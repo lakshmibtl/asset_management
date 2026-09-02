@@ -1,0 +1,139 @@
+{% extends "superadmin/base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="py-5">
+
+    <!-- Header -->
+    <div class="mb-5 text-center">
+        <h2 class="display-6 fw-bold text-dark mb-1">Super Admin Portal</h2>
+        <p class="text-muted lead">Control administrators and manage core campus systems</p>
+        <span class="underline-accent"></span>
+    </div>
+
+    <div class="row g-5 justify-content-center">
+
+        <!-- Create Admin -->
+        <div class="col-lg-4 col-md-6">
+            <a href="{% url 'create_admin' %}" class="text-decoration-none">
+                <div class="sa-card">
+                    <div class="sa-icon bg-gradient-primary">
+                        <i class="bi bi-person-plus-fill"></i>
+                    </div>
+                    <h4 class="sa-title">Create Administrator</h4>
+                    <p class="sa-desc">Register new Asset administrators</p>
+                    <i class="bi bi-arrow-right-circle-fill sa-arrow text-primary"></i>
+                </div>
+            </a>
+        </div>
+
+        <!-- Asset Management -->
+        <div class="col-lg-4 col-md-6">
+            <a href="{% url 'asset_dashboard' %}" class="text-decoration-none">
+                <div class="sa-card">
+                    <div class="sa-icon bg-gradient-success">
+                        <i class="bi bi-building-gear"></i>
+                    </div>
+                    <h4 class="sa-title">Asset Management</h4>
+                    <p class="sa-desc">Access the complete asset-admin panel</p>
+                    <i class="bi bi-arrow-right-circle-fill sa-arrow text-success"></i>
+                </div>
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modern Card & Animation CSS -->
+<style>
+
+    /* Accent underline */
+    .underline-accent {
+        display: inline-block;
+        width: 90px;
+        height: 4px;
+        background: linear-gradient(90deg, #0d6efd, #4fb6ff);
+        border-radius: 2px;
+        margin-top: 8px;
+    }
+
+    /* Modern Cards */
+    .sa-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(10px);
+        padding: 45px 35px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        transition: 0.35s;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #e8eaef;
+    }
+
+    .sa-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    }
+
+    /* Animated Icons */
+    .sa-icon {
+        width: 90px;
+        height: 90px;
+        font-size: 42px;
+        border-radius: 18px;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 auto 20px auto;
+        transition: 0.3s ease;
+    }
+
+    .sa-card:hover .sa-icon {
+        transform: scale(1.12) rotate(4deg);
+    }
+
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #0d6efd, #4ab0ff);
+    }
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #198754, #32d27c);
+    }
+    .bg-gradient-warning {
+        background: linear-gradient(135deg, #fd7e14, #ffb06f);
+    }
+
+    /* Titles */
+    .sa-title {
+        font-size: 21px;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 8px;
+    }
+
+    .sa-desc {
+        font-size: 14px;
+        color: #6c757d;
+        margin-bottom: 15px;
+    }
+
+    /* Arrow hover animation */
+    .sa-arrow {
+        font-size: 32px;
+        position: absolute;
+        bottom: 20px;
+        right: 22px;
+        opacity: 0;
+        transition: 0.3s ease;
+    }
+
+    .sa-card:hover .sa-arrow {
+        opacity: 1;
+        right: 12px;
+    }
+
+</style>
+
+{% endblock %}

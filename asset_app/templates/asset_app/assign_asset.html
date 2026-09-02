@@ -1,0 +1,219 @@
+{% extends 'asset_app/base.html' %}
+{% load static %}
+
+{% block title %}Assign Asset{% endblock %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+<style>
+    :root {
+        --primary-blue: #07518A;
+        --glass-bg: rgba(255, 255, 255, 0.95);
+        --input-border: #e2e8f0;
+    }
+
+    .card-modern {
+        border: 1px solid rgba(0,0,0,0.05);
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(7, 81, 138, 0.08);
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+    }
+
+    .section-indicator {
+        display: inline-flex;
+        align-items: center;
+        background: rgba(7, 81, 138, 0.1);
+        color: var(--primary-blue);
+        padding: 6px 16px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-control, .form-select, .select2-container--default .select2-selection--single {
+        border: 1.5px solid var(--input-border) !important;
+        border-radius: 12px !important;
+        padding: 10px 15px !important;
+        height: auto !important;
+    }
+
+    .readonly-box {
+        background-color: #f8fafc !important;
+        border-style: dashed !important;
+        color: var(--primary-blue);
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-assign {
+        background: linear-gradient(135deg, #07518A 0%, #0d6efd 100%);
+        color: white; border: none; border-radius: 14px;
+        padding: 16px; font-weight: 700;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .btn-assign:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(7, 81, 138, 0.2); color: white; }
+
+    /* Visual pulse for data updates */
+    .data-update-flash { animation: pulse 0.5s ease-in-out; }
+    @keyframes pulse {
+        0% { background-color: #f8fafc; }
+        50% { background-color: #e0f2fe; }
+        100% { background-color: #f8fafc; }
+    }
+</style>
+
+<div class="container py-5">
+    <div class="text-center mb-5 animate__animated animate__fadeInDown">
+        <h2 class="fw-bold text-dark">Asset Assignment</h2>
+        <p class="text-muted">Quickly allocate company hardware to verified staff.</p>
+    </div>
+
+    <form method="POST" id="assignForm">
+        {% csrf_token %}
+
+        <div class="row g-4">
+            <div class="col-lg-5 animate__animated animate__fadeInLeft">
+                <div class="card card-modern p-4 h-100">
+                    <span class="section-indicator">
+                        <i class="bi bi-person-check-fill me-2"></i> 1. Recipient
+                    </span>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted">EMPLOYEE SEARCH</label>
+                        <select id="empSelect" name="employee" class="form-control select2-modern" required>
+                            <option value="">Search by ID or Name...</option>
+                            {% for emp in employees %}
+                                <option value="{{ emp.id }}">{{ emp.employee_id }} — {{ emp.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-12 col-md-4">
+                            <label class="form-label small text-muted">Full Name</label>
+                            <input type="text" id="empName" class="form-control readonly-box" readonly placeholder="—">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label small text-muted">Department</label>
+                            <input type="text" id="empDept" class="form-control readonly-box" readonly placeholder="—">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label small text-muted">Branch</label>
+                            <input type="text" id="empBranch" name="branch" class="form-control" placeholder="—">
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <label class="form-label fw-bold small text-muted">ASSIGNMENT DATE</label>
+                        <input type="date" name="assigned_date" class="form-control" value="{{ today_date }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7 animate__animated animate__fadeInRight">
+                <div class="card card-modern p-4 h-100">
+                    <span class="section-indicator">
+                        <i class="bi bi-cpu-fill me-2"></i> 2. Allocation
+                    </span>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted">SELECT EQUIPMENT</label>
+                        <select name="asset" class="form-control select2-modern" required>
+                            <option value="">Choose an available asset...</option>
+                            {% for a in assets %}
+                                <option value="{{ a.pk }}">{{ a.asset_type }} [{{ a.asset_id }}]</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted">DEPLOYMENT STATUS</label>
+                        <select name="status" class="form-select">
+                            <option value="In Use">In Use</option>
+                            <option value="Temporary">Temporary Use</option>
+                        </select>
+                    </div>
+
+                    <div class="mt-auto">
+                        <button type="submit" id="submitBtn" class="btn btn-assign w-100 shadow-sm">
+                            <span id="btnText">Finalize Assignment <i class="bi bi-arrow-right-circle ms-2"></i></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+$(document).ready(function () {
+    // 1. Initialize Select2
+    $('.select2-modern').select2({
+        width: '100%',
+        dropdownAutoWidth: true
+    });
+
+    const empSelect = $('#empSelect');
+    const empName = $('#empName');
+    const empDept = $('#empDept');
+    const empBranch = $('#empBranch');
+
+    // 2. AJAX Employee Data Fetch
+    empSelect.on('change', function () {
+        const empId = $(this).val();
+        
+        if (!empId) {
+            empName.val('—');
+            empDept.val('—');
+            empBranch.val('—');
+            return;
+        }
+
+        // Show loading state visually
+        empName.val('Syncing...');
+        empDept.val('Syncing...');
+        empBranch.val('Syncing...');
+
+        $.ajax({
+            url: '/asset/ajax/get-employee/', // Ensure this matches your URL configuration
+            method: 'GET',
+            data: { 'emp_id': empId },
+            dataType: 'json',
+            success: function (data) {
+                // Apply data to fields
+                empName.val(data.name || 'Not Found');
+                empDept.val(data.department || 'Not Found');
+                empBranch.val(data.branch || 'Not Found');
+                
+                // Visual feedback that data has updated
+                $('.readonly-box').addClass('data-update-flash');
+                setTimeout(() => $('.readonly-box').removeClass('data-update-flash'), 500);
+            },
+            error: function (xhr) {
+                console.error("Error Response:", xhr.responseText);
+                empName.val('Error fetching');
+                empDept.val('Error fetching');
+                empBranch.val('Error fetching');
+            }
+        });
+    });
+
+    // 3. Form Submission Handling
+    $('#assignForm').on('submit', function() {
+        if(this.checkValidity()) {
+            $('#submitBtn').prop('disabled', true);
+            $('#btnText').html('<span class="spinner-border spinner-border-sm me-2"></span> Processing Registry...');
+        }
+    });
+});
+</script>
+{% endblock %}

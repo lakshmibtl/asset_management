@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Asset {{ asset.asset_id }} PDF</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h2 { text-align: center; color: #0d6efd; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .badge { padding: 3px 6px; border-radius: 5px; color: #fff; font-weight: bold; }
+        .bg-success { background-color: #28a745; }
+        .bg-warning { background-color: #ffc107; color: #000; }
+        .bg-secondary { background-color: #6c757d; }
+        img.qr { width: 150px; height: 150px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <h2>Asset Details</h2>
+
+    <!-- Asset Info -->
+    <table>
+        <tr><th>Asset ID</th><td>{{ asset.asset_id }}</td></tr>
+        <tr><th>Type</th><td>{{ asset.asset_type }}</td></tr>
+        <tr><th>Company</th><td>{{ asset.company_name }}</td></tr>
+        <tr><th>Series Number</th><td>{{ asset.series_number }}</td></tr>
+        <tr><th>Model</th><td>{{ asset.model }}</td></tr>
+        <tr><th>Status</th>
+            <td>
+                {% if asset.status == "Available" %}
+                    <span class="badge bg-success">{{ asset.status }}</span>
+                {% elif asset.status == "In Use" %}
+                    <span class="badge bg-warning">{{ asset.status }}</span>
+                {% else %}
+                    <span class="badge bg-secondary">{{ asset.status }}</span>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <!-- QR Code -->
+    {% if asset.qr_code_base64 %}
+        <div style="text-align:center;">
+            <img src="data:image/png;base64,{{ asset.qr_code_base64 }}" class="qr" alt="QR Code">
+            <p>Scan this QR to view asset details</p>
+        </div>
+    {% endif %}
+
+    <!-- Assignment Info -->
+    <h2>Assignment Details</h2>
+    {% if assignments %}
+        <table>
+            <tr>
+                <th>Employee Name</th>
+                <th>Department</th>
+                <th>Status</th>
+            </tr>
+            {% for a in assignments %}
+            <tr>
+                <td>{{ a.employee_name }}</td>
+                <td>{{ a.department }}</td>
+                <td>
+                    {% if a.status == "In Use" %}
+                        <span class="badge bg-success">{{ a.status }}</span>
+                    {% elif a.status == "Repair" %}
+                        <span class="badge bg-warning">{{ a.status }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ a.status }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No assignments for this asset.</p>
+    {% endif %}
+
+</body>
+</html>

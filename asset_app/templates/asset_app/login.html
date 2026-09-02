@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Page</title>
+
+  <!-- Font Awesome for eye icon -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+      background-color: #f5f7fb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .login-container {
+      display: flex;
+      width: 850px;
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    /* LEFT SIDE — your old blue curved WELCOME design */
+    .login-left {
+      flex: 1;
+      background: linear-gradient(135deg, #0044cc, #0073e6);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      border-top-right-radius: 80px;
+      border-bottom-right-radius: 80px;
+      overflow: hidden;
+    }
+
+    .welcome-shape {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle at 30% 30%, #0066ff, #0033cc);
+      border-radius: 50%;
+      overflow: hidden;
+      clip-path: circle(75% at 50% 50%);
+      box-shadow: inset -15px -15px 25px rgba(255, 255, 255, 0.1),
+                  10px 10px 25px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .welcome-shape h1 {
+      font-size: 30px;
+      margin: 0;
+      color: #fff;
+      text-shadow: 0 3px 8px rgba(0,0,0,0.3);
+      letter-spacing: 1px;
+    }
+
+    .circle1, .circle2, .circle3 {
+      position: absolute;
+      border-radius: 50%;
+      box-shadow: inset 8px 8px 20px rgba(255,255,255,0.1),
+                  0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    .circle1 {
+      width: 160px;
+      height: 160px;
+      bottom: 30px;
+      left: 40px;
+      background: radial-gradient(circle at 30% 30%, #004de6, #002699);
+    }
+
+    .circle2 {
+      width: 120px;
+      height: 120px;
+      top: 50px;
+      right: 60px;
+      background: radial-gradient(circle at 20% 20%, #005ce6, #0033cc);
+    }
+
+    .circle3 {
+      width: 80px;
+      height: 80px;
+      bottom: 60px;
+      right: 100px;
+      background: radial-gradient(circle at 20% 20%, #007bff, #0048b8);
+    }
+
+    /* RIGHT SIDE — modern clean form */
+    .login-right {
+      flex: 1;
+      padding: 60px 50px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .login-right h2 {
+      color: #0b2258;
+      margin-bottom: 30px;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .form-group {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 14px 45px 14px 15px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.3s;
+    }
+
+    .form-group input:focus {
+      border-color: #0044ff;
+      box-shadow: 0 0 5px rgba(0, 68, 255, 0.3);
+    }
+
+    /* Custom password eye icon */
+    .password-toggle {
+      position: absolute;
+      top: 50%;
+      right: 15px;
+      transform: translateY(-50%);
+      font-size: 18px;
+      color: #888;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .password-toggle:hover {
+      color: #0044ff;
+    }
+
+    /* Hide default browser eye icon (important fix) */
+    input::-ms-reveal,
+    input::-ms-clear {
+      display: none;
+    }
+
+    input[type="password"]::-webkit-textfield-decoration-container,
+    input[type="password"]::-webkit-credentials-auto-fill-button {
+      visibility: hidden;
+      display: none !important;
+      pointer-events: none;
+      position: absolute;
+      right: 0;
+    }
+
+    .login-right button {
+      width: 100%;
+      background: #0b2258;
+      color: #fff;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      padding: 13px;
+      margin-top: 10px;
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    .login-right button:hover {
+      background: #051437;
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 768px) {
+      .login-container {
+        flex-direction: column;
+        width: 90%;
+      }
+
+      .login-left {
+        border-radius: 0;
+        border-bottom-right-radius: 60px;
+        border-bottom-left-radius: 60px;
+      }
+
+      .login-right {
+        padding: 40px 30px;
+      }
+
+      .circle1, .circle2, .circle3 {
+        display: none;
+      }
+
+      .welcome-shape {
+        transform: scale(0.8);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <!-- LEFT SIDE -->
+    <div class="login-left">
+      <div class="welcome-shape">
+        <h1>WELCOME</h1>
+      </div>
+      <div class="circle1"></div>
+      <div class="circle2"></div>
+      <div class="circle3"></div>
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="login-right">
+      <h2>Login In</h2>
+
+      <form action="/login/" method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+          <input type="text" name="username" placeholder="User Name" required>
+        </div>
+
+        <div class="form-group">
+          <input type="password" id="password" name="password" placeholder="Password" required>
+          <i class="fa-solid fa-eye password-toggle" id="togglePassword"></i>
+        </div>
+
+        <button type="submit">Login In</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const togglePassword = document.getElementById("togglePassword");
+    const password = document.getElementById("password");
+
+    togglePassword.addEventListener("click", function () {
+      const type = password.getAttribute("type") === "password" ? "text" : "password";
+      password.setAttribute("type", type);
+      this.classList.toggle("fa-eye-slash");
+      this.style.color = type === "text" ? "#0044ff" : "#888";
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,46 @@
+{% extends 'asset_app/base.html' %}
+{% block title %}Assets Grouped by User{% endblock %}
+{% block content %}
+
+<div class="container py-5">
+
+    <div class="text-center mb-4">
+        <h1 class="fw-bold text-primary">
+            <i class="bi bi-people-fill"></i> Assets Grouped by User
+        </h1>
+    </div>
+
+    <div class="row g-4">
+
+        {% for user, assets in user_groups.items %}
+        <div class="col-md-6">
+            <div class="card shadow-lg rounded-4 p-3">
+
+                <h4 class="fw-bold text-primary">
+                    <i class="bi bi-person-circle"></i> {{ user }}
+                </h4>
+                <hr>
+
+                <ul class="list-group">
+                    {% for asset in assets %}
+                    <li class="list-group-item">
+                        <strong>{{ asset.asset_id }}</strong> 
+                        <span class="text-muted">({{ asset.asset_type }})</span>
+
+                        <div class="mt-2">
+                            <a href="{% url 'asset_detail' asset.pk %}" class="btn btn-outline-primary btn-sm">View</a>
+                            <a href="{% url 'download_qr' asset.pk %}" class="btn btn-outline-success btn-sm">QR</a>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+
+</div>
+
+{% endblock %}

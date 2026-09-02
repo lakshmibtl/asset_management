@@ -1,0 +1,21 @@
+<h2>Create Admin</h2>
+
+<form method="POST">
+    {% csrf_token %}
+    <label>Username</label>
+    <input type="text" name="username" required>
+
+    <label>Email</label>
+    <input type="email" name="email" required>
+
+    <label>Select Admin Role</label>
+    <select name="role">
+        <option value="asset_admin">Asset Admin</option>
+        <option value="stationery_admin">Stationery Admin</option>
+    </select>
+
+    <label>Password</label>
+    <input type="password" name="password" required>
+
+    <button type="submit">Create</button>
+</form>

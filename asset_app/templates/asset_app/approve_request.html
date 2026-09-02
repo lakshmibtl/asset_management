@@ -1,0 +1,8 @@
+<h2>Approve/Reject Request</h2>
+<p>Asset: {{ asset_request.asset.name }}</p>
+<p>Requested by: {{ asset_request.employee.username }}</p>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Update Status</button>
+</form>

@@ -1,0 +1,185 @@
+{% extends 'asset_app/base.html' %}
+{% block title %}Procurement Requests{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0">
+      </i> Requests
+    </h2>
+
+    <a href="{% url 'create_procurement' %}" class="btn btn-primary rounded-3 shadow-sm px-3">
+        <i class="bi bi-plus-lg me-1"></i> Request Asset
+    </a>
+</div>
+
+<!-- Main Card -->
+<div class="card shadow-lg border-0 rounded-4 p-0 modern-card">
+
+    <!-- Table Wrapper -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+
+            <thead class="modern-thead text-white">
+                <tr>
+                    <th>s.no</th>
+                    <th>Asset</th>
+                    <th>Description</th>
+                    <th>Requested By</th>
+                    <th>Status</th>
+                    <th>Request Date</th>
+
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for r in requests %}
+                <tr class="table-row">
+
+                    <td class="fw-semibold text-secondary">{{ r.id }}</td>
+                    <td>{{ r.asset_type }}</td>
+                    <td class="text-wrap" style="max-width:200px;">{{ r.description }}</td>
+                    <td>{{ r.requested_by.username }}</td>
+
+                    <!-- STATUS COLOR BADGES -->
+                    <td>
+                        {% if r.status == "Pending Manager Approval" %}
+                            <span class="status-pill pending-manager">Manager Review</span>
+
+                        {% elif r.status == "Pending Purchase Approval" %}
+                            <span class="status-pill pending-purchase">Purchase Review</span>
+
+                        {% elif r.status == "Invoice Pending" %}
+                            <span class="status-pill invoice-pending">Invoice Pending</span>
+
+                        {% elif r.status == "Payment Pending" %}
+                            <span class="status-pill payment-pending">Payment Pending</span>
+
+                        {% elif r.status == "Completed" %}
+                            <span class="status-pill completed">Completed</span>
+
+                        {% elif "Rejected" in r.status %}
+                            <span class="status-pill rejected">Rejected</span>
+
+                        {% else %}
+                            <span class="status-pill other">{{ r.status }}</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- DATES -->
+                    <td>
+                        {% if r.request_date %}
+                            <span class="date-pill">{{ r.request_date|date:"d-m-Y H:i" }}</span>
+                        {% else %} --- {% endif %}
+                    </td> 
+
+
+
+                    <!-- ACTION BUTTONS -->
+                    <td class="text-center">
+
+                        {% if user.role == "manager" or user.is_staff or user.is_superuser or user.role == "admin" or user.role == "asset_admin" %}
+                            {% if r.status == "Pending Manager Approval" %}
+                                <a href="{% url 'manager_approve' r.id %}" class="btn btn-success btn-sm action-btn">Approve</a>
+                                <a href="{% url 'manager_reject' r.id %}" class="btn btn-danger btn-sm action-btn">Reject</a>
+                            {% endif %}
+                        {% endif %}
+
+                        {% if user.is_staff or user.is_superuser or user.role == "admin" or user.role == "asset_admin" %}
+                            <a href="{% url 'delete_procurement' r.id %}" class="btn btn-danger btn-sm action-btn mt-1" onclick="return confirm('Are you sure you want to delete this request?');" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        {% endif %}
+
+
+                    </td>
+                </tr>
+
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                        <i class="bi bi-clipboard-x fs-3"></i><br>
+                        No procurement requests found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+
+    .modern-card {
+        background: #ffffff;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .modern-thead {
+        background: linear-gradient(90deg, #0e6ba8, #0a4b78);
+        font-weight: 600;
+        letter-spacing: .5px;
+    }
+
+    .table-row:hover {
+        background-color: #f1f6ff !important;
+    }
+
+    /* STATUS PILLS */
+    .status-pill {
+        padding: 5px 10px;
+        font-size: 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .pending-manager { background:#ffdd57; color:#000; }
+    .pending-purchase { background:#6f42c1; color:#fff; }
+    .invoice-pending { background:#ffd43b; color:#000; }
+    .payment-pending { background:#0d6efd; color:#fff; }
+    .completed { background:#28a745; color:#fff; }
+    .rejected { background:#dc3545; color:#fff; }
+    .paid { background:#198754; color:#fff; }
+    .unpaid { background:#dc3545; color:#fff; }
+    .other { background:#17a2b8; color:#fff; }
+
+    /* DATE PILLS */
+    .date-pill {
+        background:#e9ecef;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .success-pill { background:#d1e7dd; }
+
+    /* INVOICE BUTTONS */
+    .invoice-pill {
+        padding: 5px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 6px;
+        display: inline-block;
+        margin-bottom: 4px;
+    }
+
+    /* ACTION BUTTONS */
+    .action-btn {
+        width: 100%;
+        margin-bottom: 5px;
+        transition: 0.2s;
+    }
+    .action-btn:hover {
+        transform: scale(1.05);
+    }
+
+</style>
+
+{% endblock %}

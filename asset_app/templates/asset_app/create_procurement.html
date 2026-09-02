@@ -1,0 +1,112 @@
+{% extends 'asset_app/base.html' %}
+{% block title %}Create Procurement Request{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+
+    <!-- Page Heading -->
+    <div class="text-center mb-4">
+        <h2 class="fw-bold text-dark">
+            
+            Raise  Request
+        </h2>
+        <p class="text-muted">Submit a request for new assets with clear details</p>
+    </div>
+
+    <!-- Main Form Card -->
+    <div class="proc-card shadow-lg rounded-4 mx-auto" style="max-width: 700px;">
+
+        <!-- Gradient Header -->
+        <div class="proc-header text-white text-center py-4 rounded-top-4">
+            <h4 class="fw-semibold m-0">
+                <i class="bi bi-clipboard-check me-2"></i> Procurement Form
+            </h4>
+        </div>
+
+        <!-- Form -->
+        <form method="POST" class="p-5">
+            {% csrf_token %}
+
+            <!-- ASSET TYPE -->
+            <div class="mb-4">
+                <label class="form-label fw-semibold text-dark">Asset Type</label>
+                <input type="text" name="asset_type" class="form-control form-control-lg custom-input" placeholder="Enter Asset Type (e.g., Laptop, Monitor)" required>
+            </div>
+
+            <!-- DESCRIPTION -->
+            <div class="mb-4">
+                <label class="form-label fw-semibold text-dark">Description</label>
+                <textarea name="description" rows="4"
+                          class="form-control custom-input"
+                          placeholder="Provide details about your requirement..."
+                          required></textarea>
+            </div>
+
+            <!-- BUTTONS -->
+            <div class="d-flex gap-3 mt-4">
+                <button type="submit" class="btn submit-btn px-4 py-2 fw-semibold flex-grow-1">
+                    <i class="bi bi-send-check me-2"></i>Submit Request
+                </button>
+
+                <a href="{% url 'procurement_list' %}"
+                   class="btn btn-secondary px-4 py-2 fw-semibold rounded-3 flex-grow-1">
+                    <i class="bi bi-arrow-left me-1"></i>Back
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+
+    /* Main Form Card */
+    .proc-card {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(0,0,0,0.05);
+        backdrop-filter: blur(8px);
+        transition: all 0.3s ease;
+    }
+
+    .proc-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 18px 38px rgba(0,0,0,0.12);
+    }
+
+    /* Header */
+    .proc-header {
+        background: linear-gradient(120deg, #0a4b78, #0e6ba8);
+    }
+
+    /* Inputs */
+    .custom-input {
+        border: 2px solid #e5e7eb !important;
+        border-radius: 10px !important;
+        transition: 0.3s ease;
+        padding: 10px 14px;
+    }
+
+    .custom-input:focus {
+        border-color: #0d6efd !important;
+        box-shadow: 0 0 0 0.22rem rgba(13, 110, 253, 0.18) !important;
+    }
+
+    /* Submit Button */
+    .submit-btn {
+        background: linear-gradient(90deg, #0e6ba8, #0a4b78);
+        color: white;
+        border-radius: 10px;
+        transition: 0.3s ease;
+    }
+
+    .submit-btn:hover {
+        background: linear-gradient(90deg, #0a4b78, #0e6ba8);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(14,107,168,0.25);
+    }
+
+</style>
+
+{% endblock %}

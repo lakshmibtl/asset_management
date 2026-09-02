@@ -1,0 +1,20 @@
+{% extends 'asset_app/base.html' %}
+
+{% block content %}
+<h2 class="mb-4">Upload Invoice</h2>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <label class="form-label">Upload Invoice 1:</label>
+    <input type="file" name="invoice_file1" class="form-control mb-3">
+
+    <label class="form-label">Upload Invoice 2:</label>
+    <input type="file" name="invoice_file2" class="form-control mb-3">
+
+    <label class="form-label">Upload Invoice 3:</label>
+    <input type="file" name="invoice_file3" class="form-control mb-3">
+
+    <button type="submit" class="btn btn-success mt-2">Upload & Continue</button>
+</form>
+{% endblock %}

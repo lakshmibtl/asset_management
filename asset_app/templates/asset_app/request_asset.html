@@ -1,0 +1,78 @@
+{% extends 'asset_app/base.html' %}
+{% load widget_tweaks %}
+{% block title %}Request Asset{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary mb-0">
+            <i class="bi bi-cart-plus me-2"></i>Request an Asset
+        </h2>
+    </div>
+
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-body p-4 p-md-5">
+            <form method="POST" action="">
+                {% csrf_token %}
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-muted">ASSET CATEGORY</label>
+                        {{ form.asset_category|add_class:"form-select form-select-lg shadow-sm border-0 bg-light"|attr:"id:id_asset_category" }}
+                        {{ form.other_asset_category }}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-muted">ASSET TYPE</label>
+                        {{ form.asset_type|add_class:"form-control form-control-lg shadow-sm border-0 bg-light" }}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-muted">QUANTITY</label>
+                        {{ form.quantity|add_class:"form-control form-control-lg shadow-sm border-0 bg-light" }}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-muted">REQUIRED DATE</label>
+                        {{ form.required_date|add_class:"form-control form-control-lg shadow-sm border-0 bg-light" }}
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-semibold text-muted">REASON FOR REQUEST</label>
+                        {{ form.reason|add_class:"form-control form-control-lg shadow-sm border-0 bg-light" }}
+                    </div>
+                </div>
+
+                <div class="mt-5 text-center">
+                    <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 py-3 shadow" style="background-color: #07518a; border-color: #07518a;">
+                        <i class="bi bi-send me-2"></i> Submit Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const categorySelect = document.getElementById('id_asset_category');
+        const otherCategoryInput = document.getElementById('otherAssetCategoryInput');
+        
+        if (categorySelect && otherCategoryInput) {
+            categorySelect.addEventListener('change', function() {
+                if (this.value === 'Other') {
+                    otherCategoryInput.style.display = 'block';
+                    otherCategoryInput.required = true;
+                } else {
+                    otherCategoryInput.style.display = 'none';
+                    otherCategoryInput.required = false;
+                    otherCategoryInput.value = ''; // clear out
+                }
+            });
+            
+            if (categorySelect.value === 'Other') {
+                otherCategoryInput.style.display = 'block';
+            }
+        }
+    });
+</script>
+{% endblock %}

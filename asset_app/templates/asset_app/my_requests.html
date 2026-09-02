@@ -1,0 +1,35 @@
+{% extends 'asset_app/base.html' %}
+
+{% block title %}My Asset Requests{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4">My Asset Requests</h2>
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Asset</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Requested At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requests %}
+                <tr>
+                    <td>{{ req.asset.asset_id }} ({{ req.asset.asset_type }})</td>
+                    <td>{{ req.reason }}</td>
+                    <td>{{ req.status }}</td>
+                    <td>{{ req.requested_at }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center">You have not submitted any requests yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

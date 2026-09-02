@@ -1,0 +1,23 @@
+{% extends 'asset_app/base.html' %}
+{% block content %}
+<div class="container mt-5 d-flex justify-content-center">
+  <div class="card shadow-lg border-0 rounded-4 p-5" style="max-width:600px; width:100%;">
+    <h2 class="fw-bold text-center mb-4 text-primary">🎫 Raise  Ticket</h2>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-floating mb-3">{{ form.asset }}<label>Select Asset</label></div>
+      <div class="form-floating mb-3">{{ form.subject }}<label>Subject</label></div>
+      <div class="form-floating mb-4">{{ form.description }}<label>Description</label></div>
+      <div class="d-flex justify-content-center">
+        <button type="submit" class="btn btn-gradient px-5 py-2 fw-semibold">Submit Ticket</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+.btn-gradient{background:linear-gradient(90deg,#4e54c8,#8f94fb);color:white;border:none;transition:.3s}
+.btn-gradient:hover{opacity:.85;transform:scale(1.02)}
+.card{background:#fff;backdrop-filter:blur(10px)}
+</style>
+{% endblock %}

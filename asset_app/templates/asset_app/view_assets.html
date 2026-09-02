@@ -1,0 +1,582 @@
+{% extends 'asset_app/base.html' %}
+{% block title %}Asset Inventory Management{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --primary-blue: #07518a;
+        --soft-bg: #f8f9fa;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body { background-color: var(--soft-bg); }
+
+    /* Modern Card Styling */
+    .asset-card {
+        border: none;
+        border-radius: 16px;
+        transition: var(--transition);
+        background: #ffffff;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .asset-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Clickable card */
+    .asset-item[tabindex] { cursor: pointer; }
+    .asset-item:focus { outline: 3px solid rgba(7,81,138,0.15); outline-offset: 2px; }
+
+    /* Badge Styling */
+    .status-badge {
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+    }
+
+    /* Info labels */
+    .info-label {
+        color: #6c757d;
+        font-size: 0.85rem;
+        margin-bottom: 2px;
+    }
+
+    .info-value {
+        color: #212529;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+    }
+
+    /* Buttons */
+    .btn-action {
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    /* Staggered Entrance Animation */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-in {
+        animation: fadeInUp 0.5s ease backwards;
+        animation-delay: var(--delay);
+    }
+
+    /* Filter bar styles */
+    .filter-bar .btn.active {
+        background-color: var(--primary-blue);
+        border-color: var(--primary-blue);
+        color: #fff;
+    }
+    .filter-bar .btn { min-width: 90px; }
+
+    /* small helper */
+    .fw-medium { font-weight: 600; }
+</style>
+
+<div class="container py-5">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-3 animate-in" style="--delay: 0.1s">
+        <div>
+            <h1 class="display-6 fw-bold mb-1" style="color: var(--primary-blue);">
+                <i class="bi bi-box-seam-fill me-2"></i>Asset Inventory
+            </h1>
+            <p class="text-muted mb-0">Overview of assigned and available warehouse stock.</p>
+        </div>
+        {% if request.user.is_staff %}
+        <div class="mt-3 mt-md-0">
+            <button class="btn btn-primary btn-action shadow-sm" style="background-color: #07518a; border-color: #07518a;" data-bs-toggle="offcanvas" data-bs-target="#assignAssetOffcanvas">
+                <i class="bi bi-plus-lg me-1"></i> Assign New Asset
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ASSET STATS -->
+    {% if asset_stats %}
+    <div class="row g-3 mb-4 animate-in" style="--delay: 0.12s">
+        {% for stat in asset_stats %}
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="bg-white p-3 rounded-4 shadow-sm border-start border-4 stat-card-btn transition-hover" style="border-left-color: #07518a !important; cursor: pointer; transition: transform 0.2s;" data-filter="{{ stat.asset_type|lower }}">
+                <div class="text-muted small fw-bold text-uppercase mb-1">{{ stat.asset_type }}</div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="fw-bold mb-0 text-dark">{{ stat.total }}</h3>
+                    <div class="text-end small">
+                        <div class="text-success" title="Available"><i class="bi bi-check-circle-fill me-1"></i>{{ stat.available }}</div>
+                        <div class="text-primary" title="In Use" style="color: #07518a !important;"><i class="bi bi-person-check-fill me-1"></i>{{ stat.in_use }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- FILTER BAR -->
+    <div class="row mb-4 animate-in" style="--delay: 0.15s">
+        <div class="col-12">
+            <div class="bg-white p-3 rounded-4 shadow-sm d-flex flex-column flex-md-row gap-3 align-items-md-center filter-bar">
+                <!-- CATEGORY FILTER -->
+                <div class="overflow-x-auto w-100 w-md-auto pb-2 pb-md-0">
+                    <div class="btn-group" role="group" aria-label="Category filters">
+                        <button type="button" class="btn btn-outline-primary filter-btn active" data-filter="all">All</button>
+                        <button type="button" class="btn btn-outline-primary filter-btn" data-filter="laptop">Laptop</button>
+                        <button type="button" class="btn btn-outline-primary filter-btn" data-filter="desktop">Desktop</button>
+                        <button type="button" class="btn btn-outline-primary filter-btn" data-filter="printer">Printer</button>
+                        <button type="button" class="btn btn-outline-primary filter-btn" data-filter="camera">Cell</button>
+                    </div>
+                </div>
+
+                <!-- SEARCH -->
+                <div class="ms-md-auto w-100" style="max-width: 480px;">
+                    <input type="text" id="assetSearch" class="form-control" placeholder="Search by Employee Name / Employee ID / Asset ID / Asset Type...">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ASSIGNED ASSETS -->
+    <div class="row g-4" id="assignedAssets">
+        {% for assign in assignments %}
+        <div class="col-12 col-md-6 col-lg-4 animate-in asset-item"
+             role="button"
+             tabindex="0"
+             data-type="{{ assign.asset.asset_type|lower }}"
+             data-empname="{{ assign.employee.name|lower }}"
+             data-empid="{{ assign.employee.employee_id }}"
+             data-assetid="{{ assign.asset.asset_id|lower }}"
+             data-href="{% url 'asset_detail' assign.asset.pk %}"
+             style="--delay: 0.{{ forloop.counter }}s">
+            <div class="card h-100 asset-card border-top border-4" style="border-top-color: #07518a !important;">
+                <div class="card-body p-4 d-flex flex-column">
+                    
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 status-badge" style="color: #07518a !important;">
+                            <i class="bi bi-person-check-fill me-1"></i> In Use
+                        </span>
+                        <div class="text-muted small">ID: {{ assign.asset.asset_id }}</div>
+                    </div>
+
+                    <h5 class="fw-bold text-dark mb-1">
+                        {{ assign.asset.asset_id }}
+                    </h5>
+                    <p class="small text-muted mb-4">
+                        {{ assign.asset.asset_type }}
+                    </p>
+
+                    <div class="mb-4">
+                        <p class="info-label text-uppercase small fw-bold">Assigned To</p>
+                        <p class="info-value fs-5" style="color: #07518a;">
+                            <i class="bi bi-person-circle me-2"></i>
+                            {{ assign.employee.name }} {% if assign.employee.employee_id %} ({{ assign.employee.employee_id }}){% endif %}
+                        </p>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-auto border-top pt-3">
+                        <a href="{% url 'asset_detail' assign.asset.pk %}" class="btn btn-light btn-sm btn-action flex-grow-1 border" title="View Details">
+                            <i class="bi bi-eye"></i> View
+                        </a>
+                        <a href="{% url 'download_qr' assign.asset.pk %}" class="btn btn-light btn-sm btn-action border" title="Download QR Code">
+                            <i class="bi bi-download"></i> QR
+                        </a>
+                        
+                        {% if assign.asset.asset_type|lower == 'laptop' or assign.asset.asset_type|lower == 'desktop' or assign.asset.asset_type|lower == 'ippbx' or assign.asset.asset_type|lower == 'printer' %}
+                            {% if assign.is_signed %}
+                                <a href="{% url 'view_agreement' assign.pk %}" class="btn btn-success btn-sm btn-action border text-white" title="View Signed Agreement">
+                                    <i class="bi bi-file-earmark-check"></i>
+                                </a>
+                            {% else %}
+                                <a href="{% url 'sign_agreement' assign.pk %}" class="btn btn-warning btn-sm btn-action border text-dark" title="Sign Agreement Pending">
+                                    <i class="bi bi-pen"></i> Sign
+                                </a>
+                            {% endif %}
+                        {% endif %}
+                        
+                        {% if request.user.is_staff %}
+                        <div class="dropdown">
+                            <button class="btn btn-light btn-sm btn-action border dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0">
+                                <li>
+                                    <form method="POST" action="{% url 'return_asset' assign.asset.pk %}" style="display:inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item py-2" onclick="return confirm('Return {{ assign.asset.asset_id }} to available stock?')">
+                                            <i class="bi bi-arrow-return-left me-2 text-warning"></i> Return {{ assign.asset.asset_id }}
+                                        </button>
+                                    </form>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item py-2 transfer-trigger" data-bs-toggle="offcanvas" data-bs-target="#transferAssetOffcanvas" data-asset-id="{{ assign.asset.pk }}" data-asset-name="{{ assign.asset.asset_id }}" data-transfer-url="{% url 'transfer_asset' assign.asset.pk %}">
+                                        <i class="bi bi-arrow-left-right me-2 text-primary"></i> Transfer {{ assign.asset.asset_id }}
+                                    </button>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-danger py-2" href="{% url 'delete_asset' assign.asset.pk %}" onclick="return confirm('Delete {{ assign.asset.asset_id }}?')">
+                                        <i class="bi bi-trash3 me-2"></i> Delete {{ assign.asset.asset_id }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <div class="bg-white d-inline-block p-5 rounded-4 shadow-sm">
+                <i class="bi bi-inbox text-secondary display-1"></i>
+                <h4 class="mt-3 fw-bold">No Assets Found</h4>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- AVAILABLE / UNASSIGNED ASSETS -->
+    {% if request.user.is_staff and unassigned_assets %}
+    <div class="mt-5 pt-5 border-top">
+        <h4 class="fw-bold mb-4 text-secondary">
+            <i class="bi bi-box-fill me-2"></i>Available Stock
+        </h4>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="availableAssets">
+            {% for a in unassigned_assets %}
+            <div class="col animate-in asset-item"
+                 role="button"
+                 tabindex="0"
+                 data-type="{{ a.asset_type|lower }}"
+                 data-empname=""
+                 data-empid=""
+                 data-assetid="{{ a.asset_id|lower }}"
+                 data-href=""
+                 style="--delay: 0.{{ forloop.counter }}s">
+                <div class="card h-100 asset-card border-top border-4" style="border-top-color: #07518a !important;">
+                    <div class="card-body p-4 d-flex flex-column">
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge bg-success-subtle text-success px-3 py-2 status-badge">
+                                <i class="bi bi-check-circle-fill me-1"></i> Available
+                            </span>
+                            <span class="text-muted small">ID: {{ a.asset_id }}</span>
+                        </div>
+                        
+                        <h5 class="fw-bold mb-1 text-dark">{{ a.asset_type }}</h5>
+                        <p class="text-muted small mb-3">{{ a.model|default:"Hardware Asset" }}</p>
+                        
+                        <div class="bg-light p-3 rounded-3 mb-4">
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span class="text-muted">Company:</span>
+                                <span class="fw-medium">{{ a.company_name }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span class="text-muted">Model:</span>
+                                <span class="fw-medium">{{ a.model }}</span>
+                            </div>
+                             <div class="d-flex justify-content-between small">
+                                <span class="text-muted">Series:</span>
+                                <span class="fw-medium text-truncate" style="max-width: 150px;">{{ a.series_number }}</span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-auto">
+                            <a href="{% url 'asset_detail' a.pk %}" class="btn btn-outline-secondary btn-sm btn-action flex-grow-1" title="View Detail">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'download_qr' a.pk %}" class="btn btn-outline-secondary btn-sm btn-action flex-grow-1" title="Download QR">
+                                <i class="bi bi-download"></i> QR
+                            </a>
+                            <button type="button" class="btn btn-primary btn-sm btn-action flex-grow-1 shadow-sm assign-trigger" data-asset-id="{{ a.pk }}" style="background-color: #07518a; border-color: #07518a;" data-bs-toggle="offcanvas" data-bs-target="#assignAssetOffcanvas">
+                                <i class="bi bi-person-plus-fill me-1"></i> Assign
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Assign Asset Offcanvas -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="assignAssetOffcanvas" aria-labelledby="assignAssetOffcanvasLabel" style="width: 450px; z-index: 1060;">
+  <div class="offcanvas-header border-bottom">
+    <h5 class="offcanvas-title fw-bold" id="assignAssetOffcanvasLabel"><i class="bi bi-cpu-fill me-2"></i>Assign Asset</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <form method="POST" action="{% url 'assign_asset' %}" id="assignFormOffcanvas">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.path }}">
+        
+        <div class="mb-4">
+            <label class="form-label fw-bold small text-muted">EMPLOYEE SEARCH</label>
+            <select id="empSelect" name="employee" class="form-control select2-modern" style="width: 100%;">
+                <option value="">Search by ID or Name...</option>
+                {% for emp in employees %}
+                    <option value="{{ emp.id }}">{{ emp.employee_id }} — {{ emp.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="row g-2 mb-4">
+            <div class="col-12">
+                <label class="form-label small text-muted">Full Name</label>
+                <input type="text" id="empName" class="form-control" readonly placeholder="—" style="background-color: #f8fafc;">
+            </div>
+            <div class="col-12">
+                <label class="form-label small text-muted">Department</label>
+                <input type="text" id="empDept" class="form-control" readonly placeholder="—" style="background-color: #f8fafc;">
+            </div>
+            <div class="col-12">
+                <label class="form-label small text-muted">Branch</label>
+                <input type="text" id="empBranch" class="form-control" readonly placeholder="—" style="background-color: #f8fafc;">
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label fw-bold small text-muted">SELECT ASSET</label>
+            <select id="assetSelect" name="asset" class="form-control select2-modern" style="width: 100%;">
+                <option value="">Search by ID, Type, or Name...</option>
+                {% for asset in unassigned_assets %}
+                    <option value="{{ asset.id }}">{{ asset.asset_id }} — {{ asset.asset_type }} ({{ asset.name }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label fw-bold small text-muted">ASSIGNMENT DATE</label>
+            <input type="date" name="assigned_date" class="form-control" value="{{ today_date }}">
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label fw-bold small text-muted">DEPLOYMENT STATUS</label>
+            <select name="status" class="form-select">
+                <option value="In Use">In Use</option>
+                <option value="Temporary">Temporary Use</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100" style="background-color: #07518a; border-color: #07518a;">
+            Finalize Assignment
+        </button>
+    </form>
+  </div>
+</div>
+
+<!-- Transfer Asset Offcanvas -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="transferAssetOffcanvas" aria-labelledby="transferAssetOffcanvasLabel" style="width: 450px; z-index: 1060;">
+  <div class="offcanvas-header border-bottom">
+    <h5 class="offcanvas-title fw-bold" id="transferAssetOffcanvasLabel"><i class="bi bi-arrow-left-right me-2"></i>Transfer Asset</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <form method="POST" action="" id="transferFormOffcanvas">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.path }}">
+        
+        <div class="mb-4">
+            <label class="form-label fw-bold small text-muted">TRANSFERRING ASSET</label>
+            <input type="text" id="transferAssetName" class="form-control" readonly style="background-color: #f8fafc; font-weight: 600; color: #07518a;">
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label fw-bold small text-muted">SELECT NEW EMPLOYEE</label>
+            <select id="transferEmpSelect" name="employee" class="form-control select2-modern" style="width: 100%;">
+                <option value="">Search by ID or Name...</option>
+                {% for emp in employees %}
+                    <option value="{{ emp.id }}">{{ emp.employee_id }} — {{ emp.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100" style="background-color: #07518a; border-color: #07518a;">
+            Confirm Transfer
+        </button>
+    </form>
+  </div>
+</div>
+
+<!-- Scripts for Select2 and AJAX -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- FILTER + SEARCH SCRIPT -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const filterButtons = document.querySelectorAll(".filter-btn");
+    const searchInput = document.getElementById("assetSearch");
+    const assetItems = document.querySelectorAll(".asset-item");
+
+    // Helper: get active filter
+    function getActiveFilter() {
+        const active = document.querySelector(".filter-btn.active");
+        return active ? active.dataset.filter.toLowerCase() : "all";
+    }
+
+    // Show/hide logic that combines filter + search
+    function applyFilters() {
+        const filterValue = getActiveFilter();
+        const query = (searchInput.value || "").trim().toLowerCase();
+
+        assetItems.forEach(item => {
+            const types = (item.dataset.type || "").toLowerCase();
+            const empName = (item.dataset.empname || "").toLowerCase();
+            const empId = (item.dataset.empid || "").toLowerCase();
+            const assetId = (item.dataset.assetid || "").toLowerCase();
+
+            const matchesFilter = (filterValue === "all") || (types.indexOf(filterValue) !== -1);
+            const matchesQuery =
+                !query ||
+                empName.indexOf(query) !== -1 ||
+                empId.indexOf(query) !== -1 ||
+                assetId.indexOf(query) !== -1 ||
+                types.indexOf(query) !== -1;
+
+            if (matchesFilter && matchesQuery) {
+                item.style.display = "";
+            } else {
+                item.style.display = "none";
+            }
+        });
+    }
+
+    // Filter btn click: set active, focus search, apply
+    filterButtons.forEach(btn => {
+        btn.addEventListener("click", function () {
+            filterButtons.forEach(b => b.classList.remove("active"));
+            this.classList.add("active");
+
+            // Auto focus the search bar after selecting asset type
+            searchInput.focus();
+
+            // Optionally clear previous search:
+            // searchInput.value = '';
+
+            applyFilters();
+        });
+    });
+
+    // Search input — live
+    searchInput.addEventListener("input", function () {
+        applyFilters();
+    });
+
+    // Make stat cards clickable
+    document.querySelectorAll('.stat-card-btn').forEach(card => {
+        card.addEventListener('click', function() {
+            const filterVal = this.dataset.filter;
+            const targetBtn = document.querySelector(`.filter-btn[data-filter="${filterVal}"]`);
+            
+            if (targetBtn) {
+                targetBtn.click();
+            } else {
+                document.querySelector('.filter-btn[data-filter="all"]').click();
+                searchInput.value = filterVal;
+                applyFilters();
+            }
+            
+            // Highlight the card temporarily
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => this.style.transform = 'scale(1)', 150);
+
+            // Scroll slightly down to list
+            document.getElementById('assignedAssets').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    });
+
+    // Make entire card clickable (navigate to data-href), but allow internal links/buttons to work
+    assetItems.forEach(item => {
+        const href = item.dataset.href;
+        if (href) {
+            item.addEventListener("click", function(e) {
+                // if clicked on an <a> or <button>, let it handle the click
+                if (e.target.closest('a') || e.target.closest('button')) return;
+                window.location.href = href;
+            });
+            item.addEventListener("keydown", function(e){
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    window.location.href = href;
+                }
+            });
+        }
+    });
+
+    // Initialize Select2 in offcanvas
+    $('.select2-modern').select2({
+        dropdownParent: $('#assignAssetOffcanvas'),
+        width: '100%'
+    });
+
+    $('#transferEmpSelect').select2({
+        dropdownParent: $('#transferAssetOffcanvas'),
+        width: '100%'
+    });
+
+    // Auto-select asset when clicking 'Assign' on a specific card
+    document.querySelectorAll('.assign-trigger').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            const assetId = this.dataset.assetId;
+            if (assetId) {
+                $('#assetSelect').val(assetId).trigger('change');
+            }
+        });
+    });
+
+    // Transfer Asset Offcanvas Handler
+    document.querySelectorAll('.transfer-trigger').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            const transferUrl = this.dataset.transferUrl;
+            const assetName = this.dataset.assetName;
+            if (transferUrl) {
+                document.getElementById('transferFormOffcanvas').action = transferUrl;
+                document.getElementById('transferAssetName').value = assetName;
+            }
+        });
+    });
+
+    // AJAX Employee Data Fetch
+    $('#empSelect').on('change', function () {
+        const empId = $(this).val();
+        
+        if (!empId) {
+            $('#empName').val('—');
+            $('#empDept').val('—');
+            $('#empBranch').val('—');
+            return;
+        }
+
+        $('#empName').val('Syncing...');
+        $('#empDept').val('Syncing...');
+        $('#empBranch').val('Syncing...');
+
+        $.ajax({
+            url: '/asset/ajax/get-employee/',
+            method: 'GET',
+            data: { 'emp_id': empId },
+            dataType: 'json',
+            success: function (data) {
+                $('#empName').val(data.name || 'Not Found');
+                $('#empDept').val(data.department || 'Not Found');
+                $('#empBranch').val(data.branch || 'Not specified');
+            },
+            error: function () {
+                $('#empName').val('Error');
+                $('#empDept').val('Error');
+                $('#empBranch').val('Error');
+            }
+        });
+    });
+
+});
+</script>
+{% endblock %}

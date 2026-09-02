@@ -1,0 +1,151 @@
+{% extends 'asset_app/base.html' %}
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="card ticket-card mx-auto border-0 shadow-lg">
+        
+        <!-- Title -->
+        <div class="text-center py-4 border-bottom">
+            <h2 class="fw-bold mb-0" style="color: #08010e;">
+                🎟️ Ticket Details
+            </h2>
+        </div>
+
+        <!-- Ticket Info -->
+        <div class="card-body p-5">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <label class="text-dark small fw-semibold">Asset</label>
+                    <div class="p-3 bg-light rounded-3 fw-semibold text-dark">
+                        {{ ticket.asset }}
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="text-dark small fw-semibold">Subject</label>
+                    <div class="p-3 bg-light rounded-3 fw-semibold text-dark">
+                        {{ ticket.subject }}
+                    </div>
+                </div>
+
+                <div class="col-md-12">
+                    <label class="text-dark small fw-semibold">Description</label>
+                    <div class="p-3 bg-light rounded-3 text-dark">
+                        {{ ticket.description }}
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="text-dark small fw-semibold">Raised By</label>
+                    <div class="p-3 bg-light rounded-3">
+                        <i class="bi bi-person-circle text-secondary me-2"></i>
+                        <strong>{{ ticket.created_by.username }}</strong>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="text-dark small fw-semibold">Created On</label>
+                    <div class="p-3 bg-light rounded-3 text-dark">
+                        {{ ticket.created_at|date:"M d, Y H:i" }}
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-5">
+
+            <!-- Status Update -->
+            <div class="text-center">
+                <h5 class="fw-semibold mb-3 text-dark">Update Ticket Status</h5>
+                <form method="POST" class="d-inline-flex align-items-center gap-3">
+                    {% csrf_token %}
+                    <select name="status" class="form-select form-select-lg rounded-pill shadow-sm w-auto border-0 bg-light text-dark fw-semibold">
+                        <option value="Open" {% if ticket.status|lower == 'open' %}selected{% endif %}>Open</option>
+                        <option value="Pending" {% if ticket.status|lower == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="Resolved" {% if ticket.status|lower == 'resolved' %}selected{% endif %}>Resolved</option>
+                        <option value="Closed" {% if ticket.status|lower == 'closed' %}selected{% endif %}>Closed</option>
+                    </select>
+                    <button type="submit" class="btn update-btn rounded-pill px-4 py-2 fw-semibold shadow-sm">
+                        <i class="bi bi-arrow-repeat me-1"></i> Update
+                    </button>
+                </form>
+
+                <div class="mt-4">
+                    <span class="badge px-4 py-2 rounded-pill fs-6 shadow-sm
+                        {% if ticket.status|lower == 'pending' %} bg-light text-dark
+                        {% elif ticket.status == 'Resolved' %} bg-success
+                        {% elif ticket.status == 'Closed' %} bg-secondary
+                        {% endif %}">
+                        {{ ticket.status }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Back Button -->
+            <div class="text-center mt-5">
+                <a href="{% url 'view_tickets' %}" class="btn back-btn rounded-pill px-4 py-2 fw-semibold">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Tickets
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+body {
+    background-color: #f4f5fb;
+}
+
+.ticket-card {
+    max-width: 800px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ticket-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+}
+
+/* Update button – light violet gradient */
+.update-btn {
+    background: linear-gradient(90deg, #c3a6ff, #b58cff);
+    color: #fff;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.update-btn:hover {
+    background: linear-gradient(90deg, #b491ff, #a173ff);
+    transform: translateY(-2px);
+}
+
+/* Back button – soft lavender border */
+.back-btn {
+    border: 2px solid #c3a6ff;
+    color: #6a0dad;
+    background: #f3edff;
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    background-color: #b58cff;
+    color: #fff;
+}
+
+label {
+    letter-spacing: 0.5px;
+}
+
+.card-body {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+{% endblock %}
+
+

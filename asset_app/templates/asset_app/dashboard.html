@@ -1,0 +1,269 @@
+{% extends 'asset_app/base.html' %}
+
+{% block title %}Dashboard | Asset Management{% endblock %}
+
+{% block content %}
+<style>
+    :root { 
+        --glass-bg: rgba(255,255,255,0.92); 
+        --card-shadow: 0 8px 30px rgba(0,0,0,0.04); 
+    }
+    /* General Styles */
+    .card { border:none; box-shadow:var(--card-shadow); background:var(--glass-bg); backdrop-filter: blur(8px); margin-bottom: 1.5rem; }
+    .metric-label { font-size:0.75rem; font-weight:600; color:#718096; text-transform:uppercase; }
+    .metric-value { font-size:1.6rem; font-weight:700; color:#2d3748; }
+    
+    /* Table & Progress Styling */
+    .table thead th { background-color:#f8fafc; text-transform:uppercase; font-size:0.75rem; color:#64748b; border:none; }
+    .table td { vertical-align: middle; padding: 12px 16px; border-bottom: 1px solid #f1f5f9; }
+    .progress { height: 8px; background-color: #f1f5f9; border-radius: 10px; }
+    .chart-container { position: relative; width: 100%; height: 300px; }
+    
+    /* Status Badges */
+    .badge-soft-success { background-color: #dcfce7; color: #166534; }
+    .badge-soft-warning { background-color: #fef9c3; color: #854d0e; }
+    .badge-soft-danger { background-color: #fee2e2; color: #991b1b; }
+</style>
+
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 fw-bold">Analytics Overview</h1>
+            <p class="text-muted small mb-0">Real-time status of your hardware inventory.</p>
+        </div>
+        <div>
+            <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">Export Report</button>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card rounded-3 p-3">
+                <div class="d-flex align-items-center">
+                    <div class="me-3 p-3 bg-primary bg-opacity-10 rounded-2"><i class="bi bi-layers-half fs-4 text-primary"></i></div>
+                    <div>
+                        <div class="metric-label">Total Assets</div>
+                        <div class="metric-value">{{ total_assets }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card rounded-3 p-3">
+                <div class="d-flex align-items-center">
+                    <div class="me-3 p-3 bg-success bg-opacity-10 rounded-2"><i class="bi bi-shield-check fs-4 text-success"></i></div>
+                    <div>
+                        <div class="metric-label">Available</div>
+                        <div class="metric-value text-success">{{ available_assets }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card rounded-3 p-3">
+                <div class="d-flex align-items-center">
+                    <div class="me-3 p-3 bg-info bg-opacity-10 rounded-2"><i class="bi bi-person-check fs-4 text-info"></i></div>
+                    <div>
+                        <div class="metric-label">Assigned</div>
+                        <div class="metric-value text-info">{{ assigned_assets }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card rounded-3 p-3">
+                <div class="d-flex align-items-center">
+                    <div class="me-3 p-3 bg-warning bg-opacity-10 rounded-2"><i class="bi bi-clock-history fs-4 text-warning"></i></div>
+                    <div>
+                        <div class="metric-label">Checked Out</div>
+                        <div class="metric-value text-warning">{{ checked_out_assets }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ASSETS BY BRANCH -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card rounded-4 p-4">
+                <h5 class="fw-bold mb-4"><i class="bi bi-geo-alt-fill text-primary me-2"></i>Assets in Use by Branch</h5>
+                <div class="row g-3">
+                    {% for b in branch_counts %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="p-4 bg-light rounded-4 border-start border-4 border-primary h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="fw-bold text-secondary text-uppercase" style="font-size: 0.9rem;">{{ b.branch }}</span>
+                                <span class="badge bg-primary rounded-pill px-3 py-2 fs-6">Total: {{ b.total }}</span>
+                            </div>
+                            <hr class="my-3" style="border-color: #dee2e6;">
+                            <ul class="list-unstyled mb-0 mt-3">
+                                {% for type_info in b.types %}
+                                <li class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted"><i class="bi bi-laptop text-primary me-2 opacity-75"></i>{{ type_info.type }}</span>
+                                    <span class="fw-bold">{{ type_info.count }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-1 text-muted opacity-25"></i>
+                        <p class="mt-2">No branch data available.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <div class="card rounded-4 h-100 p-4">
+                <h5 class="mb-4 fw-bold">Inventory Composition</h5>
+                <div class="chart-container">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card rounded-4 h-100 p-4">
+                <h5 class="mb-4 fw-bold">Status by Category</h5>
+                <div class="chart-container">
+                    <canvas id="hbarChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card rounded-4 h-100 p-4">
+                <h5 class="mb-4 fw-bold">Performance Summary</h5>
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <div class="p-3 rounded-4 bg-light text-center">
+                            <span class="text-muted small fw-bold">NEW ASSETS</span>
+                            <h4 class="fw-bold text-primary mb-0">{{ added_this_month }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 rounded-4 bg-light text-center">
+                            <span class="text-muted small fw-bold">ASSIGNED</span>
+                            <h4 class="fw-bold text-info mb-0">{{ assigned_this_month }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-3 rounded-4 bg-white border d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="p-2 bg-secondary bg-opacity-10 rounded-3 me-3"><i class="bi bi-ticket-perforated fs-4"></i></div>
+                        <div><span class="text-muted small d-block">Monthly Support Load</span><h5 class="fw-bold mb-0">{{ total_tickets_month }} Tickets</h5></div>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge badge-soft-success">{{ tickets_resolved }} Resolved</span>
+                        <span class="badge badge-soft-warning ms-1">{{ tickets_pending }} Pending</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card rounded-4 h-100 p-4">
+                <h5 class="fw-bold mb-4">Request Fulfillment</h5>
+                <div class="vstack gap-4 mb-4">
+                    <div>
+                        <div class="d-flex justify-content-between small fw-bold mb-1">
+                            <span class="text-success">APPROVED</span>
+                            <span>{{ approved }} ({{ approved_pct }}%)</span>
+                        </div>
+                        <div class="progress"><div class="progress-bar bg-success" style="width:{{ approved_pct }}%"></div></div>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between small fw-bold mb-1">
+                            <span class="text-warning">PENDING</span>
+                            <span>{{ pending }} ({{ pending_pct }}%)</span>
+                        </div>
+                        <div class="progress"><div class="progress-bar bg-warning" style="width:{{ pending_pct }}%"></div></div>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between small fw-bold mb-1">
+                            <span class="text-danger">REJECTED</span>
+                            <span>{{ rejected }} ({{ rejected_pct }}%)</span>
+                        </div>
+                        <div class="progress"><div class="progress-bar bg-danger" style="width:{{ rejected_pct }}%"></div></div>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-muted small mt-4 mb-3">RECENT REQUESTS</h6>
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle">
+                        <tbody>
+                            {% for r in requests_list %}
+                            <tr>
+                                <td class="fw-bold">{{ r.asset_type }}</td>
+                                <td>
+                                    {% if r.status == 'Approved' %}
+                                        <span class="badge rounded-pill badge-soft-success">Approved</span>
+                                    {% elif r.status == 'Rejected' %}
+                                        <span class="badge rounded-pill badge-soft-danger">Rejected</span>
+                                    {% else %}
+                                        <span class="badge rounded-pill badge-soft-warning">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end text-muted small">{{ r.requested_by.username }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center text-muted">No data available</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const colors = { primary: '#0d6efd', success: '#198754', info: '#0dcaf0', warning: '#ffc107', danger: '#dc3545', muted: '#e2e8f0' };
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Doughnut Chart
+    const pieCtx = document.getElementById('pieChart');
+    if (pieCtx) {
+        new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: JSON.parse('{{ asset_types_json|safe }}' || '[]'),
+                datasets: [{
+                    data: JSON.parse('{{ asset_type_counts_json|safe }}' || '[]'),
+                    backgroundColor: [colors.primary, colors.success, colors.info, colors.warning, colors.danger, '#6f42c1'],
+                    borderWidth: 5, borderColor: '#ffffff'
+                }]
+            },
+            options: { maintainAspectRatio: false, cutout: '75%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } } } }
+        });
+    }
+
+    // Bar Chart
+    const barCtx = document.getElementById('hbarChart');
+    if (barCtx) {
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: JSON.parse('{{ asset_type_labels_json|safe }}' || '[]'),
+                datasets: [
+                    { label: 'Available', data: JSON.parse('{{ available_by_type_json|safe }}' || '[]'), backgroundColor: colors.muted, borderRadius: 5 },
+                    { label: 'Assigned', data: JSON.parse('{{ assigned_by_type_json|safe }}' || '[]'), backgroundColor: colors.primary, borderRadius: 5 }
+                ]
+            },
+            options: { indexAxis: 'y', maintainAspectRatio: false, scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, grid: { display: false } } } }
+        });
+    }
+});
+</script>
+{% endblock %}

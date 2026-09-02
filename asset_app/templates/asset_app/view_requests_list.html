@@ -1,0 +1,182 @@
+{% extends 'asset_app/base.html' %}
+{% block title %}Asset Requests{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <!-- Header Section -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-5 gap-3">
+        <div>
+            <h1 class="display-5 fw-bold text-primary mb-1">Asset Requests</h1>
+           <!-- <p class="text-muted mb-0">Manage and track all asset allocation requests</p>-->
+        </div>
+       
+        <!-- Request Asset Button -->
+        <a href="{% url 'request_asset' %}" class="btn btn-primary btn-lg shadow-sm d-flex align-items-center gap-2 px-4">
+            <i class="bi bi-plus-circle-fill"></i>
+            <span class="d-none d-sm-inline">Request New Asset</span>
+            <span class="d-inline d-sm-none">Request</span>
+        </a>
+    </div>
+
+    <!-- Requests Table Card -->
+    <div class="card border-0 shadow-lg rounded-3 overflow-hidden">
+        <div class="card-header bg-gradient bg-primary text-white py-3">
+            <h5 class="mb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-list-check"></i>
+                All Requests
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            {% if requests %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle borderless-table text-nowrap">
+                    <thead class="bg-light text-dark fw-semibold">
+                        <tr>
+                            <th class="ps-4">ID</th>
+                            <th>Asset Type</th>
+                            <th>Requested By</th>
+                            <th>Status</th>
+                            {% if request.user.is_staff %}
+                            <th class="text-center">Action</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody class="text-secondary">
+                        {% for req in requests %}
+                        <tr>
+                            <td class="ps-4 fw-medium">{{ req.id }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi {% if req.asset_type == 'Laptop' %}bi-laptop{% elif req.asset_type == 'Monitor' %}bi-display{% elif req.asset_type == 'Keyboard' %}bi-keyboard{% else %}bi-box-seam{% endif %} text-primary"></i>
+                                    <span>{{ req.asset_type }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="avatar avatar-sm bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center">
+                                        {{ req.requested_by.username|slice:":1"|upper }}
+                                    </div>
+                                    <span class="fw-medium">{{ req.requested_by.get_full_name|default:req.requested_by.username }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if req.status == "Approved" %}
+                                    <span class="badge bg-success-subtle text-success fw-semibold px-3 py-2">Approved</span>
+                                {% elif req.status == "Rejected" %}
+                                    <span class="badge bg-danger-subtle text-danger fw-semibold px-3 py-2">Rejected</span>
+                                {% elif req.status == "Pending" %}
+                                    <span class="badge bg-warning-subtle text-warning fw-semibold px-3 py-2">Pending</span>
+                                {% else %}
+                                    <span class="badge bg-secondary-subtle text-secondary fw-semibold px-3 py-2">{{ req.status }}</span>
+                                {% endif %}
+                            </td>
+                            {% if request.user.is_staff %}
+                            <td class="text-center">
+                                <a href="{% url 'view_request' req.id %}"
+                                   class="btn btn-outline-primary btn-sm rounded-pill px-3 d-flex align-items-center gap-1 mx-auto"
+                                   style="width: fit-content;">
+                                    <i class="bi bi-eye"></i>
+                                    <span class="d-none d-md-inline">View</span>
+                                </a>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="bi bi-inbox display-1 text-muted opacity-25"></i>
+                </div>
+                <h4 class="text-muted mb-2">No requests found</h4>
+                <p class="text-muted">When users request assets, they will appear here.</p>
+                <a href="{% url 'request_asset' %}" class="btn btn-outline-primary mt-3">
+                    <i class="bi bi-plus-circle"></i> Make First Request
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Optional: Summary Stats (for staff) -->
+   <!-- {% if request.user.is_staff and requests %}
+    <div class="row mt-4 g-3">
+        <div class="col-6 col-md-3">
+            <div class="card border-0 bg-success-subtle text-success h-100">
+                <div class="card-body text-center py-3">
+                    <h6 class="mb-1">Approved</h6>
+                    <h4 class="mb-0 fw-bold">{{ requests|length|add:0 }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 bg-danger-subtle text-danger h-100">
+                <div class="card-body text-center py-3">
+                    <h6 class="mb-1">Rejected</h6>
+                    <h4 class="mb-0 fw-bold">0</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 bg-warning-subtle text-warning h-100">
+                <div class="card-body text-center py-3">
+                    <h6 class="mb-1">Pending</h6>
+                    <h4 class="mb-0 fw-bold">0</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 bg-primary-subtle text-primary h-100">
+                <div class="card-body text-center py-3">
+                    <h6 class="mb-1">Total</h6>
+                    <h4 class="mb-0 fw-bold">{{ requests|length }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}-->
+</div>
+
+<!-- Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+<style>
+    .avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    /* Borderless Table */
+    .borderless-table {
+        border: none !important;
+    }
+    .borderless-table thead th {
+        border: none !important;
+        border-bottom: 1px solid #e9ecef !important;
+    }
+    .borderless-table tbody tr {
+        border: none !important;
+    }
+    .borderless-table tbody td {
+        border: none !important;
+        padding: 1rem 0.75rem;
+    }
+    .borderless-table tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05) !important;
+    }
+    
+    .card-header {
+        border-bottom: none;
+    }
+    
+    @media (max-width: 576px) {
+        .display-5 {
+            font-size: 1.8rem;
+        }
+    }
+</style>
+{% endblock %}

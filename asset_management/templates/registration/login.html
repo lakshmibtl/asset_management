@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Login Page</title>
+
+    <!-- Boxicons (optional) -->
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+        *{ margin:0; padding:0; box-sizing:border-box; font-family:'Outfit',sans-serif; }
+        body{ background:#e9e9e9; min-height:100vh; display:flex; justify-content:center; align-items:center; }
+
+        .container{ width:850px; height:450px; background:#fff; display:flex; border-radius:12px; overflow:hidden; box-shadow:0 8px 20px rgba(0,0,0,0.2); }
+
+        /* Left Login Box */
+        .login-box{ width:50%; padding:50px; }
+        .login-box h2{ font-size:32px; font-weight:600; margin-bottom:25px; color:#07518A; text-align:left; }
+
+        .input-box{ position:relative; margin-bottom:22px; }
+        .input-box input{ width:100%; padding:12px 45px 12px 12px; border:none; border-bottom:2px solid #07518A; outline:none; font-size:16px; background:transparent; }
+        .input-box label{ position:absolute; top:50%; left:12px; transform:translateY(-50%); font-size:16px; color:#555; transition:0.18s; pointer-events:none; }
+        .input-box input:focus ~ label, .input-box input:not(:placeholder-shown) ~ label{ top:-6px; font-size:12px; color:#07518A; }
+        .input-box i{ position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:20px; color:#07518A; }
+
+        .btn{ width:100%; background:#07518A; color:#fff; border:none; padding:12px; border-radius:25px; font-size:18px; cursor:pointer; transition:0.3s; }
+        .btn:hover{ background:#053C66; letter-spacing:1px; }
+
+        .signup-text{ margin-top:15px; text-align:center; font-size:14px; }
+        .signup-text a{ color:#07518A; text-decoration:none; }
+
+        /* Centered Right Panel */
+        .right-box{ width:50%; background:#07518A; color:#fff; padding:0 40px; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; clip-path: polygon(25% 0, 100% 0, 100% 100%, 0 100%); }
+        .right-box h1{ font-size:42px; line-height:1.3; margin-bottom:20px; }
+        .right-box p{ color:#eee; font-size:15px; width:70%; }
+
+        /* messages */
+        .messages { margin-bottom:12px; }
+        .alert { background: #f8d7da; color:#842029; padding:10px 12px; border-radius:6px; margin-bottom:8px; }
+        .success { background:#d1e7dd; color:#0f5132; padding:10px 12px; border-radius:6px; margin-bottom:8px; }
+
+        /* Forgot Password Modal */
+        .modal-overlay{
+            display:none;
+            position:fixed;
+            top:0; left:0;
+            width:100%; height:100%;
+            background:rgba(0,0,0,0.6);
+            justify-content:center;
+            align-items:center;
+            z-index:9999;
+        }
+        .modal-box{
+            background:#fff;
+            padding:26px 28px;
+            width:380px;
+            border-radius:12px;
+            text-align:center;
+            position:relative;
+            box-shadow:0 8px 30px rgba(0,0,0,0.25);
+        }
+        .modal-box h3{ margin-bottom:10px; color:#07518A; }
+        .modal-box p{ font-size:14px; color:#333; }
+        .modal-box input{ width:100%; padding:10px; margin:15px 0; border:1px solid #ccc; border-radius:6px; }
+        .modal-box button{ width:100%; background:#07518A; color:#fff; border:none; padding:10px; border-radius:20px; cursor:pointer; }
+        .close-btn{ position:absolute; top:10px; right:15px; font-size:22px; cursor:pointer; }
+
+        .modal-message { margin:10px 0; font-size:14px; }
+        .modal-message .error { color:#842029; background:#f8d7da; padding:10px; border-radius:6px; }
+        .modal-message .success { color:#0f5132; background:#d1e7dd; padding:10px; border-radius:6px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Form -->
+        <div class="login-box">
+            <h2>Login</h2>
+
+            <form method="post" action="{% url 'login' %}" novalidate>
+                {% csrf_token %}
+                {% if next %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
+
+                <!-- Form-level errors (e.g. invalid username/password) -->
+                {% if form.non_field_errors %}
+                    <div class="alert" role="alert" style="background: #f8d7da; color:#842029; padding:10px; border-radius:6px; margin-bottom:15px; font-size: 14px;">
+                        {{ form.non_field_errors|striptags }}
+                    </div>
+                {% endif %}
+
+                <div class="input-box">
+                    <input type="text" name="username" placeholder=" " value="{{ request.POST.username }}" required autocomplete="username" />
+                    <label>Username</label>
+                    <i class='bx bxs-user'></i>
+
+                    {% if form.username.errors %}
+                        <div class="alert" role="alert">{{ form.username.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="input-box">
+                    <input type="password" name="password" placeholder=" " required autocomplete="current-password" />
+                    <label>Password</label>
+                    <i class='bx bxs-lock-alt'></i>
+
+                    {% if form.password.errors %}
+                        <div class="alert" role="alert">{{ form.password.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="btn">Login</button>
+
+               <!-- place this under your Login button -->
+                 <div class="signup-text" style="margin-top:12px; text-align:left;">
+                   <a href="{% url 'password_reset' %}">Forgot Password?</a>
+               </div>
+
+            </form>
+        </div>
+
+        <!-- Centered Right Panel -->
+        <div class="right-box">
+            <h1>WELCOME<br>BACK!</h1>
+            <p>Sign in to continue to the dashboard.</p>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <!--✅ FORGOT PASSWORD MODAL (KEEP THIS)--> 
+  <!--<div id="forgotModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="forgotTitle">
+      <span class="close-btn" onclick="closeForgotModal()">×</span>
+
+      <h3 id="forgotTitle">Forgot Password</h3>
+      <p>
+        Enter the email address associated with your account.
+        We’ll send you a link to reset your password.
+      </p>
+
+      <!-- ✅ ERROR / SUCCESS MESSAGE INSIDE POPUP -->
+      <!--<div class="modal-message" id="modalMessages">
+        {% if messages %}
+          {% for message in messages %}
+            <div class="{{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      </div>
+
+      <form method="post" action="{% url 'password_reset' %}">
+        {% csrf_token %}
+        <input type="email" name="email" placeholder="Email address" required>
+        <button type="submit">Send Reset Link</button>
+      </form>
+    </div>
+  </div>-->
+
+    <script>
+        function openForgotModal(){
+            const m = document.getElementById("forgotModal");
+            m.style.display = "flex";
+            m.setAttribute('aria-hidden','false');
+            const input = m.querySelector('input[name="email"]');
+            if(input) input.focus();
+        }
+
+        function closeForgotModal(){
+            const m = document.getElementById("forgotModal");
+            m.style.display = "none";
+            m.setAttribute('aria-hidden','true');
+        }
+
+        // Auto-open modal when there are messages (useful for showing password-reset messages)
+        window.addEventListener('DOMContentLoaded', () => {
+            const modalMsg = document.getElementById('modalMessages');
+            if (modalMsg && modalMsg.innerText.trim().length > 0) {
+                openForgotModal();
+            }
+
+            // close modal when clicking overlay outside the box
+            document.getElementById('forgotModal').addEventListener('click', function(e){
+                if (e.target === this) closeForgotModal();
+            });
+
+            // close on Esc
+            document.addEventListener('keydown', function(e){
+                if (e.key === 'Escape') closeForgotModal();
+            });
+        });
+    </script>
+</body>
+</html>

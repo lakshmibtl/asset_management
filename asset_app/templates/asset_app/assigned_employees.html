@@ -1,0 +1,280 @@
+{% extends 'asset_app/base.html' %}
+{% block title %}Assigned Employees Directory{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+
+    <!-- ============================
+         PAGE HEADER & SEARCH
+    ============================ -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5 gap-3">
+        <div>
+            <h1 class="fw-bolder mb-1" style="color: #1a237e; letter-spacing: -0.5px;">
+                <i class="bi bi-people-fill text-primary me-2"></i>Assigned Employees
+            </h1>
+            <p class="text-muted m-0 fs-6">View and manage assets currently assigned to staff.</p>
+        </div>
+        
+        <!-- Premium Search Bar -->
+        <div class="search-container position-relative">
+            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+            <input type="text" id="employeeSearch" class="form-control form-control-lg premium-search ps-5 rounded-pill shadow-sm" placeholder="Search by name or ID..." style="width: 320px; border: 1px solid #e0e5ec; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);">
+        </div>
+    </div>
+
+    <!-- ============================
+         EMPLOYEE DIRECTORY GRID
+    ============================ -->
+    <div class="row g-4" id="employeeDirectory">
+        {% for employee, assets in employee_asset_map.items %}
+        <div class="col-12 col-md-6 col-xl-4 animate-in employee-card" 
+             data-empname="{{ employee.name|default:employee|lower }}" 
+             data-empid="{{ employee.employee_id|default:''|lower }}"
+             style="--delay: 0.{{ forloop.counter }}s">
+             
+            <!-- Glassmorphic Premium Card -->
+            <div class="card h-100 premium-card border-0 rounded-4 overflow-hidden position-relative" style="background: linear-gradient(145deg, #ffffff, #f8f9fc); box-shadow: 0 10px 30px rgba(0,0,0,0.04);">
+                
+                <!-- Card Header Accent -->
+                <div class="position-absolute top-0 start-0 w-100" style="height: 4px; background: linear-gradient(90deg, #4776E6 0%, #8E54E9 100%);"></div>
+
+                <div class="card-body p-4 d-flex flex-column">
+                    
+                    <!-- Top Section: Avatar & Info -->
+                    <div class="d-flex align-items-center mb-4">
+                        <!-- Initial Avatar -->
+                        <div class="avatar-circle rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3" style="width: 55px; height: 55px; background: linear-gradient(135deg, #00c6ff, #0072ff); font-size: 1.2rem; box-shadow: 0 4px 10px rgba(0, 114, 255, 0.3);">
+                            {{ employee.name|default:employee|make_list|first|upper }}
+                        </div>
+                        
+                        <div class="flex-grow-1">
+                            <h5 class="fw-bold text-dark m-0">{{ employee.name|default:employee }}</h5>
+                            <span class="badge bg-light text-secondary border mt-1">ID: {{ employee.employee_id|default:"N/A" }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Department -->
+                    <div class="mb-3 d-flex align-items-center text-muted small">
+                        <i class="bi bi-briefcase me-2 text-primary"></i>
+                        <span>Dept: <strong class="text-dark">{{ employee.department|default:"Unspecified" }}</strong></span>
+                    </div>
+
+                    <!-- Assets Pills -->
+                    <div class="mb-4">
+                        <p class="text-muted small mb-2 fw-medium">Assigned Assets ({{ assets|length }})</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for item in assets|slice:":3" %}
+                                <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary-subtle px-3 py-2 fw-medium shadow-sm">
+                                    <i class="bi bi-laptop me-1"></i> {{ item.asset.asset_type }}
+                                </span>
+                            {% endfor %}
+                            {% if assets|length > 3 %}
+                                <span class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary border px-3 py-2 fw-medium shadow-sm">
+                                    +{{ assets|length|add:"-3" }} more
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Action Button -->
+                    <div class="mt-auto pt-3">
+                        <button class="btn btn-primary w-100 rounded-pill py-2 fw-medium premium-btn" data-bs-toggle="offcanvas" data-bs-target="#empAssetsOffcanvas-{{ forloop.counter }}" style="background: linear-gradient(90deg, #4776E6 0%, #8E54E9 100%); border: none; box-shadow: 0 4px 15px rgba(142, 84, 233, 0.3);">
+                            <i class="bi bi-collection me-2"></i> View Asset Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Premium Offcanvas Side Panel -->
+        <div class="offcanvas offcanvas-end premium-offcanvas border-0 shadow-lg" tabindex="-1" id="empAssetsOffcanvas-{{ forloop.counter }}" aria-labelledby="empAssetsOffcanvasLabel-{{ forloop.counter }}" style="width: 480px; border-top-left-radius: 20px; border-bottom-left-radius: 20px; z-index: 1060;">
+            <div class="offcanvas-header border-bottom bg-light px-4 py-3">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-circle rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3" style="width: 45px; height: 45px; background: linear-gradient(135deg, #00c6ff, #0072ff);">
+                        {{ employee.name|default:employee|make_list|first|upper }}
+                    </div>
+                    <div>
+                        <h5 class="offcanvas-title fw-bold text-dark m-0" id="empAssetsOffcanvasLabel-{{ forloop.counter }}">
+                            {{ employee.name|default:employee }}
+                        </h5>
+                        <small class="text-muted">{{ assets|length }} Assigned Asset{{ assets|length|pluralize }}</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close shadow-none bg-white rounded-circle p-2" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            
+            <div class="offcanvas-body p-4" style="background-color: #f8f9fa;">
+                {% for item in assets %}
+                <div class="card mb-4 border-0 rounded-4 premium-asset-card overflow-hidden" style="box-shadow: 0 5px 20px rgba(0,0,0,0.05); background: #ffffff;">
+                    <div class="card-body p-4">
+                        
+                        <!-- Header with QR inline -->
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h5 class="fw-bolder text-dark mb-1 d-flex align-items-center">
+                                    {{ item.asset.asset_type }}
+                                </h5>
+                                <p class="text-primary fw-medium mb-2" style="font-family: monospace; letter-spacing: 0.5px;">#{{ item.asset.asset_id }}</p>
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle rounded-pill px-3 py-1 fw-medium">
+                                    <i class="bi bi-check-circle-fill me-1"></i> In Use
+                                </span>
+                            </div>
+                            
+                            <!-- Premium QR Display -->
+                            {% if item.asset.qr_code_base64 %}
+                            <div class="qr-container bg-white p-2 rounded-3 shadow-sm border" style="transform: rotate(2deg); transition: transform 0.3s ease;">
+                                <img src="data:image/png;base64,{{ item.asset.qr_code_base64 }}" alt="QR Code" style="width: 75px; height: 75px;">
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <hr class="text-muted opacity-25 my-3">
+                        
+                        <!-- Rich Grid Details -->
+                        <div class="row g-3 small">
+                            <div class="col-12 col-sm-6">
+                                <div class="text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Brand/Company</div>
+                                <div class="fw-medium text-dark">{{ item.asset.company_name|default:"-" }}</div>
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <div class="text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Model</div>
+                                <div class="fw-medium text-dark">{{ item.asset.model|default:"-" }}</div>
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <div class="text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">S/N</div>
+                                <div class="fw-medium text-dark text-truncate" title="{{ item.asset.series_number }}">{{ item.asset.series_number|default:"-" }}</div>
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <div class="text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Warranty</div>
+                                <div class="fw-medium text-dark">{{ item.asset.warranty|default:"-" }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="mt-4 d-flex justify-content-end align-items-center">
+                            {% if item.assignment.is_signed %}
+                            <a href="{% url 'view_agreement' item.assignment.pk %}" class="btn btn-outline-success btn-sm rounded-pill px-3 fw-medium">
+                                <i class="bi bi-file-earmark-check me-1"></i> Signed
+                            </a>
+                            {% else %}
+                                {% if item.asset.asset_type|lower == 'laptop' or item.asset.asset_type|lower == 'desktop' or item.asset.asset_type|lower == 'ippbx' or item.asset.asset_type|lower == 'printer' %}
+                                    <a href="{% url 'sign_agreement' item.assignment.pk %}" class="btn btn-outline-warning btn-sm rounded-pill px-3 fw-medium text-dark" title="Sign Agreement Pending">
+                                        <i class="bi bi-pen me-1"></i> Sign
+                                    </a>
+                                {% else %}
+                                    <div></div>
+                                {% endif %}
+                            {% endif %}
+                            
+
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        {% empty %}
+        <div class="col-12 text-center py-5 mt-5">
+            <div class="d-inline-flex flex-column align-items-center justify-content-center p-5 rounded-circle bg-white shadow-sm mb-4" style="width: 150px; height: 150px;">
+                <i class="bi bi-folder-x text-muted" style="font-size: 3rem;"></i>
+            </div>
+            <h3 class="fw-bold text-dark">No Assigned Employees</h3>
+            <p class="text-muted fs-5">There are currently no employees holding assets.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- Premium CSS Styling -->
+<style>
+    /* Card Interactions */
+    .premium-card {
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+    }
+    .premium-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.08) !important;
+    }
+    
+    /* Button Hover Effect */
+    .premium-btn {
+        transition: all 0.3s ease;
+        background-size: 200% auto;
+    }
+    .premium-btn:hover {
+        background-position: right center;
+        transform: scale(1.02);
+    }
+    
+    /* Search Bar Styling */
+    .premium-search:focus {
+        box-shadow: 0 0 0 4px rgba(71, 118, 230, 0.15) !important;
+        border-color: #4776E6 !important;
+        outline: none;
+    }
+
+    /* Staggered Entrance Animation */
+    .animate-in {
+        animation: fadeSlideUp 0.6s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+        opacity: 0;
+        transform: translateY(30px);
+        animation-delay: var(--delay, 0s);
+    }
+    
+    @keyframes fadeSlideUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Offcanvas Enhancements */
+    .premium-offcanvas {
+        transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+    .premium-asset-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .premium-asset-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08) !important;
+    }
+    .premium-asset-card:hover .qr-container {
+        transform: rotate(0deg) scale(1.05);
+    }
+    
+    .hover-lift {
+        transition: all 0.2s ease;
+    }
+    .hover-lift:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(13, 110, 253, 0.15);
+    }
+</style>
+
+<!-- Live Search Script -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById("employeeSearch");
+        const employeeCards = document.querySelectorAll(".employee-card");
+
+        searchInput.addEventListener("keyup", function() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+
+            employeeCards.forEach(function(card) {
+                const empName = card.getAttribute("data-empname") || "";
+                const empId = card.getAttribute("data-empid") || "";
+                
+                if (empName.includes(searchTerm) || empId.includes(searchTerm)) {
+                    card.style.display = "block";
+                    // Reset animation so it flows nicely if they were hidden
+                    card.style.animation = 'none';
+                    card.offsetHeight; // trigger reflow
+                    card.style.animation = null; 
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,277 @@
+{% extends 'asset_app/base.html' %}
+{% load widget_tweaks %}
+{% load static %}
+
+{% block title %}Add New Asset{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+<style>
+    /* modern Variables */
+    :root {
+        --primary-blue: #07518A;
+        --glass-bg: rgba(255, 255, 255, 0.9);
+        --input-focus-shadow: 0 0 0 0.25rem rgba(7, 81, 138, 0.1);
+    }
+
+    /* Page Entrance Animation */
+    .form-card {
+        animation: fadeInUp 0.6s ease-out;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.08) !important;
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+    }
+
+    /* Refined Form Controls */
+    .form-control, .form-select {
+        border: 1px solid #e0e6ed;
+        transition: all 0.2s ease-in-out;
+        background-color: #fcfdfe;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-blue);
+        box-shadow: var(--input-focus-shadow);
+        background-color: #fff;
+    }
+
+    /* Custom Floating Label Styling */
+    .form-floating > label {
+        padding-left: 1.25rem;
+        opacity: 0.7;
+        font-weight: 500;
+        color: #4a5568;
+    }
+
+    .form-floating > .form-control:focus ~ label,
+    .form-floating > .form-control:not(:placeholder-shown) ~ label,
+    .form-floating > .form-select ~ label {
+        color: var(--primary-blue) !important;
+        opacity: 1;
+        font-weight: 700;
+    }
+
+    /* Step-like Icon accents */
+    .input-group-icon {
+        position: absolute;
+        right: 1.25rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--primary-blue);
+        opacity: 0.4;
+        z-index: 5;
+    }
+
+    /* Button Styling */
+    .btn-submit {
+        background: var(--primary-blue);
+        border: none;
+        padding: 1rem;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .btn-submit:hover {
+        background: #053a63;
+        transform: scale(1.02);
+        box-shadow: 0 10px 20px rgba(7, 81, 138, 0.2);
+    }
+
+    .btn-submit:active {
+        transform: scale(0.98);
+    }
+
+    /* File Upload Styling */
+    .custom-file-upload {
+        border: 2px dashed #cbd5e0;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.3s;
+    }
+
+    .custom-file-upload:hover {
+        border-color: var(--primary-blue);
+        background: rgba(7, 81, 138, 0.02);
+    }
+</style>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10 col-xl-8">
+            
+            <nav aria-label="breadcrumb" class="mb-4 animate__animated animate__fadeIn">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'asset_dashboard' %}" class="text-decoration-none">Dashboard</a></li>
+                 
+                </ol>
+            </nav>
+
+            <div class="card form-card border-0">
+                <div class="card-header bg-transparent border-0 pt-5 pb-0 text-center">
+                    <div class="icon-box mb-3 mx-auto d-flex align-items-center justify-content-center" 
+                         style="width: 60px; height: 60px; background: rgba(7, 81, 138, 0.1); border-radius: 15px;">
+                        <i class="bi bi-plus-lg fs-3 text-primary"></i>
+                    </div>
+                    <h2 class="fw-bold text-dark">ADD New Asset</h2>
+                    <p class="text-muted">Enter the details below to add a new asset </p>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    <form id="assetForm" method="POST" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+
+                        <div class="row g-4">
+                            <div class="col-md-6 animate__animated animate__fadeInLeft">
+                                <div class="form-floating position-relative">
+                                    <input type="text" class="form-control form-control-lg border-0 shadow-sm bg-light" 
+                                           placeholder="Auto" value="SYSTEM-GENERATED" readonly>
+                                    <label>Asset ID</label>
+                                    <i class="bi bi-lock-fill input-group-icon"></i>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 animate__animated animate__fadeInRight">
+                                <div class="form-floating" id="assetTypeContainer">
+                                    {{ form.asset_type|add_class:"form-select form-select-lg shadow-sm border-0"|attr:"required"|attr:"id:id_asset_type" }}
+                                    <label>Asset Type</label>
+                                </div>
+                                {{ form.other_asset_type }}
+                            </div>
+
+                            <div class="col-md-6 animate__animated animate__fadeInLeft">
+                                <div class="form-floating">
+                                    {{ form.company_name|add_class:"form-control form-control-lg shadow-sm border-0"|attr:"required"|attr:"placeholder:Company" }}
+                                    <label>Manufacturer/Company</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 animate__animated animate__fadeInRight">
+                                <div class="form-floating">
+                                    {{ form.series_number|add_class:"form-control form-control-lg shadow-sm border-0"|attr:"required"|attr:"placeholder:Series" }}
+                                    <label>Serial / Series Number</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 animate__animated animate__fadeInLeft">
+                                <div class="form-floating">
+                                    {{ form.model|add_class:"form-control form-control-lg shadow-sm border-0"|attr:"required"|attr:"placeholder:Model" }}
+                                    <label>Model Name</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 animate__animated animate__fadeInRight">
+                                <div class="form-floating">
+                                    {{ form.status|add_class:"form-select form-select-lg shadow-sm border-0"|attr:"required" }}
+                                    <label> Status</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 animate__animated animate__fadeInLeft">
+                                <div class="form-floating">
+                                    {{ form.purchase_date|add_class:"form-control form-control-lg shadow-sm border-0"|attr:"placeholder:Purchase Date" }}
+                                    <label>Purchase Date</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 animate__animated animate__fadeInRight">
+                                <div class="form-floating">
+                                    {{ form.cost|add_class:"form-control form-control-lg shadow-sm border-0"|attr:"placeholder:Cost" }}
+                                    <label>Cost</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 animate__animated animate__fadeInLeft">
+                                <div class="form-floating">
+                                    {{ form.warranty|add_class:"form-control form-control-lg shadow-sm border-0"|attr:"placeholder:Warranty" }}
+                                    <label>Warranty</label>
+                                </div>
+                            </div>
+
+                            {% if form.image %}
+                            <div class="col-12 animate__animated animate__fadeInUp">
+                                <div class="custom-file-upload">
+                                    <i class="bi bi-cloud-arrow-up fs-2 text-primary mb-2"></i>
+                                    <p class="mb-2 fw-medium">Upload Asset Image</p>
+                                    {{ form.image|add_class:"form-control" }}
+                                    <div class="form-text mt-2">Maximum file size: 5MB (JPG, PNG)</div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mt-5 text-center animate__animated animate__fadeInUp">
+                            <button id="submitBtn" type="submit" class="btn btn-submit text-white w-100 rounded-pill btn-lg shadow">
+                                <span id="btnText">
+                                    <i class="bi bi-check2-circle me-2"></i> Save Asset
+                                </span>
+                            </button>
+                          
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('assetForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+                
+                // Trigger a slight shake effect on the button for feedback
+                submitBtn.classList.add('animate__animated', 'animate__shakeX');
+                setTimeout(() => submitBtn.classList.remove('animate__shakeX'), 500);
+                
+                form.classList.add('was-validated');
+
+                const firstInvalid = form.querySelector(':invalid');
+                if (firstInvalid) {
+                    firstInvalid.focus();
+                }
+            } else {
+                // Successful submission state
+                submitBtn.disabled = true;
+                btnText.innerHTML = `
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Processing Entry...
+                `;
+                submitBtn.style.opacity = '0.8';
+            }
+        }, false);
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const assetTypeSelect = document.getElementById('id_asset_type');
+        const otherAssetTypeInput = document.getElementById('otherAssetTypeInput');
+        
+        if (assetTypeSelect && otherAssetTypeInput) {
+            assetTypeSelect.addEventListener('change', function() {
+                if (this.value === 'Other') {
+                    otherAssetTypeInput.style.display = 'block';
+                    otherAssetTypeInput.required = true;
+                } else {
+                    otherAssetTypeInput.style.display = 'none';
+                    otherAssetTypeInput.required = false;
+                    otherAssetTypeInput.value = ''; // clear out
+                }
+            });
+            
+            // Trigger on load in case of re-render with errors
+            if (assetTypeSelect.value === 'Other') {
+                otherAssetTypeInput.style.display = 'block';
+            }
+        }
+    });
+</script>
+{% endblock %}
