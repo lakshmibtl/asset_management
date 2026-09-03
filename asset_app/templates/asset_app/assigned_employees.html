@@ -110,14 +110,23 @@
                         
                         <!-- Header with QR inline -->
                         <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div>
-                                <h5 class="fw-bolder text-dark mb-1 d-flex align-items-center">
-                                    {{ item.asset.asset_type }}
-                                </h5>
-                                <p class="text-primary fw-medium mb-2" style="font-family: monospace; letter-spacing: 0.5px;">#{{ item.asset.asset_id }}</p>
-                                <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle rounded-pill px-3 py-1 fw-medium">
-                                    <i class="bi bi-check-circle-fill me-1"></i> In Use
-                                </span>
+                            <div class="d-flex align-items-start">
+                                {% if item.asset.image %}
+                                    <img src="{{ item.asset.image.url }}" class="rounded shadow-sm me-3 bg-light p-1" style="width: 50px; height: 50px; object-fit: contain;">
+                                {% else %}
+                                    <div class="rounded shadow-sm bg-light d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                        <i class="bi bi-display text-muted fs-4"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <h5 class="fw-bolder text-dark mb-1 d-flex align-items-center">
+                                        {{ item.asset.asset_type }}
+                                    </h5>
+                                    <p class="text-primary fw-medium mb-2" style="font-family: monospace; letter-spacing: 0.5px;">#{{ item.asset.asset_id }}</p>
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle rounded-pill px-3 py-1 fw-medium">
+                                        <i class="bi bi-check-circle-fill me-1"></i> In Use
+                                    </span>
+                                </div>
                             </div>
                             
                             <!-- Premium QR Display -->

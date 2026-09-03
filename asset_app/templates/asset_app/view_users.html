@@ -62,24 +62,34 @@
                         </p>
                     </div>
 
-                    <!-- Role Badge -->
-                    <span class="badge role-badge 
-                        {% if 'admin' in u.role|lower %}
-                            bg-danger
-                        {% elif u.role == 'manager' %}
-                            bg-success
-                        {% else %}
-                            bg-primary
+                    <!-- Role Badge & Actions -->
+                    <div class="d-flex flex-column align-items-end gap-2 ms-auto">
+                        <span class="badge role-badge 
+                            {% if 'admin' in u.role|lower %}
+                                bg-danger
+                            {% elif u.role == 'manager' %}
+                                bg-success
+                            {% else %}
+                                bg-primary
+                            {% endif %}
+                        ">
+                            {% if 'admin' in u.role|lower %}
+                                <i class="bi bi-person-gear me-1"></i> {{ u.get_role_display|default:u.role|title }}
+                            {% elif u.role == 'manager' %}
+                                <i class="bi bi-person-workspace me-1"></i> {{ u.get_role_display|default:u.role|title }}
+                            {% else %}
+                                <i class="bi bi-person-fill me-1"></i> {{ u.get_role_display|default:u.role|title }}
+                            {% endif %}
+                        </span>
+
+                        {% if request.user.is_staff or request.user.role == 'superadmin' %}
+                            {% if u.id != request.user.id %}
+                            <a href="{% url 'delete_user' u.id %}" class="btn btn-sm btn-outline-danger rounded-pill px-3 mt-1" onclick="return confirm('Are you sure you want to delete user {{ u.username }}?');">
+                                <i class="bi bi-trash"></i> Delete
+                            </a>
+                            {% endif %}
                         {% endif %}
-                    ">
-                        {% if 'admin' in u.role|lower %}
-                            <i class="bi bi-person-gear me-1"></i> {{ u.get_role_display|default:u.role|title }}
-                        {% elif u.role == 'manager' %}
-                            <i class="bi bi-person-workspace me-1"></i> {{ u.get_role_display|default:u.role|title }}
-                        {% else %}
-                            <i class="bi bi-person-fill me-1"></i> {{ u.get_role_display|default:u.role|title }}
-                        {% endif %}
-                    </span>
+                    </div>
 
                 </div>
 
@@ -103,21 +113,21 @@
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
   <div class="offcanvas-body">
-    <form method="POST" action="{% url 'create_asset_user' %}">
+    <form method="POST" action="{% url 'create_asset_user' %}" autocomplete="off">
         {% csrf_token %}
         <div class="mb-3">
             <label class="form-label fw-semibold">Username</label>
-            <input type="text" name="username" class="form-control" placeholder="Enter username" required>
+            <input type="text" name="username" class="form-control" placeholder="Enter username" required autocomplete="new-password">
         </div>
         
         <div class="mb-3">
             <label class="form-label fw-semibold">Email Address</label>
-            <input type="email" name="email" class="form-control" placeholder="Enter email address" required>
+            <input type="email" name="email" class="form-control" placeholder="Enter email address" required autocomplete="off">
         </div>
         
         <div class="mb-3">
             <label class="form-label fw-semibold">Role</label>
-            <select name="role" class="form-select" required>
+            <select name="role" class="form-select" required autocomplete="off">
                 <option value="" disabled selected>Select a role...</option>
                 <option value="asset_user">Asset User</option>
                 <option value="asset_admin">Asset Admin</option>
@@ -128,12 +138,17 @@
 
         <div class="mb-3">
             <label class="form-label fw-semibold">Department</label>
-            <input type="text" name="department" class="form-control" placeholder="Enter department name">
+            <input type="text" name="department" class="form-control" placeholder="Enter department name" autocomplete="off">
         </div>
 
         <div class="mb-4">
             <label class="form-label fw-semibold">Password</label>
-            <input type="password" name="password" class="form-control" placeholder="Enter password" required>
+            <div class="input-group">
+                <input type="password" name="password" id="createUserPassword" class="form-control border-end-0" placeholder="Enter password" required autocomplete="new-password">
+                <span class="input-group-text bg-white border-start-0 text-muted" style="cursor: pointer;" id="toggleCreateUserPassword">
+                    <i class='bi bi-eye-slash'></i>
+                </span>
+            </div>
         </div>
         
         <!-- Pass 'next' parameter so we return to this page after creation -->
@@ -187,6 +202,25 @@ document.getElementById('userSearch').addEventListener('input', function() {
         const email = row.dataset.email;
         row.style.display = (name.includes(query) || email.includes(query)) ? '' : 'none';
     });
+});
+
+document.addEventListener("DOMContentLoaded", function() {
+    const toggleBtn = document.getElementById('toggleCreateUserPassword');
+    const pwdInput = document.getElementById('createUserPassword');
+    if(toggleBtn && pwdInput) {
+        toggleBtn.addEventListener('click', function() {
+            const icon = toggleBtn.querySelector('i');
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            } else {
+                pwdInput.type = 'password';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            }
+        });
+    }
 });
 </script>
 

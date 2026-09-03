@@ -77,6 +77,7 @@ path('update-request-status/<int:pk>/', views.update_request_status, name='updat
 
     # View Users
     path('view-users/', views.view_users, name='view_users'),
+    path('delete-user/<int:pk>/', views.delete_user, name='delete_user'),
 
 
 

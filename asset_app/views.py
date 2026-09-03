@@ -48,6 +48,22 @@ def view_users(request):
     users = User.objects.all().order_by('-id')
     return render(request, 'asset_app/view_users.html', {'users': users})
 
+@login_required(login_url='/login/')
+def delete_user(request, pk):
+    if not (request.user.is_staff or getattr(request.user, 'role', None) == 'superadmin'):
+        messages.error(request, "You do not have permission to delete users.")
+        return redirect('view_users')
+        
+    user_to_delete = get_object_or_404(User, pk=pk)
+    if user_to_delete.id == request.user.id:
+        messages.error(request, "You cannot delete yourself.")
+    else:
+        username = user_to_delete.username
+        user_to_delete.delete()
+        messages.success(request, f"User '{username}' deleted successfully.")
+        
+    return redirect('view_users')
+
 
 @login_required
 def create_asset_user(request):
@@ -143,26 +159,54 @@ def dashboard(request):
     now_dt = now()
     this_start, this_end = _month_start_end(now_dt)
 
+    is_staff = request.user.is_staff or getattr(request.user, 'role', '') == 'superadmin'
+    is_manager = getattr(request.user, 'role', '') == 'manager'
+    is_employee = not (is_staff or is_manager)
+
+    # Base Queries
+    total_team_members = 0
+    if is_staff:
+        assets_q = Asset.objects.all()
+        assignments_q = Assignment.objects.all()
+        reqs_q_base = ProcurementRequestWorkflow.objects.all()
+        tickets_q_base = Ticket.objects.all()
+        total_team_members = get_user_model().objects.count()
+    elif is_manager:
+        department = request.user.department
+        assigned_asset_ids = Assignment.objects.filter(employee__department__iexact=department).values_list('asset_id', flat=True)
+        assets_q = Asset.objects.filter(id__in=assigned_asset_ids)
+        assignments_q = Assignment.objects.filter(employee__department__iexact=department)
+        reqs_q_base = ProcurementRequestWorkflow.objects.filter(requested_by__department__iexact=department)
+        tickets_q_base = Ticket.objects.filter(created_by__department__iexact=department)
+        total_team_members = get_user_model().objects.filter(department__iexact=department).count()
+    else:
+        # Employee
+        assigned_asset_ids = Assignment.objects.filter(employee__name__iexact=request.user.username).values_list('asset_id', flat=True)
+        assets_q = Asset.objects.filter(id__in=assigned_asset_ids)
+        assignments_q = Assignment.objects.filter(employee__name__iexact=request.user.username)
+        reqs_q_base = ProcurementRequestWorkflow.objects.filter(requested_by=request.user)
+        tickets_q_base = Ticket.objects.filter(created_by=request.user)
+
     # TOP METRICS
-    total_assets = Asset.objects.count()
-    available_assets = Asset.objects.filter(status__iexact='Available').count()
-    assigned_assets = Asset.objects.filter(status__in=['Assigned', 'In Use']).count()
-    checked_out_assets = Asset.objects.filter(status__iexact='Checked Out').count()
+    total_assets = assets_q.count()
+    available_assets = assets_q.filter(status__iexact='Available').count()
+    assigned_assets = assets_q.filter(status__in=['Assigned', 'In Use']).count()
+    checked_out_assets = assets_q.filter(status__iexact='Checked Out').count()
 
     # MONTHLY METRICS
-    added_this_month = Asset.objects.filter(created_at__gte=this_start, created_at__lt=this_end).count()
-    assigned_this_month = Assignment.objects.filter(assigned_at__gte=this_start, assigned_at__lt=this_end).count()
+    added_this_month = assets_q.filter(created_at__gte=this_start, created_at__lt=this_end).count()
+    assigned_this_month = assignments_q.filter(assigned_at__gte=this_start, assigned_at__lt=this_end).count()
 
     # PROCUREMENT REQUESTS THIS MONTH
-    reqs_q = (
-        ProcurementRequestWorkflow.objects
+    reqs_q_month = (
+        reqs_q_base
         .filter(request_date__gte=this_start, request_date__lt=this_end)
         .values('status')
         .annotate(c=Count('id'))
     )
 
     approved = pending = rejected = 0
-    for r in reqs_q:
+    for r in reqs_q_month:
         status = (r['status'] or '').lower()
         if status == 'approved':
             approved += r['c']
@@ -178,38 +222,44 @@ def dashboard(request):
     rejected_pct = int((rejected / total_reqs) * 100) if total_reqs else 0
 
     # TICKETS THIS MONTH
-    tickets_q = (
-        Ticket.objects
+    tickets_month_qs = (
+        tickets_q_base
         .filter(created_at__gte=this_start, created_at__lt=this_end)
         .values('status')
         .annotate(c=Count('id'))
     )
-    tickets_map = {r['status'].lower(): r['c'] for r in tickets_q}
+    tickets_map = {r['status'].lower(): r['c'] for r in tickets_month_qs}
     tickets_pending = tickets_map.get('pending', 0)
     tickets_resolved = tickets_map.get('resolved', 0)
-    total_tickets_month = Ticket.objects.filter(created_at__gte=this_start, created_at__lt=this_end).count()
+    total_tickets_month = tickets_q_base.filter(created_at__gte=this_start, created_at__lt=this_end).count()
 
     # ASSETS BY TYPE
-    types_q = Asset.objects.values('asset_type').annotate(c=Count('id'))
+    types_q = assets_q.values('asset_type').annotate(c=Count('id'))
     asset_types = [r['asset_type'] for r in types_q]
     asset_type_counts = [r['c'] for r in types_q]
 
     ASSET_TYPES = ['Laptop', 'Desktop', 'Printer', 'Phone','cell']
     available_by_type = []
     assigned_by_type = []
+    category_stats = []
     for t in ASSET_TYPES:
-        available_by_type.append(
-            Asset.objects.filter(asset_type__iexact=t, status__iexact='Available').count()
-        )
-        assigned_by_type.append(
-            Asset.objects.filter(asset_type__iexact=t, status__in=['Assigned', 'In Use']).count()
-        )
+        av = assets_q.filter(asset_type__iexact=t, status__iexact='Available').count()
+        ass = assets_q.filter(asset_type__iexact=t, status__in=['Assigned', 'In Use']).count()
+        available_by_type.append(av)
+        assigned_by_type.append(ass)
+        if av > 0 or ass > 0:
+            category_stats.append({
+                'type': t,
+                'available': av,
+                'assigned': ass,
+                'total': av + ass
+            })
 
-    requests_list = ProcurementRequestWorkflow.objects.order_by('-request_date')[:30]
+    requests_list = reqs_q_base.order_by('-request_date')[:30]
 
     # BRANCH WISE ASSETS
     branch_asset_counts_raw = (
-        Assignment.objects.filter(status__in=['In Use'])
+        assignments_q.filter(status__in=['In Use'])
         .values('employee__branch', 'asset__asset_type')
         .annotate(c=Count('id'))
         .order_by('employee__branch', '-c')
@@ -232,16 +282,102 @@ def dashboard(request):
     branch_counts = [{'branch': k, 'total': v['total'], 'types': v['types']} for k, v in branch_data.items()]
     branch_counts = sorted(branch_counts, key=lambda x: x['total'], reverse=True)
 
+    # EMPLOYEE SPECIFIC DATA
+    emp_my_assets = 0
+    emp_pending_requests = 0
+    emp_approved_requests = 0
+    emp_returned_assets = 0
+    emp_recent_assignments = []
+    emp_recent_requests = []
+
+    if is_employee:
+        emp_my_assets = assignments_q.filter(status__iexact='In Use').count()
+        emp_returned_assets = assignments_q.filter(status__icontains='Returned').count()
+        emp_recent_assignments = assignments_q.filter(status__iexact='In Use').order_by('-assigned_at')[:10]
+        
+        emp_pending_requests = reqs_q_base.filter(
+            Q(status__icontains='Pending') | Q(status__icontains='Review')
+        ).count()
+        
+        emp_approved_requests = reqs_q_base.filter(
+            Q(status__icontains='Approved') | Q(status__icontains='Completed')
+        ).count()
+        
+        emp_recent_requests = reqs_q_base.order_by('-request_date')[:5]
+
+    # ADMIN MOCKUP SPECIFIC
+    assets_maintenance = assets_q.filter(status__iexact='Maintenance').count()
+    assets_in_use = assets_q.filter(status__in=['Assigned', 'In Use']).count()
+    
+    # Real line chart data for the "Requests Overview" (Last 6 Months)
+    import calendar
+    from datetime import date
+    today_date = date.today()
+    line_chart_labels = []
+    line_chart_total = []
+    line_chart_approved = []
+    line_chart_pending = []
+    line_chart_rejected = []
+    
+    for i in range(5, -1, -1):
+        m = today_date.month - i
+        y = today_date.year
+        if m <= 0:
+            m += 12
+            y -= 1
+        line_chart_labels.append(calendar.month_abbr[m])
+        qs = reqs_q_base.filter(request_date__year=y, request_date__month=m)
+        t_count = qs.count()
+        a_count = qs.filter(status__icontains='Approved').count()
+        r_count = qs.filter(status__icontains='Reject').count()
+        p_count = t_count - a_count - r_count
+        
+        line_chart_total.append(t_count)
+        line_chart_approved.append(a_count)
+        line_chart_pending.append(p_count)
+        line_chart_rejected.append(r_count)
+
+    # Recent activity feeds
+    recent_assigns = []
+    recent_reqs_feed = []
+    if is_staff:
+        recent_assigns = Assignment.objects.all().order_by('-assigned_at')[:3]
+        recent_reqs_feed = ProcurementRequestWorkflow.objects.all().order_by('-request_date')[:3]
+
+    import shutil
+    from django.contrib.sessions.models import Session
+    from django.utils import timezone
+    
+    active_sessions = Session.objects.filter(expire_date__gte=timezone.now()).count()
+    disk = shutil.disk_usage('/')
+    storage_percent = int((disk.used / disk.total) * 100)
+
     context = {
+        'active_sessions': active_sessions,
+        'storage_percent': storage_percent,
         'total_assets': total_assets,
         'available_assets': available_assets,
         'assigned_assets': assigned_assets,
         'checked_out_assets': checked_out_assets,
+        'assets_in_use': assets_in_use,
+        'assets_maintenance': assets_maintenance,
+        
         'added_this_month': added_this_month,
         'assigned_this_month': assigned_this_month,
         'approved': approved,
         'pending': pending,
         'rejected': rejected,
+        'total_reqs': total_reqs,
+        
+        'line_chart_labels': json.dumps(line_chart_labels),
+        'line_chart_total': json.dumps(line_chart_total),
+        'line_chart_approved': json.dumps(line_chart_approved),
+        'line_chart_pending': json.dumps(line_chart_pending),
+        'line_chart_rejected': json.dumps(line_chart_rejected),
+        
+        'recent_assigns': recent_assigns,
+        'recent_reqs_feed': recent_reqs_feed,
+        
         'approved_pct': approved_pct,
         'pending_pct': pending_pct,
         'rejected_pct': rejected_pct,
@@ -253,8 +389,18 @@ def dashboard(request):
         'asset_type_labels_json': json.dumps(ASSET_TYPES),
         'available_by_type_json': json.dumps(available_by_type),
         'assigned_by_type_json': json.dumps(assigned_by_type),
+        'category_stats': category_stats,
         'requests_list': requests_list,
         'branch_counts': branch_counts,
+        'total_team_members': total_team_members,
+        'is_employee': is_employee,
+        'is_manager': is_manager,
+        'emp_my_assets': emp_my_assets,
+        'emp_pending_requests': emp_pending_requests,
+        'emp_approved_requests': emp_approved_requests,
+        'emp_returned_assets': emp_returned_assets,
+        'emp_recent_assignments': emp_recent_assignments,
+        'emp_recent_requests': emp_recent_requests,
     }
 
     return render(request, 'asset_app/dashboard.html', context)
@@ -455,12 +601,20 @@ def get_employee_details(request):
 # ------------------- VIEW ASSETS (fixed) -------------------
 @login_required
 def view_assets(request):
-    if request.user.is_staff:
+    is_staff = request.user.is_staff or getattr(request.user, 'role', '') == 'superadmin'
+    is_manager = getattr(request.user, 'role', '') == 'manager'
+        
+    if is_staff:
         assignments = Assignment.objects.select_related("asset", "employee").filter(status__iexact='In Use')
-    else:
-        # adjust this relation based on your models: employee__user is used elsewhere in your code
+    elif is_manager:
         assignments = Assignment.objects.select_related("asset", "employee").filter(
-            employee__user=request.user,
+            employee__department__iexact=request.user.department,
+            status__iexact='In Use'
+        )
+    else:
+        # Employee - only show their own assets
+        assignments = Assignment.objects.select_related("asset", "employee").filter(
+            employee__name__iexact=request.user.username,
             status__iexact='In Use'
         )
 
@@ -486,11 +640,17 @@ def view_assets(request):
 # ------------------- ASSIGNED EMPLOYEES -------------------
 @login_required
 def assigned_employees(request):
-    if request.user.is_staff:
+    is_staff = request.user.is_staff or getattr(request.user, 'role', '') == 'superadmin'
+    is_manager = getattr(request.user, 'role', '') == 'manager'
+    
+    if not (is_staff or is_manager):
+        return redirect('asset_dashboard')
+        
+    if is_staff:
         assignments = Assignment.objects.select_related("asset", "employee").filter(status__iexact='In Use')
     else:
         assignments = Assignment.objects.select_related("asset", "employee").filter(
-            employee__user=request.user,
+            employee__department__iexact=request.user.department,
             status__iexact='In Use'
         )
 
@@ -714,8 +874,12 @@ def request_detail(request, pk):
 
 @login_required
 def view_requests_list(request):
-    if request.user.is_staff:
+    if request.user.is_staff or getattr(request.user, 'role', '') == 'superadmin':
         requests = AssetRequest.objects.select_related('requested_by').all()
+    elif getattr(request.user, 'role', '') == 'manager':
+        requests = AssetRequest.objects.select_related('requested_by').filter(
+            requested_by__department__iexact=request.user.department
+        )
     else:
         requests = AssetRequest.objects.select_related('requested_by').filter(requested_by=request.user)
     return render(request, 'asset_app/view_requests_list.html', {'requests': requests})
@@ -745,12 +909,10 @@ def update_request_status(request, pk):
                 messages.error(request, "You must select an asset to approve the request.")
                 return redirect('view_request', pk=pk)
                 
-            # Find the Employee profile for this user
-            emp = getattr(asset_request.requested_by, 'employee', None)
+            # Find the Employee profile for this user by name matching username
+            emp = Employee.objects.filter(name__iexact=asset_request.requested_by.username).first()
             if not emp:
-                emp = Employee.objects.filter(user=asset_request.requested_by).first()
-            if not emp:
-                messages.error(request, "Employee profile not found for this user.")
+                messages.error(request, "Employee profile not found for this user. Please ensure an Employee with this username exists.")
                 return redirect('view_request', pk=pk)
                 
             # Assign assets
@@ -797,8 +959,12 @@ from django.utils import timezone
 # -------------------
 @login_required
 def view_tickets(request):
-    if request.user.is_staff:
+    if request.user.is_staff or getattr(request.user, 'role', '') == 'superadmin':
         tickets = Ticket.objects.all().order_by('-created_at')
+    elif getattr(request.user, 'role', '') == 'manager':
+        tickets = Ticket.objects.filter(
+            created_by__department__iexact=request.user.department
+        ).order_by('-created_at')
     else:
         tickets = Ticket.objects.filter(created_by=request.user).order_by('-created_at')
 
@@ -806,11 +972,16 @@ def view_tickets(request):
 
     # Limit assets user can select
     if 'asset' in form.fields:
-        if (hasattr(request.user, 'role') and request.user.role == 'admin') or request.user.is_superuser or request.user.is_staff:
+        if request.user.is_staff or getattr(request.user, 'role', '') == 'superadmin':
             form.fields['asset'].queryset = Asset.objects.all()
+        elif getattr(request.user, 'role', '') == 'manager':
+            assigned_asset_ids = Assignment.objects.filter(
+                employee__department__iexact=request.user.department
+            ).values_list('asset_id', flat=True)
+            form.fields['asset'].queryset = Asset.objects.filter(id__in=assigned_asset_ids)
         else:
             assigned_asset_ids = Assignment.objects.filter(
-                employee_name=request.user.username
+                employee__name__iexact=request.user.username
             ).values_list('asset_id', flat=True)
             form.fields['asset'].queryset = Asset.objects.filter(id__in=assigned_asset_ids)
 
@@ -826,11 +997,16 @@ def view_tickets(request):
 @login_required
 def raise_ticket(request):
     # Determine which assets user can see
-    if (hasattr(request.user, 'role') and request.user.role == 'admin') or request.user.is_superuser or request.user.is_staff:
+    if request.user.is_staff or getattr(request.user, 'role', '') == 'superadmin':
         user_assets = Asset.objects.all()
+    elif getattr(request.user, 'role', '') == 'manager':
+        assigned_asset_ids = Assignment.objects.filter(
+            employee__department__iexact=request.user.department
+        ).values_list('asset_id', flat=True)
+        user_assets = Asset.objects.filter(id__in=assigned_asset_ids)
     else:
         assigned_asset_ids = Assignment.objects.filter(
-            employee_name=request.user.username
+            employee__name__iexact=request.user.username
         ).values_list('asset_id', flat=True)
         user_assets = Asset.objects.filter(id__in=assigned_asset_ids)
 

@@ -99,7 +99,7 @@
     </div>
 
     <!-- ASSET STATS -->
-    {% if asset_stats %}
+    {% if asset_stats and request.user.is_staff or request.user.role == 'manager' or request.user.role == 'superadmin' %}
     <div class="row g-3 mb-4 animate-in" style="--delay: 0.12s">
         {% for stat in asset_stats %}
         <div class="col-6 col-md-4 col-lg-3">
@@ -129,13 +129,21 @@
                         <button type="button" class="btn btn-outline-primary filter-btn" data-filter="laptop">Laptop</button>
                         <button type="button" class="btn btn-outline-primary filter-btn" data-filter="desktop">Desktop</button>
                         <button type="button" class="btn btn-outline-primary filter-btn" data-filter="printer">Printer</button>
-                        <button type="button" class="btn btn-outline-primary filter-btn" data-filter="camera">Cell</button>
+                        <button type="button" class="btn btn-outline-primary filter-btn" data-filter="ippbx">IPPBX</button>
+                        <button type="button" class="btn btn-outline-primary filter-btn" data-filter="mouse">Mouse</button>
                     </div>
                 </div>
 
                 <!-- SEARCH -->
                 <div class="ms-md-auto w-100" style="max-width: 480px;">
-                    <input type="text" id="assetSearch" class="form-control" placeholder="Search by Employee Name / Employee ID / Asset ID / Asset Type...">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                        {% if not is_employee %}
+                        <input type="text" id="assetSearch" class="form-control border-start-0 ps-0" placeholder="Search by Employee / Asset ID / Type...">
+                        {% else %}
+                        <input type="text" id="assetSearch" class="form-control border-start-0 ps-0" placeholder="Search by Asset ID or Type...">
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -163,12 +171,23 @@
                         <div class="text-muted small">ID: {{ assign.asset.asset_id }}</div>
                     </div>
 
-                    <h5 class="fw-bold text-dark mb-1">
-                        {{ assign.asset.asset_id }}
-                    </h5>
-                    <p class="small text-muted mb-4">
-                        {{ assign.asset.asset_type }}
-                    </p>
+                    <div class="d-flex align-items-center mb-4">
+                        {% if assign.asset.image %}
+                            <img src="{{ assign.asset.image.url }}" class="rounded shadow-sm me-3 bg-light p-1" style="width: 48px; height: 48px; object-fit: contain;">
+                        {% else %}
+                            <div class="rounded shadow-sm bg-light d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                <i class="bi bi-display text-muted fs-4"></i>
+                            </div>
+                        {% endif %}
+                        <div>
+                            <h5 class="fw-bold text-dark mb-1">
+                                {{ assign.asset.asset_id }}
+                            </h5>
+                            <p class="small text-muted mb-0">
+                                {{ assign.asset.asset_type }}
+                            </p>
+                        </div>
+                    </div>
 
                     <div class="mb-4">
                         <p class="info-label text-uppercase small fw-bold">Assigned To</p>
@@ -266,8 +285,19 @@
                             <span class="text-muted small">ID: {{ a.asset_id }}</span>
                         </div>
                         
-                        <h5 class="fw-bold mb-1 text-dark">{{ a.asset_type }}</h5>
-                        <p class="text-muted small mb-3">{{ a.model|default:"Hardware Asset" }}</p>
+                        <div class="d-flex align-items-center mb-3">
+                            {% if a.image %}
+                                <img src="{{ a.image.url }}" class="rounded shadow-sm me-3 bg-light p-1" style="width: 48px; height: 48px; object-fit: contain;">
+                            {% else %}
+                                <div class="rounded shadow-sm bg-light d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                    <i class="bi bi-display text-muted fs-4"></i>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <h5 class="fw-bold mb-1 text-dark">{{ a.asset_type }}</h5>
+                                <p class="text-muted small mb-0">{{ a.model|default:"Hardware Asset" }}</p>
+                            </div>
+                        </div>
                         
                         <div class="bg-light p-3 rounded-3 mb-4">
                             <div class="d-flex justify-content-between small mb-1">

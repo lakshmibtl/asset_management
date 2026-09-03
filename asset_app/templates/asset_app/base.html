@@ -262,6 +262,7 @@
         </a>
         {% endif %}
 
+        {% if request.user.is_staff or request.user.role == 'manager' or request.user.role == 'superadmin' %}
         <a href="{% url 'view_assets' %}"
             class="{% if 'view_assets' in request.resolver_match.url_name %}active{% endif %}">
             <i class="bi bi-box-seam"></i><span class="link-text">View Assets</span>
@@ -270,6 +271,12 @@
             class="{% if 'assigned_employees' in request.resolver_match.url_name %}active{% endif %}">
             <i class="bi bi-person-lines-fill"></i><span class="link-text">Assigned Employees</span>
         </a>
+        {% else %}
+        <a href="{% url 'view_assets' %}"
+            class="{% if 'view_assets' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="bi bi-box-seam"></i><span class="link-text">My Assigned Assets</span>
+        </a>
+        {% endif %}
         <a href="{% url 'view_tickets' %}"
             class="{% if 'view_tickets' in request.resolver_match.url_name %}active{% endif %}">
             <i class="bi bi-ticket-perforated"></i><span class="link-text">View Tickets</span>

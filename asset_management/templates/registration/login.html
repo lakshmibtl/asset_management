@@ -102,9 +102,9 @@
                 </div>
 
                 <div class="input-box">
-                    <input type="password" name="password" placeholder=" " required autocomplete="current-password" />
+                    <input type="password" id="passwordInput" name="password" placeholder=" " required autocomplete="current-password" />
                     <label>Password</label>
-                    <i class='bx bxs-lock-alt'></i>
+                    <i class='bx bx-hide' id="togglePassword" style="cursor: pointer;" title="Toggle Password Visibility"></i>
 
                     {% if form.password.errors %}
                         <div class="alert" role="alert">{{ form.password.errors|striptags }}</div>
@@ -189,6 +189,21 @@
                 if (e.key === 'Escape') closeForgotModal();
             });
         });
+
+        // Toggle Password Visibility
+        const togglePassword = document.querySelector('#togglePassword');
+        const passwordInput = document.querySelector('#passwordInput');
+
+        if(togglePassword && passwordInput) {
+            togglePassword.addEventListener('click', function (e) {
+                // toggle the type attribute
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                // toggle the eye / eye slash icon
+                this.classList.toggle('bx-show');
+                this.classList.toggle('bx-hide');
+            });
+        }
     </script>
 </body>
 </html>

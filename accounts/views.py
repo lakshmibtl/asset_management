@@ -25,16 +25,7 @@ def login_user(request):
             user = form.get_user()
             login(request, user)
 
-            # SUPERADMIN first: check is_superuser
-            if user.is_superuser:
-                return redirect("/asset/dashboard/")
-
-            # ASSET ADMIN / USER
-            if user.role in ["asset_admin", "asset_user"]:
-                return redirect("/asset/dashboard/")
-
-            # fallback
-            return redirect("/login/")
+            return redirect("/asset/dashboard/")
 
     else:
         form = AuthenticationForm()
