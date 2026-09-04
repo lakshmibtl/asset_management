@@ -500,6 +500,13 @@ def assign_asset(request):
                 return redirect(next_url)
             return redirect(reverse('assign_asset'))
     else:
+        try:
+            from .sync_employees import sync_employees_from_api
+            success, msg = sync_employees_from_api()
+            if not success:
+                messages.error(request, f"API Sync Error: {msg}")
+        except Exception as e:
+            messages.error(request, f"API Sync Error: {str(e)}")
         form = AssignmentForm()
 
     context = {

@@ -224,7 +224,11 @@ class AssetRequestForm(forms.ModelForm):
 class AddUserForm(UserCreationForm):
     class Meta:
         model = CustomUser
-        fields = ['username', 'email', 'role', 'password1', 'password2']
+        fields = ['username', 'email', 'role']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].label = "Username / Emp ID"
 
     def save(self, commit=True):
         user = super().save(commit=False)

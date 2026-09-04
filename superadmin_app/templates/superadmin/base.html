@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Super Admin Panel</title>
@@ -26,7 +27,7 @@
             background: #ffffff;
             padding: 12px 25px;
             border-bottom: 1px solid #e0e0e0;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -65,39 +66,38 @@
             margin: 30px auto;
             padding: 25px;
         }
-
     </style>
 
 </head>
 
 <body>
 
-<!-- TOP HEADER -->
-<div class="top-header">
+    <!-- TOP HEADER -->
+    <div class="top-header">
 
-    <!-- LOGO + BRAND -->
-<div class="brand-section">
-  {% load static %}
-<img src="{% static 'superadmin/images/blue_logo_tm.png' %}" 
-     alt="Logo" class="brand-logo">
-
-
- 
-</div>
+        <!-- LOGO + BRAND -->
+        <div class="brand-section">
+            {% load static %}
+            <img src="{% static 'superadmin/images/blue_logo_tm.png' %}" alt="Logo" class="brand-logo">
 
 
-    <!-- LOGOUT -->
-    <a href="{% url 'logout_user' %}" class="logout-btn">
-        <i class="bi bi-box-arrow-right me-1"></i> Logout
-    </a>
 
-</div>
+        </div>
 
-<!-- PAGE CONTENT -->
-<div class="content-wrapper">
-    {% block content %}
-    {% endblock %}
-</div>
+
+        <!-- LOGOUT -->
+        <a href="{% url 'logout_user' %}" class="logout-btn">
+            <i class="bi bi-box-arrow-right me-1"></i> Logout
+        </a>
+
+    </div>
+
+    <!-- PAGE CONTENT -->
+    <div class="content-wrapper">
+        {% block content %}
+        {% endblock %}
+    </div>
 
 </body>
+
 </html>
