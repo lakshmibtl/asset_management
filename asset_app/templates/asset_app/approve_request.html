@@ -1,5 +1,5 @@
 <h2>Approve/Reject Request</h2>
-<p>Asset: {{ asset_request.asset.name }}</p>
+<p>Asset: {{ asset_request.asset.name|default:asset_request.asset.asset_id }} ({{ asset_request.asset.asset_type }})</p>
 <p>Requested by: {{ asset_request.employee.username }}</p>
 <form method="post">
     {% csrf_token %}

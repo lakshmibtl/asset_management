@@ -111,7 +111,7 @@
 
                     <div class="mt-4">
                         <label class="form-label fw-bold small text-muted">ASSIGNMENT DATE</label>
-                        <input type="date" name="assigned_date" class="form-control" value="{{ today_date }}">
+                        <input type="date" name="assigned_date" class="form-control" value="{{ today_date }}" max="{{ today_date }}">
                     </div>
                 </div>
             </div>
@@ -208,10 +208,27 @@ $(document).ready(function () {
     });
 
     // 3. Form Submission Handling
+    const ASSIGN_TODAY = "{{ today_date }}";
     $('#assignForm').on('submit', function() {
+        const dateInput = this.querySelector('input[name="assigned_date"]');
+        if (dateInput && dateInput.value) {
+            if (dateInput.value > ASSIGN_TODAY) {
+                dateInput.value = ASSIGN_TODAY;
+                dateInput.setCustomValidity('Future dates are not allowed.');
+                dateInput.reportValidity();
+                return false;
+            }
+            dateInput.setCustomValidity('');
+        }
         if(this.checkValidity()) {
             $('#submitBtn').prop('disabled', true);
             $('#btnText').html('<span class="spinner-border spinner-border-sm me-2"></span> Processing Registry...');
+        }
+    });
+
+    document.getElementById('assignForm').querySelector('input[name="assigned_date"]').addEventListener('change', function() {
+        if (this.value > ASSIGN_TODAY) {
+            this.value = ASSIGN_TODAY;
         }
     });
 });

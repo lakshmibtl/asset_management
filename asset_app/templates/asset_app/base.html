@@ -70,6 +70,137 @@
             align-items: center;
         }
 
+        /* ---------------- NOTIFICATIONS ---------------- */
+        .notification-btn {
+            position: relative;
+            font-size: 1.3rem;
+            color: #636e72;
+            background: transparent;
+            border: none;
+            padding: 8px 10px;
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+
+        .notification-btn:hover {
+            background: rgba(13, 110, 253, 0.1);
+            color: var(--accent-color);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background-color: #dc3545;
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 700;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            border: 2px solid #fff;
+        }
+
+        .notification-dropdown {
+            width: 360px;
+            padding: 0;
+            border: 0;
+            border-radius: 14px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            background: #fff;
+            border-bottom: 1px solid #f1f3f5;
+        }
+
+        .notification-header h6 {
+            margin: 0;
+            font-weight: 700;
+        }
+
+        .notification-list {
+            max-height: 360px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            text-decoration: none;
+            color: var(--text-dark);
+            border-bottom: 1px solid #f1f3f5;
+            transition: background 0.15s;
+        }
+
+        .notification-item:hover {
+            background: rgba(13, 110, 253, 0.05);
+        }
+
+        .notification-item.unread {
+            background: rgba(13, 110, 253, 0.07);
+        }
+
+        .notification-icon {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.05rem;
+        }
+
+        .notification-item .title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+        }
+
+        .notification-item .msg {
+            color: #636e72;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .notification-item .time {
+            color: #adb5bd;
+            font-size: 0.7rem;
+        }
+
+        .notification-empty {
+            padding: 32px 16px;
+            text-align: center;
+            color: #adb5bd;
+        }
+
+        .notification-empty i {
+            font-size: 2.2rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 480px) {
+            .notification-dropdown {
+                width: 300px;
+            }
+        }
+
         .header img.logo {
             height: 32px;
             width: auto;
@@ -152,6 +283,15 @@
             box-shadow: inset 3px 0 0 var(--accent-color);
         }
 
+        .sidebar .return-badge {
+            margin-left: auto;
+            margin-right: 2px;
+            background-color: #e5533d;
+            color: #fff;
+            font-size: 0.7rem;
+            opacity: 1;
+        }
+
         /* ---------------- MOBILE OVERLAY ---------------- */
         .sidebar-overlay {
             position: fixed;
@@ -220,17 +360,79 @@
 
         <div class="header-right">
             {% if request.user.is_authenticated %}
+            <div class="dropdown me-2">
+                <button class="notification-btn" type="button" data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside" aria-expanded="false" title="Notifications">
+                    <i class="bi bi-bell"></i>
+                    {% if unread_notifications_count %}
+                    <span class="notification-badge">{{ unread_notifications_count }}</span>
+                    {% endif %}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end notification-dropdown shadow mt-2">
+                    <li>
+                        <div class="notification-header">
+                            <h6>
+                                Notifications
+                                {% if unread_notifications_count %}
+                                <span class="badge bg-danger ms-1">{{ unread_notifications_count }}</span>
+                                {% endif %}
+                            </h6>
+                            <a href="{% url 'notifications' %}" class="small text-decoration-none">View all</a>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="notification-list">
+                            {% if notifications %}
+                            {% for n in notifications %}
+                            <a href="{% url 'mark_notification_read' n.id %}?next={{ n.link|default:'/asset/notifications/' }}"
+                                class="notification-item {% if not n.is_read %}unread{% endif %}">
+                                <div class="notification-icon" style="background:{% if n.notification_type == 'asset_request' %}rgba(13,110,253,.12);color:#0d6efd{% elif n.notification_type == 'ticket' %}rgba(220,53,69,.12);color:#dc3545{% elif n.notification_type == 'procurement' %}rgba(111,66,193,.12);color:#6f42c1{% else %}rgba(25,135,84,.12);color:#198754{% endif %};">
+                                    <i class="bi {% if n.notification_type == 'asset_request' %}bi-box-seam{% elif n.notification_type == 'ticket' %}bi-ticket-perforated{% elif n.notification_type == 'procurement' %}bi-cart-plus{% else %}bi-arrow-return-left{% endif %}"></i>
+                                </div>
+                                <div style="min-width:0;">
+                                    <div class="title">{{ n.title }}</div>
+                                    {% if n.message %}<div class="msg">{{ n.message }}</div>{% endif %}
+                                    <div class="time">{{ n.created_at|timesince }} ago</div>
+                                </div>
+                            </a>
+                            {% endfor %}
+                            {% else %}
+                            <div class="notification-empty">
+                                <i class="bi bi-bell-slash"></i>
+                                No notifications yet
+                            </div>
+                            {% endif %}
+                        </div>
+                    </li>
+                    <li>
+                        <div class="p-2 border-top text-center">
+                            <a href="{% url 'mark_notifications_read' %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-check2-all me-1"></i>Mark all as read
+                            </a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
             <div class="dropdown">
                 <button class="btn btn-light dropdown-toggle d-flex align-items-center border-0 bg-transparent"
                     type="button" data-bs-toggle="dropdown">
                     <i class="bi bi-person-circle fs-5 me-md-2"></i>
-                    <span class="d-none d-md-inline fw-medium">{{ request.user.username }}</span>
+                    <span class="d-none d-md-inline fw-medium">{{ request.user.first_name|default:request.user.username }}</span>
+                    <span class="d-none d-md-inline text-muted small ms-1">({{ request.user.username }})</span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
                     <li>
-                        <h6 class="dropdown-header d-md-none text-muted">User: {{ request.user.username }}</h6>
+                        <h6 class="dropdown-header text-muted">
+                            {{ request.user.first_name|default:request.user.username }}
+                        </h6>
                     </li>
                     <li>
+                        <div class="dropdown-item text-muted small text-truncate">
+                            <i class="bi bi-hash me-2"></i>Emp ID: {{ request.user.username }}
+                        </div>
+                    </li>
+                    <li>
+                        <hr class="dropdown-divider">
                         <form action="{% url 'logout_user' %}" method="POST" id="logout-form" class="d-none">{% csrf_token %}</form>
                         <a class="dropdown-item text-danger d-flex align-items-center" href="#"
                             onclick="document.getElementById('logout-form').submit();">
@@ -271,6 +473,11 @@
             class="{% if 'assigned_employees' in request.resolver_match.url_name %}active{% endif %}">
             <i class="bi bi-person-lines-fill"></i><span class="link-text">Assigned Employees</span>
         </a>
+        <a href="{% url 'return_requests' %}"
+            class="return-link {% if 'return_requests' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="bi bi-arrow-return-left"></i><span class="link-text">Return Requests</span>
+            {% if pending_return_count %}<span class="badge rounded-pill return-badge">{{ pending_return_count }}</span>{% endif %}
+        </a>
         {% else %}
         <a href="{% url 'view_assets' %}"
             class="{% if 'view_assets' in request.resolver_match.url_name %}active{% endif %}">
@@ -296,6 +503,14 @@
 
     <main class="main-content">
         <div class="container-fluid">
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show mt-3 shadow-sm" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
             {% block content %}{% endblock %}
         </div>
     </main>

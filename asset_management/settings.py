@@ -26,7 +26,27 @@ SECRET_KEY = 'django-insecure-pi+zmc##p_6=7s-mov685tqwc!&9l5wmd6k71gn(fff_6-9lx2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost',  '172.21.2.133']
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    '172.30.0.190',
+    'host.docker.internal',
+    'hrms.brihaspathi.in',
+]
+
+# Prevent "Forbidden (403)" on POSTs when behind a reverse proxy where
+# Django sees an HTTP request but the browser sends an HTTPS Origin header.
+CSRF_TRUSTED_ORIGINS = [
+    'http://127.0.0.1',
+    'http://127.0.0.1:8000',
+    'http://localhost',
+    'http://localhost:8000',
+    'http://172.30.0.190',
+    'http://172.30.0.190:8000',
+    'http://host.docker.internal',
+    'http://host.docker.internal:8000',
+    'https://hrms.brihaspathi.in',
+]
 
 AUTH_USER_MODEL = "accounts.CustomUser"
 
@@ -34,6 +54,8 @@ AUTH_USER_MODEL = "accounts.CustomUser"
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/asset/dashboard/"
 LOGOUT_REDIRECT_URL = "/login/"
+
+CSRF_FAILURE_VIEW = "asset_app.views.csrf_failure_handler"
 
 
 # Application definition
@@ -54,6 +76,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -75,6 +98,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'asset_app.context_processors.pending_return_count',
+                'asset_app.context_processors.notifications_processor',
             ],
         },
     },
@@ -85,18 +110,17 @@ WSGI_APPLICATION = 'asset_management.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'asset_db',
         'USER': 'postgres',
-        'PASSWORD': 'Test@12345',
-        'HOST': 'localhost',
+        'PASSWORD': 'Postgres@123',
+        'HOST': '127.0.0.1',
         'PORT': '5433',
     }
 }
-
-
 
 
 # Password validation
@@ -154,6 +178,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = []
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'qr_codes') 

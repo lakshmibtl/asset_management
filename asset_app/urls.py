@@ -1,5 +1,5 @@
 from django.urls import path
-from django.contrib.auth import views as auth_views
+from django.contrib.auth import views as auth_views 
 from . import views
 from django.shortcuts import redirect
 from django.contrib import admin
@@ -48,6 +48,9 @@ urlpatterns = [
     # Assignment
     path('assign/', views.assign_asset, name='assign_asset'),
     path('return-asset/<int:pk>/', views.return_asset, name='return_asset'),
+    path('request-return/<int:pk>/', views.request_return_asset, name='request_return_asset'),
+    path('process-return/<int:pk>/', views.process_return, name='process_return'),
+    path('return-requests/', views.return_requests, name='return_requests'),
     path('transfer-asset/<int:pk>/', views.transfer_asset, name='transfer_asset'),
     
     # Digital Signature
@@ -84,20 +87,19 @@ path('update-request-status/<int:pk>/', views.update_request_status, name='updat
 path('procurement/manager-approve/<int:pk>/', views.manager_approve, name='manager_approve'),
 path('procurement/manager-reject/<int:pk>/', views.manager_reject, name='manager_reject'),
 
-path('procurement/purchase-approve/<int:pk>/', views.purchase_approve, name='purchase_approve'),
-path('procurement/purchase-reject/<int:pk>/', views.purchase_reject, name='purchase_reject'),
-
-path('procurement/accounts-approve/<int:pk>/', views.accounts_approve, name='accounts_approve'),
-path('procurement/accounts-reject/<int:pk>/', views.accounts_reject, name='accounts_reject'),
-
-path('procurement/upload-invoice/<int:pk>/', views.upload_invoice, name='upload_invoice'),
-path('procurement/payment-done/<int:pk>/', views.payment_done, name='payment_done'),
+path('procurement/admin-approve/<int:pk>/', views.admin_approve, name='admin_approve'),
+path('procurement/admin-reject/<int:pk>/', views.admin_reject, name='admin_reject'),
 
     path('procurement/', views.procurement_list, name='procurement_list'),
     path('procurement/create/', views.create_procurement_request, name='create_procurement'),
     path('procurement/delete/<int:pk>/', views.delete_procurement, name='delete_procurement'),
 
     path("ajax/get-employee/", views.get_employee_details, name="get_employee_details"),
+
+    # Notifications
+    path('notifications/', views.notifications, name='notifications'),
+    path('notifications/mark-all-read/', views.mark_notifications_read, name='mark_notifications_read'),
+    path('notifications/mark-read/<int:pk>/', views.mark_notification_read, name='mark_notification_read'),
 
 ]
 

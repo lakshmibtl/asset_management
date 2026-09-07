@@ -3,6 +3,7 @@ from io import BytesIO
 import base64
 import json
 import socket
+from datetime import datetime
 from xhtml2pdf import pisa
 
 from django.shortcuts import render, get_object_or_404, redirect
@@ -16,6 +17,8 @@ from django.db import IntegrityError
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 import qrcode
 
@@ -28,6 +31,8 @@ from .models import (
     ProcurementRequest1,
     Ticket,
     Employee,
+    ReturnRequest,
+    Notification,
 )
 from .forms import (
     AssetForm,
@@ -42,11 +47,142 @@ from .forms import (
 User = get_user_model()
 
 
+def _department_usernames(department):
+    """Usernames of users who belong to a department, resolved via Employee
+    records (username matches employee_id OR employee name) plus the user's
+    own department field. Employee accounts may have a blank user.department."""
+    if not department:
+        return []
+    employees = Employee.objects.filter(department__iexact=department)
+    names = set()
+    for emp in employees:
+        if emp.employee_id:
+            names.add(emp.employee_id)
+        if emp.name:
+            names.add(emp.name)
+    return list(names)
+
+
+def _department_user_q(department, user_field='created_by'):
+    from django.db.models import Q as _Q
+    names = _department_usernames(department)
+    q = _Q()
+    if names:
+        sub = _Q()
+        for n in names:
+            sub |= _Q(**{f'{user_field}__username__iexact': n})
+        q |= sub
+    if department:
+        q |= _Q(**{f'{user_field}__department__iexact': department})
+    if not names and not department:
+        q |= _Q(**{'pk': -1})  # matches nothing
+    return q
+
+
+def _employee_display_name(user):
+    """Real employee name for a user (username matches employee_id or name),
+    falling back to the username."""
+    if user is None:
+        return ''
+    emp = Employee.objects.filter(employee_id__iexact=user.username).first()
+    if not emp:
+        emp = Employee.objects.filter(name__iexact=user.username).first()
+    return emp.name if emp else user.username
+
+
+def _notify_admins(notification_type, title, message='', link=''):
+    """Create a notification for every admin/superadmin user."""
+    admins = User.objects.filter(
+        Q(is_staff=True)
+        | Q(role__in=['superadmin', 'asset_admin'])
+    )
+    Notification.objects.bulk_create([
+        Notification(recipient=u, notification_type=notification_type,
+                     title=title, message=message, link=link)
+        for u in admins
+    ])
+
+
+# ------------------- CSRF FAILURE HANDLER -------------------
+from django.views.decorators.csrf import csrf_exempt
+from django.template import loader as template_loader
+from django.http import HttpResponseForbidden
+
+
+@csrf_exempt
+def csrf_failure_handler(request, reason=""):
+    import logging
+    logger = logging.getLogger('django.security.csrf')
+    logger.warning(
+        "CSRF 403 | path=%s method=%s reason=%r host=%s origin=%r referer=%r "
+        "secure=%s csrf_cookie_present=%s token_sent=%s",
+        request.path, request.method, reason, request.get_host(),
+        request.headers.get('Origin'), request.headers.get('Referer'),
+        request.is_secure(), bool(request.COOKIES.get('csrfCookie') or request.COOKIES.get('csrftoken')),
+        bool(request.POST.get('csrfmiddlewaretoken')),
+    )
+    ctx = {
+        'reason': reason,
+        'request_path': request.path,
+        'request_method': request.method,
+        'request_host': request.get_host(),
+        'request_is_secure': request.is_secure(),
+        'origin': request.headers.get('Origin', ''),
+        'referer': request.headers.get('Referer', ''),
+    }
+    template = template_loader.get_template('asset_app/403_csrf.html')
+    return HttpResponseForbidden(template.render(ctx))
+
+
+# ------------------- NOTIFICATIONS -------------------
+@login_required
+def notifications(request):
+    per_page = 20
+    page = request.GET.get('page', 1)
+    try:
+        page = int(page)
+    except (TypeError, ValueError):
+        page = 1
+    qs = request.user.notifications.all()
+    total = qs.count()
+    start = (page - 1) * per_page
+    items = list(qs[start:start + per_page])
+    has_next = start + per_page < total
+    return render(request, 'asset_app/notifications.html', {
+        'notifications': items,
+        'page': page,
+        'has_next': has_next,
+        'total': total,
+    })
+
+
+@login_required
+def mark_notifications_read(request):
+    request.user.notifications.filter(is_read=False).update(is_read=True)
+    nxt = request.GET.get('next', '')
+    if nxt and nxt.startswith('/'):
+        return redirect(nxt)
+    return redirect('notifications')
+
+
+@login_required
+def mark_notification_read(request, pk):
+    Notification.objects.filter(pk=pk, recipient=request.user).update(is_read=True)
+    nxt = request.GET.get('next', '')
+    if nxt and nxt.startswith('/'):
+        return redirect(nxt)
+    return redirect('notifications')
+
+
 # ------------------- USERS -------------------
 @login_required(login_url='/login/')
 def view_users(request):
     users = User.objects.all().order_by('-id')
-    return render(request, 'asset_app/view_users.html', {'users': users})
+    employees = Employee.objects.all().order_by('name')
+    emp_name_map = {e.employee_id: e.name for e in employees}
+    for u in users:
+        u.display_name = u.first_name or emp_name_map.get(u.username) or u.username
+    return render(request, 'asset_app/view_users.html', {'users': users, 'employees': employees})
 
 @login_required(login_url='/login/')
 def delete_user(request, pk):
@@ -70,14 +206,46 @@ def create_asset_user(request):
     # Only Asset Admin and Superusers should create Asset Users
     if getattr(request.user, 'role', None) != "asset_admin" and not request.user.is_superuser:
         messages.error(request, "You do not have permission to access this page.")
-        return redirect("dashboard")
+        return redirect("asset_dashboard")
 
     if request.method == "POST":
-        username = request.POST.get("username")
-        password = request.POST.get("password")
-        email = request.POST.get("email")
+        username = (request.POST.get("username") or "").strip()
+        password = request.POST.get("password") or ""
+        email = (request.POST.get("email") or "").strip()
         role = request.POST.get("role", "asset_user")
         department = request.POST.get("department", "")
+        first_name = request.POST.get("first_name", "").strip() or username
+
+        redirect_url = request.POST.get('next') or 'view_users'
+
+        errors = []
+
+        if not username:
+            errors.append("Username / Emp ID is required.")
+        elif get_user_model().objects.filter(username__iexact=username).exists():
+            errors.append(f"Username \"{username}\" is already taken.")
+
+        if not email:
+            errors.append("Email address is required.")
+        else:
+            try:
+                validate_email(email)
+            except DjangoValidationError:
+                errors.append("Enter a valid email address.")
+
+        if not password:
+            errors.append("Password is required.")
+        elif len(password) < 8:
+            errors.append("Password must be at least 8 characters long.")
+
+        valid_roles = ["superadmin", "asset_admin", "asset_user", "manager"]
+        if role not in valid_roles:
+            errors.append("Please select a valid role.")
+
+        if errors:
+            for error in errors:
+                messages.error(request, error)
+            return redirect(redirect_url)
 
         # Create asset user
         user = User.objects.create_user(
@@ -85,6 +253,7 @@ def create_asset_user(request):
             email=email,
             password=password,
             role=role,
+            first_name=first_name,
             is_staff=True if "admin" in role or role == "superadmin" else False,
             is_superuser=True if role == "superadmin" else False
         )
@@ -113,7 +282,7 @@ def create_admin(request):
             password=password,
             role="asset_admin"
         )
-        return redirect("dashboard")
+        return redirect("asset_dashboard")
 
     return render(request, "asset_app/create_admin.html")
 
@@ -176,14 +345,27 @@ def dashboard(request):
         assigned_asset_ids = Assignment.objects.filter(employee__department__iexact=department).values_list('asset_id', flat=True)
         assets_q = Asset.objects.filter(id__in=assigned_asset_ids)
         assignments_q = Assignment.objects.filter(employee__department__iexact=department)
-        reqs_q_base = ProcurementRequestWorkflow.objects.filter(requested_by__department__iexact=department)
-        tickets_q_base = Ticket.objects.filter(created_by__department__iexact=department)
-        total_team_members = get_user_model().objects.filter(department__iexact=department).count()
+        reqs_q_base = ProcurementRequestWorkflow.objects.filter(_department_user_q(department, 'requested_by'))
+        tickets_q_base = Ticket.objects.filter(_department_user_q(department))
+        names = _department_usernames(department)
+        team_q = Q()
+        if names:
+            sub = Q()
+            for n in names:
+                sub |= Q(username__iexact=n)
+            team_q |= sub
+        if department:
+            team_q |= Q(department__iexact=department)
+        if not names and not department:
+            team_q |= Q(pk=-1)
+        total_team_members = get_user_model().objects.filter(team_q).count()
     else:
         # Employee
-        assigned_asset_ids = Assignment.objects.filter(employee__name__iexact=request.user.username).values_list('asset_id', flat=True)
+        assignments_q = Assignment.objects.filter(
+            employee__employee_id__iexact=request.user.username
+        ) | Assignment.objects.filter(employee__name__iexact=request.user.username)
+        assigned_asset_ids = assignments_q.values_list('asset_id', flat=True)
         assets_q = Asset.objects.filter(id__in=assigned_asset_ids)
-        assignments_q = Assignment.objects.filter(employee__name__iexact=request.user.username)
         reqs_q_base = ProcurementRequestWorkflow.objects.filter(requested_by=request.user)
         tickets_q_base = Ticket.objects.filter(created_by=request.user)
 
@@ -238,7 +420,7 @@ def dashboard(request):
     asset_types = [r['asset_type'] for r in types_q]
     asset_type_counts = [r['c'] for r in types_q]
 
-    ASSET_TYPES = ['Laptop', 'Desktop', 'Printer', 'Phone','cell']
+    ASSET_TYPES = [r['asset_type'] for r in types_q if r['asset_type']]
     available_by_type = []
     assigned_by_type = []
     category_stats = []
@@ -292,7 +474,7 @@ def dashboard(request):
 
     if is_employee:
         emp_my_assets = assignments_q.filter(status__iexact='In Use').count()
-        emp_returned_assets = assignments_q.filter(status__icontains='Returned').count()
+        emp_returned_assets = assignments_q.filter(status__icontains='Returned').values('asset').distinct().count()
         emp_recent_assignments = assignments_q.filter(status__iexact='In Use').order_by('-assigned_at')[:10]
         
         emp_pending_requests = reqs_q_base.filter(
@@ -353,6 +535,10 @@ def dashboard(request):
     storage_percent = int((disk.used / disk.total) * 100)
 
     context = {
+        'display_name': request.user.first_name or (
+            Employee.objects.filter(employee_id__iexact=request.user.username).values_list('name', flat=True).first()
+            or request.user.username
+        ),
         'active_sessions': active_sessions,
         'storage_percent': storage_percent,
         'total_assets': total_assets,
@@ -476,7 +662,24 @@ def asset_detail(request, pk):
 # ------------------- ASSIGN ASSET -------------------
 @login_required
 def assign_asset(request):
+    is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
+    if not request.user.is_authenticated or not is_admin:
+        messages.error(request, "Only an admin can assign assets.")
+        return redirect("asset_dashboard")
     if request.method == "POST":
+        assigned_date = request.POST.get('assigned_date')
+        assigned_date_obj = None
+        try:
+            assigned_date_obj = datetime.strptime(assigned_date, '%Y-%m-%d').date()
+        except (TypeError, ValueError):
+            pass
+        if assigned_date_obj and assigned_date_obj > timezone.now().date():
+            messages.error(request, "Assignment date cannot be in the future.")
+            next_url = request.POST.get('next')
+            if next_url:
+                return redirect(next_url)
+            return redirect(reverse('assign_asset'))
+
         form = AssignmentForm(request.POST)
         if form.is_valid():
             assignment = form.save()
@@ -500,13 +703,8 @@ def assign_asset(request):
                 return redirect(next_url)
             return redirect(reverse('assign_asset'))
     else:
-        try:
-            from .sync_employees import sync_employees_from_api
-            success, msg = sync_employees_from_api()
-            if not success:
-                messages.error(request, f"API Sync Error: {msg}")
-        except Exception as e:
-            messages.error(request, f"API Sync Error: {str(e)}")
+        from .sync_employees import sync_employees_from_api
+        sync_employees_from_api()
         form = AssignmentForm()
 
     context = {
@@ -546,17 +744,126 @@ def view_agreement(request, assignment_id):
     })
 
 @login_required
+@login_required
 def return_asset(request, pk):
     asset = get_object_or_404(Asset, pk=pk)
     if request.method == "POST":
         assign = Assignment.objects.filter(asset=asset, status='In Use').last()
-        if assign:
-            assign.status = 'Returned'
-            assign.save()
+        if not assign:
+            messages.error(request, f"No active assignment found for {asset.asset_id}.")
+            return redirect('view_assets')
+
+        is_staff = request.user.is_staff or getattr(request.user, 'role', '') in ('superadmin', 'admin')
+        is_manager = getattr(request.user, 'role', '') == 'manager'
+        is_owner = (
+            str(assign.employee.employee_id) == str(request.user.username)
+            or str(assign.employee.name) == str(request.user.username)
+        )
+        if not (is_staff or is_manager or is_owner):
+            messages.error(request, "You can only return your own assigned asset.")
+            return redirect('view_assets')
+
+        reason = (request.POST.get('reason') or '').strip()
+        if not reason:
+            messages.error(request, f"Please write a reason to return {asset.asset_id}.")
+            return redirect('view_assets')
+
+        assign.status = 'Returned'
+        assign.return_reason = reason
+        assign.returned_at = timezone.now()
+        assign.save()
         asset.status = 'Available'
         asset.save()
         messages.success(request, f"Asset {asset.asset_id} returned successfully.")
     return redirect('view_assets')
+
+
+@login_required
+def request_return_asset(request, pk):
+    asset = get_object_or_404(Asset, pk=pk)
+    if request.method == "POST":
+        assign = Assignment.objects.filter(asset=asset, status='In Use').last()
+        if not assign:
+            messages.error(request, f"No active assignment found for {asset.asset_id}.")
+            return redirect('view_assets')
+
+        is_staff = request.user.is_staff or getattr(request.user, 'role', '') in ('superadmin', 'admin')
+        is_manager = getattr(request.user, 'role', '') == 'manager'
+        is_owner = (
+            str(assign.employee.employee_id) == str(request.user.username)
+            or str(assign.employee.name) == str(request.user.username)
+        )
+        if not (is_staff or is_manager or is_owner):
+            messages.error(request, "You can only request a return for your own assigned asset.")
+            return redirect('view_assets')
+
+        reason = (request.POST.get('reason') or '').strip()
+        if not reason:
+            messages.error(request, f"Please write a reason to return {asset.asset_id}.")
+            return redirect('view_assets')
+
+        if ReturnRequest.objects.filter(asset=asset, status='Pending').exists():
+            messages.error(request, f"A return request for {asset.asset_id} is already pending approval.")
+            return redirect('view_assets')
+
+        ReturnRequest.objects.create(
+            asset=asset,
+            assignment=assign,
+            employee=assign.employee,
+            reason=reason,
+            status='Pending',
+        )
+        _notify_admins(
+            'return_request',
+            f"New return request for {asset.asset_id}",
+            f"{assign.employee.name} requested to return {asset.asset_id}.",
+            reverse('return_requests'),
+        )
+        messages.success(request, f"Return request submitted for {asset.asset_id}. Awaiting admin approval.")
+    return redirect('view_assets')
+
+
+@login_required
+def process_return(request, pk):
+    rq = get_object_or_404(ReturnRequest, pk=pk)
+    is_staff = request.user.is_staff or getattr(request.user, 'role', '') in ('superadmin', 'admin')
+    is_manager = getattr(request.user, 'role', '') == 'manager'
+    if not (is_staff or is_manager):
+        messages.error(request, "Only an admin or manager can process return requests.")
+        return redirect('return_requests')
+
+    if rq.status != 'Pending':
+        messages.error(request, f"Return request for {rq.asset.asset_id} was already processed.")
+        return redirect('return_requests')
+
+    action = request.POST.get('action', 'accept')
+
+    if action == 'reject':
+        rq.status = 'Rejected'
+        rq.processed_by = request.user
+        rq.processed_at = timezone.now()
+        rq.save()
+        messages.info(request, f"Return request for {rq.asset.asset_id} was declined. Asset stays with {rq.employee.name}.")
+    else:
+        assign = rq.assignment
+        if assign.status == 'In Use':
+            assign.status = 'Returned'
+            assign.return_reason = rq.reason
+            assign.returned_at = timezone.now()
+            assign.save()
+            rq.asset.status = 'Available'
+            rq.asset.save()
+
+        rq.status = 'Accepted'
+        rq.processed_by = request.user
+        rq.processed_at = timezone.now()
+        rq.save()
+        messages.success(request, f"Return request for {rq.asset.asset_id} accepted. Asset is now available.")
+
+    nxt = request.POST.get('next', '')
+    if nxt and nxt.startswith('/'):
+        return redirect(nxt)
+    return redirect('return_requests')
 
 @login_required
 def transfer_asset(request, pk):
@@ -605,6 +912,36 @@ def get_employee_details(request):
     })
 
 
+# ------------------- RETURN REQUESTS (dedicated admin page) -------------------
+@login_required
+def return_requests(request):
+    is_staff = request.user.is_staff or getattr(request.user, 'role', '') in ('superadmin', 'admin')
+    is_manager = getattr(request.user, 'role', '') == 'manager'
+    if not (is_staff or is_manager):
+        return redirect('asset_dashboard')
+
+    pending_returns = (
+        ReturnRequest.objects.filter(status='Pending')
+        .select_related('asset', 'employee')
+        .order_by('-created_at')
+    )
+    processed_returns = (
+        ReturnRequest.objects.exclude(status='Pending')
+        .select_related('asset', 'employee', 'processed_by')
+        .order_by('-processed_at')[:30]
+    )
+    pending_count = ReturnRequest.objects.filter(status='Pending').count()
+    accepted_count = ReturnRequest.objects.filter(status='Accepted').count()
+    rejected_count = ReturnRequest.objects.filter(status='Rejected').count()
+    return render(request, 'asset_app/return_requests.html', {
+        'pending_returns': pending_returns,
+        'processed_returns': processed_returns,
+        'pending_count': pending_count,
+        'accepted_count': accepted_count,
+        'rejected_count': rejected_count,
+    })
+
+
 # ------------------- VIEW ASSETS (fixed) -------------------
 @login_required
 def view_assets(request):
@@ -621,7 +958,7 @@ def view_assets(request):
     else:
         # Employee - only show their own assets
         assignments = Assignment.objects.select_related("asset", "employee").filter(
-            employee__name__iexact=request.user.username,
+            Q(employee__employee_id__iexact=request.user.username) | Q(employee__name__iexact=request.user.username),
             status__iexact='In Use'
         )
 
@@ -635,12 +972,34 @@ def view_assets(request):
         available=Count('id', filter=Q(status__iexact='Available'))
     ).order_by('asset_type')
 
+    # Employees see all assets; requests they have made
+    employee_requested = []
+    if not (is_staff or is_manager):
+        employee_requested = AssetRequest.objects.filter(requested_by=request.user).values_list('pk', flat=True)
+
+    # Sub-types dropdown data: main_type -> list of {name, pk}
+    type_dropdowns = []
+    for t in sorted(Asset.objects.exclude(asset_type='').values_list('asset_type', flat=True).distinct()):
+        sub_assets = Asset.objects.filter(asset_type__iexact=t).exclude(name='').order_by('name')
+        if sub_assets.exists():
+            type_dropdowns.append({
+                'type': t,
+                'subtypes': [{'name': a.name, 'pk': a.pk} for a in sub_assets],
+            })
+
     return render(request, 'asset_app/view_assets.html', {
         'assignments': assignments,
         'unassigned_assets': unassigned_assets,
         'asset_stats': asset_stats,
         'employees': Employee.objects.all().order_by('name'),
         'today_date': timezone.now().date().isoformat(),
+        'is_employee': not (is_staff or is_manager),
+        'type_dropdowns': type_dropdowns,
+        'employee_requested': employee_requested,
+        'pending_return_requests': ReturnRequest.objects.filter(status='Pending').select_related('asset', 'employee').order_by('-created_at'),
+        'pending_return_asset_pks': list(
+            ReturnRequest.objects.filter(status='Pending').values_list('asset_id', flat=True)
+        ),
     })
 
 
@@ -727,6 +1086,14 @@ def create_procurement_request(request):
             status="Pending Manager Approval"
         )
 
+        requester = _employee_display_name(request.user)
+        _notify_admins(
+            'procurement',
+            f"New procurement request: {asset_type}",
+            f"{requester} raised a procurement request for {asset_type}.",
+            reverse('procurement_list'),
+        )
+
         messages.success(request, "Procurement request submitted!")
         return redirect('procurement_list')
 
@@ -736,16 +1103,61 @@ def create_procurement_request(request):
 @login_required
 def manager_approve(request, pk):
     req = get_object_or_404(ProcurementRequestWorkflow, pk=pk)
-    req.status = "Completed"
+    if not (request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin', 'manager')):
+        messages.error(request, "Only a manager or admin can approve requests.")
+        return redirect("procurement_list")
+    if req.status != "Pending Manager Approval":
+        messages.error(request, f"Request {req.asset_type} is not waiting for manager approval.")
+        return redirect("procurement_list")
+    req.status = "Pending Admin Approval"
     req.save()
+    messages.success(request, f"Request {req.asset_type} approved by manager. Awaiting admin approval.")
     return redirect("procurement_list")
 
 
 @login_required
 def manager_reject(request, pk):
     req = get_object_or_404(ProcurementRequestWorkflow, pk=pk)
+    if not (request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin', 'manager')):
+        messages.error(request, "Only a manager or admin can reject requests.")
+        return redirect("procurement_list")
+    if req.status != "Pending Manager Approval":
+        messages.error(request, f"Request {req.asset_type} is not waiting for manager approval.")
+        return redirect("procurement_list")
     req.status = "Rejected by Manager"
     req.save()
+    messages.info(request, f"Request {req.asset_type} rejected by manager.")
+    return redirect("procurement_list")
+
+
+@login_required
+def admin_approve(request, pk):
+    req = get_object_or_404(ProcurementRequestWorkflow, pk=pk)
+    if not (request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')):
+        messages.error(request, "Only an admin can approve requests.")
+        return redirect("procurement_list")
+    if req.status != "Pending Admin Approval":
+        messages.error(request, f"Request {req.asset_type} is not waiting for admin approval.")
+        return redirect("procurement_list")
+    req.status = "Completed"
+    req.completed_date = timezone.now()
+    req.save()
+    messages.success(request, f"Request {req.asset_type} approved and completed.")
+    return redirect("procurement_list")
+
+
+@login_required
+def admin_reject(request, pk):
+    req = get_object_or_404(ProcurementRequestWorkflow, pk=pk)
+    if not (request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')):
+        messages.error(request, "Only an admin can reject requests.")
+        return redirect("procurement_list")
+    if req.status != "Pending Admin Approval":
+        messages.error(request, f"Request {req.asset_type} is not waiting for admin approval.")
+        return redirect("procurement_list")
+    req.status = "Rejected by Admin"
+    req.save()
+    messages.info(request, f"Request {req.asset_type} rejected by admin.")
     return redirect("procurement_list")
 
 
@@ -767,7 +1179,7 @@ def purchase_reject(request, pk):
 
 @login_required
 def accounts_approve(request, pk):
-    req = ProcurementRequestWorkflow.objects.get(pk=pk)
+    req = get_object_or_404(ProcurementRequestWorkflow, pk=pk)
     req.status = "Completed"
     req.payment_status = "Paid"
     req.completed_date = timezone.now()
@@ -785,12 +1197,12 @@ def accounts_reject(request, pk):
 
 @login_required
 def payment_done(request, pk):
-    req = get_object_or_404(ProcurementRequest, pk=pk)
+    req = get_object_or_404(ProcurementRequestWorkflow, pk=pk)
     req.payment_status = "Paid"
     req.status = "Completed"
     req.save()
     messages.success(request, "Payment completed!")
-    return redirect('dashboard')
+    return redirect('procurement_list')
 
 
 @login_required
@@ -815,27 +1227,17 @@ def upload_invoice(request, pk):
 def procurement_list(request):
     user = request.user
 
-    if user.is_staff:
+    if user.is_staff or getattr(user, 'role', None) in ('admin', 'superadmin', 'asset_admin'):
         requests = ProcurementRequestWorkflow.objects.all().order_by('-id')
     elif getattr(user, 'role', None) == "manager":
         requests = ProcurementRequestWorkflow.objects.filter(
-            status__in=["Pending Manager Approval", "Rejected by Manager", "Completed"]
-        ).order_by('-id')
-    elif getattr(user, 'role', None) == "purchase":
-        requests = ProcurementRequestWorkflow.objects.filter(
+            _department_user_q(user.department, 'requested_by'),
             status__in=[
-                "Pending Purchase Approval",
-                "Invoice Pending",
-                "Rejected by Purchase Manager",
-                "Completed"
-            ]
-        ).order_by('-id')
-    elif getattr(user, 'role', None) == "accounts":
-        requests = ProcurementRequestWorkflow.objects.filter(
-            status__in=[
-                "Payment Pending",
-                "Rejected by Accounts Manager",
-                "Completed"
+                "Pending Manager Approval",
+                "Pending Admin Approval",
+                "Rejected by Manager",
+                "Rejected by Admin",
+                "Completed",
             ]
         ).order_by('-id')
     else:
@@ -863,7 +1265,16 @@ def request_asset(request):
             asset_request = form.save(commit=False)
             asset_request.requested_by = request.user
             asset_request.save()
-            return redirect('dashboard')
+
+            requester = _employee_display_name(request.user)
+            _notify_admins(
+                'asset_request',
+                f"New asset request #{asset_request.id}",
+                f"{requester} requested {asset_request.quantity} x {asset_request.asset_category}.",
+                reverse('view_request', args=[asset_request.id]),
+            )
+
+            return redirect('asset_dashboard')
     else:
         form = AssetRequestForm()
     return render(request, 'asset_app/request_asset.html', {'form': form})
@@ -875,7 +1286,7 @@ def request_detail(request, pk):
         new_status = request.POST.get('status')
         asset_request.status = new_status
         asset_request.save()
-        return redirect('dashboard')
+        return redirect('asset_dashboard')
     return render(request, 'asset_app/request_detail.html', {'asset_request': asset_request})
 
 
@@ -885,7 +1296,7 @@ def view_requests_list(request):
         requests = AssetRequest.objects.select_related('requested_by').all()
     elif getattr(request.user, 'role', '') == 'manager':
         requests = AssetRequest.objects.select_related('requested_by').filter(
-            requested_by__department__iexact=request.user.department
+            _department_user_q(request.user.department, 'requested_by')
         )
     else:
         requests = AssetRequest.objects.select_related('requested_by').filter(requested_by=request.user)
@@ -947,7 +1358,7 @@ def delete_asset(request, pk):
 
 def public_asset_detail(request, pk):
     asset = get_object_or_404(Asset, pk=pk)
-    assignments = asset.assignments.all() if hasattr(asset, 'assignments') else []
+    assignments = Assignment.objects.filter(asset=asset).select_related("employee")
     return render(request, 'asset_app/public_asset_detail.html', {
         'asset': asset,
         'assignments': assignments,
@@ -970,7 +1381,7 @@ def view_tickets(request):
         tickets = Ticket.objects.all().order_by('-created_at')
     elif getattr(request.user, 'role', '') == 'manager':
         tickets = Ticket.objects.filter(
-            created_by__department__iexact=request.user.department
+            _department_user_q(request.user.department)
         ).order_by('-created_at')
     else:
         tickets = Ticket.objects.filter(created_by=request.user).order_by('-created_at')
@@ -988,13 +1399,19 @@ def view_tickets(request):
             form.fields['asset'].queryset = Asset.objects.filter(id__in=assigned_asset_ids)
         else:
             assigned_asset_ids = Assignment.objects.filter(
-                employee__name__iexact=request.user.username
+                Q(employee__employee_id__iexact=request.user.username) | Q(employee__name__iexact=request.user.username),
+                status__iexact='In Use'
             ).values_list('asset_id', flat=True)
             form.fields['asset'].queryset = Asset.objects.filter(id__in=assigned_asset_ids)
 
+    # Map each ticket creator to their real employee name (fall back to username)
+    tickets = list(tickets)
+    for t in tickets:
+        t.display_name = _employee_display_name(t.created_by)
+
     return render(request, 'asset_app/view_tickets.html', {
         'tickets': tickets,
-        'form': form
+        'form': form,
     })
 
 
@@ -1013,7 +1430,8 @@ def raise_ticket(request):
         user_assets = Asset.objects.filter(id__in=assigned_asset_ids)
     else:
         assigned_asset_ids = Assignment.objects.filter(
-            employee__name__iexact=request.user.username
+            Q(employee__employee_id__iexact=request.user.username) | Q(employee__name__iexact=request.user.username),
+            status__iexact='In Use'
         ).values_list('asset_id', flat=True)
         user_assets = Asset.objects.filter(id__in=assigned_asset_ids)
 
@@ -1030,6 +1448,14 @@ def raise_ticket(request):
                 ticket.status = "Open"
             ticket.save()
 
+            requester = _employee_display_name(request.user)
+            _notify_admins(
+                'ticket',
+                f"New ticket: {ticket.subject}",
+                f"{requester} raised a ticket for {ticket.asset.asset_id}.",
+                reverse('ticket_detail', args=[ticket.id]),
+            )
+
             messages.success(request, "✅ Ticket raised successfully!")
             return redirect('view_tickets')   # 🔁 SIMPLE REDIRECT
         else:
@@ -1044,6 +1470,11 @@ def raise_ticket(request):
 @login_required
 def update_ticket_status(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
+    is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
+    is_manager = getattr(request.user, 'role', '') == 'manager'
+    if not (is_admin or is_manager):
+        messages.error(request, "Only an admin or manager can update ticket status.")
+        return redirect('view_tickets')
 
     if ticket.status.lower() == "pending":
         ticket.status = "Resolved"
@@ -1065,6 +1496,11 @@ def ticket_detail(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
 
     if request.method == 'POST':
+        is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
+        is_manager = getattr(request.user, 'role', '') == 'manager'
+        if not (is_admin or is_manager):
+            messages.error(request, "Only an admin or manager can update ticket status.")
+            return redirect('view_tickets')
         new_status = request.POST.get('status')
         if new_status:
             # Capitalize to match backend conventions (Pending, Resolved, Closed, Open)
@@ -1077,7 +1513,7 @@ def ticket_detail(request, pk):
                 messages.info(request, f'Ticket is already marked as {new_status}.')
             return redirect('view_tickets')
 
-    return render(request, 'asset_app/ticket_detail.html', {'ticket': ticket})
+    return render(request, 'asset_app/ticket_detail.html', {'ticket': ticket, 'display_name': _employee_display_name(ticket.created_by)})
 
 
 

@@ -38,7 +38,7 @@
                     <label class="text-dark small fw-semibold">Raised By</label>
                     <div class="p-3 bg-light rounded-3">
                         <i class="bi bi-person-circle text-secondary me-2"></i>
-                        <strong>{{ ticket.created_by.username }}</strong>
+                        <strong>{{ display_name }}</strong>
                     </div>
                 </div>
 
@@ -52,6 +52,7 @@
 
             <hr class="my-5">
 
+            {% if request.user.is_staff or request.user.role == 'manager' or request.user.role == 'superadmin' %}
             <!-- Status Update -->
             <div class="text-center">
                 <h5 class="fw-semibold mb-3 text-dark">Update Ticket Status</h5>
@@ -78,6 +79,7 @@
                     </span>
                 </div>
             </div>
+            {% endif %}
 
             <!-- Back Button -->
             <div class="text-center mt-5">

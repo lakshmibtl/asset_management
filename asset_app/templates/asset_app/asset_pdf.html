@@ -59,8 +59,8 @@
             </tr>
             {% for a in assignments %}
             <tr>
-                <td>{{ a.employee_name }}</td>
-                <td>{{ a.department }}</td>
+                <td>{{ a.employee.name }}</td>
+                <td>{{ a.employee.department }}</td>
                 <td>
                     {% if a.status == "In Use" %}
                         <span class="badge bg-success">{{ a.status }}</span>

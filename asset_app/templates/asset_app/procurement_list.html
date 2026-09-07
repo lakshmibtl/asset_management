@@ -48,14 +48,8 @@
                         {% if r.status == "Pending Manager Approval" %}
                             <span class="status-pill pending-manager">Manager Review</span>
 
-                        {% elif r.status == "Pending Purchase Approval" %}
-                            <span class="status-pill pending-purchase">Purchase Review</span>
-
-                        {% elif r.status == "Invoice Pending" %}
-                            <span class="status-pill invoice-pending">Invoice Pending</span>
-
-                        {% elif r.status == "Payment Pending" %}
-                            <span class="status-pill payment-pending">Payment Pending</span>
+                        {% elif r.status == "Pending Admin Approval" %}
+                            <span class="status-pill pending-purchase">Admin Review</span>
 
                         {% elif r.status == "Completed" %}
                             <span class="status-pill completed">Completed</span>
@@ -80,10 +74,15 @@
                     <!-- ACTION BUTTONS -->
                     <td class="text-center">
 
-                        {% if user.role == "manager" or user.is_staff or user.is_superuser or user.role == "admin" or user.role == "asset_admin" %}
+                        {% if user.role == "manager" or user.role == "admin" or user.role == "asset_admin" or user.is_staff or user.is_superuser %}
                             {% if r.status == "Pending Manager Approval" %}
                                 <a href="{% url 'manager_approve' r.id %}" class="btn btn-success btn-sm action-btn">Approve</a>
                                 <a href="{% url 'manager_reject' r.id %}" class="btn btn-danger btn-sm action-btn">Reject</a>
+                            {% elif r.status == "Pending Admin Approval" %}
+                                {% if user.is_staff or user.is_superuser or user.role == "admin" or user.role == "asset_admin" %}
+                                <a href="{% url 'admin_approve' r.id %}" class="btn btn-success btn-sm action-btn">Approve</a>
+                                <a href="{% url 'admin_reject' r.id %}" class="btn btn-danger btn-sm action-btn">Reject</a>
+                                {% endif %}
                             {% endif %}
                         {% endif %}
 

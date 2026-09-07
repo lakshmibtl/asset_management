@@ -99,6 +99,59 @@
     .fw-medium {
         font-weight: 600;
     }
+
+    /* Return requests panel */
+    .initials-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #07518a, #0d6efd);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+    .rr-table thead th {
+        background-color: #f6f8fb;
+        color: #64748b;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        border-bottom: 2px solid #e9eef4;
+        white-space: nowrap;
+        padding: 0.9rem 1.1rem;
+    }
+    .rr-table tbody td {
+        padding: 1rem 1.1rem;
+        border-bottom: 1px solid #eef2f6;
+        vertical-align: middle;
+    }
+    .pill-type {
+        background: #eef3fa;
+        color: #455a75;
+        font-size: 0.68rem;
+        font-weight: 600;
+        padding: 0.15rem 0.55rem;
+        border-radius: 999px;
+    }
+    .btn-accept {
+        background: linear-gradient(135deg, #18a05c, #149c57);
+        border: none;
+        color: #fff;
+        border-radius: 10px;
+    }
+    .btn-accept:hover { background: #128a4e; color: #fff; }
+    .btn-reject {
+        border: 1px solid #e6c3c3;
+        color: #c03636;
+        background: #fff;
+        border-radius: 10px;
+    }
+    .btn-reject:hover { background: #fbecea; border-color: #e0abab; color: #a82e2e; }
 </style>
 
 <div class="container py-5">
@@ -122,8 +175,7 @@
     </div>
 
     <!-- ASSET STATS -->
-    {% if asset_stats and request.user.is_staff or request.user.role == 'manager' or request.user.role == 'superadmin'
-    %}
+    {% if asset_stats and request.user.is_staff or request.user.role == 'manager' or request.user.role == 'superadmin' %}
     <div class="row g-3 mb-4 animate-in" style="--delay: 0.12s">
         {% for stat in asset_stats %}
         <div class="col-6 col-md-4 col-lg-3">
@@ -134,8 +186,9 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <h3 class="fw-bold mb-0 text-dark">{{ stat.total }}</h3>
                     <div class="text-end small">
-                        <div class="text-success" title="Available"><i class="bi bi-check-circle-fill me-1"></i>{{
-                            stat.available }}</div>
+                        {% if request.user.role != 'manager' %}
+                        <div class="text-success" title="Available"><i class="bi bi-check-circle-fill me-1"></i>{{ stat.available }}</div>
+                        {% endif %}
                         <div class="text-primary" title="In Use" style="color: #07518a !important;"><i
                                 class="bi bi-person-check-fill me-1"></i>{{ stat.in_use }}</div>
                     </div>
@@ -156,17 +209,29 @@
                     <div class="btn-group" role="group" aria-label="Category filters">
                         <button type="button" class="btn btn-outline-primary filter-btn active"
                             data-filter="all">All</button>
+                        {% for stat in asset_stats %}
                         <button type="button" class="btn btn-outline-primary filter-btn"
-                            data-filter="laptop">Laptop</button>
-                        <button type="button" class="btn btn-outline-primary filter-btn"
-                            data-filter="desktop">Desktop</button>
-                        <button type="button" class="btn btn-outline-primary filter-btn"
-                            data-filter="printer">Printer</button>
-                        <button type="button" class="btn btn-outline-primary filter-btn"
-                            data-filter="ippbx">IPPBX</button>
-                        <button type="button" class="btn btn-outline-primary filter-btn"
-                            data-filter="mouse">Mouse</button>
+                            data-filter="{{ stat.asset_type|lower }}">
+                            {{ stat.asset_type }}
+                            {% for dd in type_dropdowns %}{% if dd.type|lower == stat.asset_type|lower and dd.subtypes %}<i class="bi bi-chevron-down ms-1" style="font-size:.6rem;"></i>{% endif %}{% endfor %}
+                        </button>
+                        {% endfor %}
                     </div>
+
+                    {% for dd in type_dropdowns %}
+                    {% if dd.subtypes %}
+                    <div class="subtype-dropdown d-none mt-2" id="dd-{{ dd.type|lower }}" data-for="{{ dd.type|lower }}">
+                        <span class="text-muted small me-2"><i class="bi bi-arrow-return-right me-1"></i>Sub-types:</span>
+                        {% for sub in dd.subtypes %}
+                        <a href="{% url 'asset_detail' sub.pk %}"
+                            class="btn btn-outline-secondary btn-sm py-0 px-2 me-1 mb-1 btn-subtype"
+                            style="font-size:0.75rem;">
+                            <i class="bi bi-box me-1"></i>{{ sub.name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% endfor %}
                 </div>
 
                 <!-- SEARCH -->
@@ -187,11 +252,81 @@
         </div>
     </div>
 
+    <!-- PENDING RETURN REQUESTS (admin/manager): full panel + link to dedicated page -->
+    {% if not is_employee and pending_return_requests %}
+    <div class="bg-white rounded-4 shadow-sm border-0 mb-4 p-4 overflow-hidden" style="border-left: 4px solid #e5533d !important;">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-2">
+            <h5 class="fw-bold mb-md-0 text-dark d-flex align-items-center">
+                <span class="me-2" style="width:8px;height:8px;border-radius:50%;background:#e5533d;display:inline-block;"></span>
+                Return Requests Awaiting Approval
+                <span class="badge bg-danger rounded-pill ms-2">{{ pending_return_requests|length }}</span>
+            </h5>
+            <a href="{% url 'return_requests' %}" class="btn btn-action border shadow-sm mt-2 mt-md-0"
+                style="border-color:#ddd !important;">
+                Open Return Requests <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <p class="text-muted small mb-3">Employees requested to return these assets. Accept releases them back to stock.</p>
+        <div class="table-responsive">
+            <table class="table rr-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Asset</th>
+                        <th>Reason</th>
+                        <th>Requested</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rq in pending_return_requests %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="initials-avatar">{{ rq.employee.name|make_list|first|upper }}</div>
+                                <div>
+                                    <div class="fw-bold text-dark">{{ rq.employee.name }}</div>
+                                    <div class="text-muted small" style="font-size:0.78rem;">{{ rq.employee.employee_id }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-dark">{{ rq.asset.asset_id }}</div>
+                            <span class="pill-type mt-1 d-inline-block">{{ rq.asset.asset_type }}</span>
+                        </td>
+                        <td class="text-muted small" style="max-width: 260px;">{{ rq.reason }}</td>
+                        <td class="text-muted small">{{ rq.created_at|date:"d M Y, H:i" }}</td>
+                        <td class="text-end">
+                            <form method="POST" action="{% url 'process_return' rq.pk %}"
+                                class="d-flex justify-content-end gap-2">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{% url 'view_assets' %}">
+                                <button type="submit" name="action" value="reject"
+                                    class="btn btn-reject btn-sm px-3 py-2"
+                                    onclick="return confirm('Decline return of {{ rq.asset.asset_id }} from {{ rq.employee.name }}? The asset stays with them.');">
+                                    <i class="bi bi-x-lg me-1"></i>Reject
+                                </button>
+                                <button type="submit" name="action" value="accept"
+                                    class="btn btn-accept btn-sm px-3 py-2"
+                                    onclick="return confirm('Accept return of {{ rq.asset.asset_id }} from {{ rq.employee.name }}? The asset will become available.');">
+                                    <i class="bi bi-check-lg me-1"></i>Accept
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- ASSIGNED ASSETS -->
     <div class="row g-4" id="assignedAssets">
         {% for assign in assignments %}
         <div class="col-12 col-md-6 col-lg-4 animate-in asset-item" role="button" tabindex="0"
-            data-type="{{ assign.asset.asset_type|lower }}" data-empname="{{ assign.employee.name|lower }}"
+            data-type="{{ assign.asset.asset_type|lower }}" data-name="{{ assign.asset.name|lower }}"
+            data-model="{{ assign.asset.model|lower }}" data-empname="{{ assign.employee.name|lower }}"
             data-empid="{{ assign.employee.employee_id }}" data-assetid="{{ assign.asset.asset_id|lower }}"
             data-href="{% url 'asset_detail' assign.asset.pk %}" style="--delay: 0.{{ forloop.counter }}s">
             <div class="card h-100 asset-card border-top border-4" style="border-top-color: #07518a !important;">
@@ -220,7 +355,7 @@
                                 {{ assign.asset.asset_id }}
                             </h5>
                             <p class="small text-muted mb-0">
-                                {{ assign.asset.asset_type }}
+                                {{ assign.asset.asset_type }}{% if assign.asset.name %} — <span class="fw-semibold">{{ assign.asset.name }}</span>{% endif %}
                             </p>
                         </div>
                     </div>
@@ -229,8 +364,7 @@
                         <p class="info-label text-uppercase small fw-bold">Assigned To</p>
                         <p class="info-value fs-5" style="color: #07518a;">
                             <i class="bi bi-person-circle me-2"></i>
-                            {{ assign.employee.name }} {% if assign.employee.employee_id %} ({{
-                            assign.employee.employee_id }}){% endif %}
+                            {{ assign.employee.name }} {% if assign.employee.employee_id %} ({{ assign.employee.employee_id }}){% endif %}
                         </p>
                     </div>
 
@@ -244,8 +378,7 @@
                             <i class="bi bi-download"></i> QR
                         </a>
 
-                        {% if assign.asset.asset_type|lower == 'laptop' or assign.asset.asset_type|lower == 'desktop' or
-                        assign.asset.asset_type|lower == 'ippbx' or assign.asset.asset_type|lower == 'printer' %}
+                        {% if assign.asset.asset_type|lower == 'laptop' or assign.asset.asset_type|lower == 'desktop' or assign.asset.asset_type|lower == 'ippbx' or assign.asset.asset_type|lower == 'printer' %}
                         {% if assign.is_signed %}
                         <a href="{% url 'view_agreement' assign.pk %}"
                             class="btn btn-success btn-sm btn-action border text-white" title="View Signed Agreement">
@@ -259,7 +392,24 @@
                         {% endif %}
                         {% endif %}
 
-                        {% if request.user.is_staff %}
+                        {% if is_employee %}
+                        {% if assign.asset.pk in pending_return_asset_pks %}
+                        <span class="btn btn-secondary btn-sm btn-action border"
+                            title="Return request pending admin approval">
+                            <i class="bi bi-hourglass-split"></i> Return Requested
+                        </span>
+                        {% else %}
+                        <button type="button"
+                            class="btn btn-outline-danger btn-sm btn-action border return-trigger"
+                            data-return-url="{% url 'request_return_asset' assign.asset.pk %}"
+                            data-asset-name="{{ assign.asset.asset_id }} ({{ assign.asset.asset_type }})"
+                            title="Request return of this asset">
+                            <i class="bi bi-arrow-return-left"></i> Return
+                        </button>
+                        {% endif %}
+                        {% endif %}
+
+                        {% if request.user.is_staff or request.user.role == 'manager' %}
                         <div class="dropdown">
                             <button class="btn btn-light btn-sm btn-action border dropdown-toggle" type="button"
                                 data-bs-toggle="dropdown" aria-expanded="false">
@@ -267,23 +417,18 @@
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0">
                                 <li>
-                                    <form method="POST" action="{% url 'return_asset' assign.asset.pk %}"
-                                        style="display:inline;">
-                                        {% csrf_token %}
-                                        <button type="submit" class="dropdown-item py-2"
-                                            onclick="return confirm('Return {{ assign.asset.asset_id }} to available stock?')">
-                                            <i class="bi bi-arrow-return-left me-2 text-warning"></i> Return {{
-                                            assign.asset.asset_id }}
-                                        </button>
-                                    </form>
+                                    <button type="button" class="dropdown-item py-2 return-trigger"
+                                        data-return-url="{% url 'return_asset' assign.asset.pk %}"
+                                        data-asset-name="{{ assign.asset.asset_id }} ({{ assign.asset.asset_type }})">
+                                        <i class="bi bi-arrow-return-left me-2 text-warning"></i> Return {{ assign.asset.asset_id }}
+                                    </button>
                                 </li>
                                 <li>
                                     <button class="dropdown-item py-2 transfer-trigger" data-bs-toggle="offcanvas"
                                         data-bs-target="#transferAssetOffcanvas" data-asset-id="{{ assign.asset.pk }}"
                                         data-asset-name="{{ assign.asset.asset_id }}"
                                         data-transfer-url="{% url 'transfer_asset' assign.asset.pk %}">
-                                        <i class="bi bi-arrow-left-right me-2 text-primary"></i> Transfer {{
-                                        assign.asset.asset_id }}
+                                        <i class="bi bi-arrow-left-right me-2 text-primary"></i> Transfer {{ assign.asset.asset_id }}
                                     </button>
                                 </li>
                                 <li>
@@ -310,8 +455,8 @@
         {% endfor %}
     </div>
 
-    <!-- AVAILABLE / UNASSIGNED ASSETS -->
-    {% if request.user.is_staff and unassigned_assets %}
+    <!-- AVAILABLE / UNASSIGNED ASSETS (hidden for employees and managers) -->
+    {% if unassigned_assets and not is_employee and request.user.role != 'manager' %}
     <div class="mt-5 pt-5 border-top">
         <h4 class="fw-bold mb-4 text-secondary">
             <i class="bi bi-box-fill me-2"></i>Available Stock
@@ -319,6 +464,7 @@
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="availableAssets">
             {% for a in unassigned_assets %}
             <div class="col animate-in asset-item" role="button" tabindex="0" data-type="{{ a.asset_type|lower }}"
+                data-name="{{ a.name|lower }}" data-model="{{ a.model|lower }}"
                 data-empname="" data-empid="" data-assetid="{{ a.asset_id|lower }}" data-href=""
                 style="--delay: 0.{{ forloop.counter }}s">
                 <div class="card h-100 asset-card border-top border-4" style="border-top-color: #07518a !important;">
@@ -342,7 +488,7 @@
                             </div>
                             {% endif %}
                             <div>
-                                <h5 class="fw-bold mb-1 text-dark">{{ a.asset_type }}</h5>
+                                <h5 class="fw-bold mb-1 text-dark">{{ a.asset_type }}{% if a.name %} — {{ a.name }}{% endif %}</h5>
                                 <p class="text-muted small mb-0">{{ a.model|default:"Hardware Asset" }}</p>
                             </div>
                         </div>
@@ -358,8 +504,7 @@
                             </div>
                             <div class="d-flex justify-content-between small">
                                 <span class="text-muted">Series:</span>
-                                <span class="fw-medium text-truncate" style="max-width: 150px;">{{ a.series_number
-                                    }}</span>
+                                <span class="fw-medium text-truncate" style="max-width: 150px;">{{ a.series_number }}</span>
                             </div>
                         </div>
 
@@ -372,12 +517,27 @@
                                 class="btn btn-outline-secondary btn-sm btn-action flex-grow-1" title="Download QR">
                                 <i class="bi bi-download"></i> QR
                             </a>
+                            {% if is_employee %}
+                            <form method="POST" action="{% url 'request_asset' %}" class="flex-grow-1">
+                                {% csrf_token %}
+                                <input type="hidden" name="asset_category" value="{{ a.asset_type }}">
+                                <input type="hidden" name="asset_type" value="{{ a.asset_id }}">
+                                <input type="hidden" name="quantity" value="1">
+                                <input type="hidden" name="reason" value="Request asset {{ a.asset_id }} ({{ a.asset_type }})">
+                                <button type="submit"
+                                    class="btn btn-primary btn-sm btn-action w-100 shadow-sm"
+                                    style="background-color: #07518a; border-color: #07518a;">
+                                    <i class="bi bi-box-arrow-in-right me-1"></i> Request
+                                </button>
+                            </form>
+                            {% elif request.user.is_staff or request.user.role == 'admin' or request.user.role == 'superadmin' %}
                             <button type="button"
                                 class="btn btn-primary btn-sm btn-action flex-grow-1 shadow-sm assign-trigger"
                                 data-asset-id="{{ a.pk }}" style="background-color: #07518a; border-color: #07518a;"
                                 data-bs-toggle="offcanvas" data-bs-target="#assignAssetOffcanvas">
                                 <i class="bi bi-person-plus-fill me-1"></i> Assign
                             </button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -389,7 +549,8 @@
 
 </div>
 
-<!-- Assign Asset Offcanvas -->
+<!-- Assign Asset Offcanvas (staff only) -->
+{% if request.user.is_staff or request.user.role == 'admin' or request.user.role == 'superadmin' %}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="assignAssetOffcanvas" aria-labelledby="assignAssetOffcanvasLabel"
     style="width: 450px; z-index: 1060;">
     <div class="offcanvas-header border-bottom">
@@ -435,7 +596,7 @@
                 <select id="assetSelect" name="asset" class="form-control select2-modern" style="width: 100%;">
                     <option value="">Search by ID, Type, or Name...</option>
                     {% for asset in unassigned_assets %}
-                    <option value="{{ asset.id }}">{{ asset.asset_id }} — {{ asset.asset_type }} ({{ asset.name }})
+                    <option value="{{ asset.id }}">{{ asset.asset_id }} — {{ asset.asset_type }} ({{ asset.name|default:asset.asset_type }})
                     </option>
                     {% endfor %}
                 </select>
@@ -443,7 +604,7 @@
 
             <div class="mb-4">
                 <label class="form-label fw-bold small text-muted">ASSIGNMENT DATE</label>
-                <input type="date" name="assigned_date" class="form-control" value="{{ today_date }}">
+                <input type="date" name="assigned_date" class="form-control" value="{{ today_date }}" max="{{ today_date }}">
             </div>
 
             <div class="mb-4">
@@ -461,6 +622,7 @@
         </form>
     </div>
 </div>
+{% endif %}
 
 <!-- Transfer Asset Offcanvas -->
 <div class="offcanvas offcanvas-end" tabindex="-1" id="transferAssetOffcanvas"
@@ -499,6 +661,41 @@
     </div>
 </div>
 
+<!-- Return Asset Modal -->
+<div class="modal fade" id="returnAssetModal" tabindex="-1" aria-labelledby="returnAssetModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" id="returnAssetForm">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="returnAssetModalLabel">
+                        <i class="bi bi-arrow-return-left me-2"></i>Return Asset
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="bg-light p-3 rounded-3 mb-3">
+                        <span class="text-muted small">Returning</span>
+                        <div class="fw-bold text-dark fs-5" id="returnAssetName">—</div>
+                    </div>
+                    <div class="mb-2">
+                        <label for="returnReason" class="form-label fw-bold small text-muted">RETURN REASON</label>
+                        <textarea name="reason" id="returnReason" class="form-control" rows="3"
+                            placeholder="Write the reason for returning this asset..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="background-color: #07518a; border-color: #07518a;">
+                        <i class="bi bi-check-lg me-1"></i>Confirm Return
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Scripts for Select2 and AJAX -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -524,17 +721,21 @@
 
             assetItems.forEach(item => {
                 const types = (item.dataset.type || "").toLowerCase();
+                const names = (item.dataset.name || "").toLowerCase();
+                const models = (item.dataset.model || "").toLowerCase();
                 const empName = (item.dataset.empname || "").toLowerCase();
                 const empId = (item.dataset.empid || "").toLowerCase();
                 const assetId = (item.dataset.assetid || "").toLowerCase();
 
-                const matchesFilter = (filterValue === "all") || (types.indexOf(filterValue) !== -1);
+                const matchesFilter = (filterValue === "all") || (types.indexOf(filterValue) !== -1) || (names.indexOf(filterValue) !== -1);
                 const matchesQuery =
                     !query ||
                     empName.indexOf(query) !== -1 ||
                     empId.indexOf(query) !== -1 ||
                     assetId.indexOf(query) !== -1 ||
-                    types.indexOf(query) !== -1;
+                    types.indexOf(query) !== -1 ||
+                    names.indexOf(query) !== -1 ||
+                    models.indexOf(query) !== -1;
 
                 if (matchesFilter && matchesQuery) {
                     item.style.display = "";
@@ -552,6 +753,14 @@
 
                 // Auto focus the search bar after selecting asset type
                 searchInput.focus();
+
+                // Show/hide sub-type dropdown for this main type
+                document.querySelectorAll('.subtype-dropdown').forEach(dd => {
+                    dd.classList.add('d-none');
+                });
+                const f = this.dataset.filter;
+                const target = document.getElementById('dd-' + f);
+                if (target) target.classList.remove('d-none');
 
                 // Optionally clear previous search:
                 // searchInput.value = '';
@@ -607,15 +816,19 @@
         });
 
         // Initialize Select2 in offcanvas
-        $('.select2-modern').select2({
-            dropdownParent: $('#assignAssetOffcanvas'),
-            width: '100%'
-        });
+        if ($('#assignAssetOffcanvas').length) {
+            $('#empSelect, #assetSelect').select2({
+                dropdownParent: $('#assignAssetOffcanvas'),
+                width: '100%'
+            });
+        }
 
-        $('#transferEmpSelect').select2({
-            dropdownParent: $('#transferAssetOffcanvas'),
-            width: '100%'
-        });
+        if ($('#transferAssetOffcanvas').length) {
+            $('#transferEmpSelect').select2({
+                dropdownParent: $('#transferAssetOffcanvas'),
+                width: '100%'
+            });
+        }
 
         // Auto-select asset when clicking 'Assign' on a specific card
         document.querySelectorAll('.assign-trigger').forEach(btn => {
@@ -638,6 +851,48 @@
                 }
             });
         });
+
+        // Return Asset Modal Handler (employee + staff + manager)
+        document.querySelectorAll('.return-trigger').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                const returnUrl = this.dataset.returnUrl;
+                const assetName = this.dataset.assetName;
+                const reasonField = document.getElementById('returnReason');
+                if (returnUrl) {
+                    document.getElementById('returnAssetForm').action = returnUrl;
+                    document.getElementById('returnAssetName').textContent = assetName;
+                    reasonField.value = '';
+                    reasonField.setCustomValidity('');
+                    $('#returnAssetModal').modal('show');
+                }
+            });
+        });
+
+        // Block future assignment dates
+        const assignForm = document.getElementById('assignFormOffcanvas');
+        if (assignForm) {
+            const assignToday = "{{ today_date }}";
+            assignForm.addEventListener('submit', function () {
+                const dateInput = this.querySelector('input[name="assigned_date"]');
+                if (dateInput && dateInput.value) {
+                    if (dateInput.value > assignToday) {
+                        dateInput.value = assignToday;
+                        dateInput.setCustomValidity('Future dates are not allowed.');
+                        dateInput.reportValidity();
+                        return false;
+                    }
+                    dateInput.setCustomValidity('');
+                }
+            });
+            const assignDateInput = assignForm.querySelector('input[name="assigned_date"]');
+            if (assignDateInput) {
+                assignDateInput.addEventListener('change', function () {
+                    if (this.value > assignToday) {
+                        this.value = assignToday;
+                    }
+                });
+            }
+        }
 
         // AJAX Employee Data Fetch
         $('#empSelect').on('change', function () {

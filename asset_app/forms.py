@@ -75,13 +75,17 @@ class AssetForm(forms.ModelForm):
 
     class Meta:
         model = Asset
-        fields = ['asset_type', 'other_asset_type', 'company_name', 'series_number', 'model', 'status', 'purchase_date', 'cost', 'warranty', 'image']
+        fields = ['asset_type', 'name', 'company_name', 'series_number', 'model', 'status', 'purchase_date', 'cost', 'warranty', 'image']
 
         widgets = {
             'company_name': forms.TextInput(attrs={
                 'class': 'form-control form-control-lg rounded-3 shadow-sm',
                 'placeholder': 'Enter Company Name',
                 'required': 'required'   # ✅ browser validation
+            }),
+            'name': forms.TextInput(attrs={
+                'class': 'form-control form-control-lg rounded-3 shadow-sm',
+                'placeholder': 'Enter Asset Name'
             }),
             'series_number': forms.TextInput(attrs={
                 'class': 'form-control form-control-lg rounded-3 shadow-sm',
@@ -124,7 +128,9 @@ class AssetForm(forms.ModelForm):
             if not other:
                 self.add_error('other_asset_type', 'Please specify the asset type.')
             else:
-                cleaned_data['asset_type'] = other
+                # Keep 'Other' as the main type; the custom value becomes the sub-type/name
+                cleaned_data['asset_type'] = 'Other'
+                cleaned_data['name'] = other.strip()
         
         return cleaned_data
 
@@ -141,7 +147,7 @@ from .models import Assignment, AssetRequest
 class AssignmentForm(forms.ModelForm):
     class Meta:
         model = Assignment
-        fields = ['asset', 'employee', 'status']
+        fields = ['asset', 'employee', 'status', 'assigned_date']
         widgets = {
             'asset': forms.Select(attrs={
                 'class': 'form-select form-select-lg custom-input'
@@ -152,6 +158,10 @@ class AssignmentForm(forms.ModelForm):
             'status': forms.Select(attrs={
                 'class': 'form-select form-select-lg custom-input'
             }),
+            'assigned_date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+            }, format='%Y-%m-%d'),
         }
 
 
@@ -166,9 +176,9 @@ ASSET_CHOICES = [
 ]
 
 class AssetRequestForm(forms.ModelForm):
-    asset_category = forms.ChoiceField(
-        choices=AssetRequest.ASSET_TYPES,
-        widget=forms.Select(attrs={'class': 'form-select'})
+    asset_category = forms.CharField(
+        required=False,
+        widget=forms.Select(choices=AssetRequest.ASSET_TYPES, attrs={'class': 'form-select'})
     )
 
     other_asset_category = forms.CharField(
@@ -208,13 +218,21 @@ class AssetRequestForm(forms.ModelForm):
         cleaned_data = super().clean()
         asset_category = cleaned_data.get('asset_category')
         other = cleaned_data.get('other_asset_category')
-        
+
         if asset_category == 'Other':
             if not other:
                 self.add_error('other_asset_category', 'Please specify the custom category.')
             else:
                 cleaned_data['asset_category'] = other
-        
+
+        # Always store a meaningful category (which may be a free-form custom type)
+        if not cleaned_data.get('asset_category'):
+            raw = self.data.get('asset_category', '').strip()
+            if raw:
+                cleaned_data['asset_category'] = raw
+            else:
+                self.add_error('asset_category', 'Please select a category.')
+
         return cleaned_data
 
 

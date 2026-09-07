@@ -179,7 +179,7 @@
     <!-- Welcome Banner -->
     <div class="welcome-banner">
         <div>
-            <h1 class="welcome-title">Welcome back, {{ request.user.first_name|default:request.user.username|title }}!</h1>
+            <h1 class="welcome-title">Welcome back, {{ display_name|title }}!</h1>
             <p class="welcome-subtitle">Here's a quick overview of your assigned hardware and recent requests.</p>
         </div>
         <div>
@@ -263,7 +263,7 @@
                                         </div>
                                     {% endif %}
                                     <div>
-                                        <div class="fw-bold text-slate-800" style="color: #0f172a;">{{ assignment.asset.name }}</div>
+                                        <div class="fw-bold text-slate-800" style="color: #0f172a;">{{ assignment.asset.name|default:assignment.asset.asset_type }}</div>
                                         <div class="text-muted small fw-medium">{{ assignment.asset.asset_type }}</div>
                                     </div>
                                 </td>
@@ -276,7 +276,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="fw-bold" style="color: #334155;">{{ assignment.assigned_at|date:"d M, Y" }}</span>
+                                    <span class="fw-bold" style="color: #334155;">{{ assignment.assigned_date|default:assignment.assigned_at|date:"d M, Y" }}</span>
                                 </td>
                             </tr>
                             {% empty %}
@@ -415,7 +415,7 @@
     <div class="mockup-header">
         <div>
             <h1 class="mockup-header-title">{% if is_manager %}Manager Dashboard{% else %}Command Center{% endif %}</h1>
-            <div class="mockup-header-sub">Welcome back, {{ request.user.first_name|default:request.user.username }}! 👋</div>
+            <div class="mockup-header-sub">Welcome back, {{ display_name }}! 👋</div>
         </div>
         <div class="d-flex align-items-center gap-3">
             <div class="mockup-search">
@@ -516,7 +516,7 @@
             <div class="mockup-card" style="height: auto;">
                 <div class="mockup-panel-title">
                     <span>Branch Distribution</span>
-                    <a href="#" class="mockup-link">View All</a>
+                    <a href="{% url 'assigned_employees' %}" class="mockup-link">View All</a>
                 </div>
                 <div>
                     {% for b in branch_counts %}
@@ -727,8 +727,6 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="admin-header">
         <h2>Welcome back, Admin! 👋</h2>
         <div class="d-flex gap-2">
-            <button class="date-btn"><i class="bi bi-calendar"></i> 01 May 2024 - 31 May 2024 <i class="bi bi-chevron-down"></i></button>
-            <button class="export-btn"><i class="bi bi-download"></i> Export Report</button>
         </div>
     </div>
 
@@ -802,7 +800,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="panel-card">
             <div class="panel-header">
                 <span class="panel-title">Assets Overview</span>
-                <a href="#" class="view-btn">View Details</a>
+                <a href="{% url 'view_assets' %}" class="view-btn">View Details</a>
             </div>
             <div style="position:relative; height: 200px;">
                 <canvas id="mockupDoughnut"></canvas>
@@ -817,7 +815,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="panel-card">
             <div class="panel-header">
                 <span class="panel-title">Requests Overview</span>
-                <a href="#" class="view-btn">View Details</a>
+                <a href="{% url 'procurement_list' %}" class="view-btn">View Details</a>
             </div>
             <div style="position:relative; height: 200px;">
                 <canvas id="mockupLineChart"></canvas>
@@ -828,7 +826,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="panel-card">
             <div class="panel-header">
                 <span class="panel-title">Assets by Category</span>
-                <a href="#" class="view-btn" style="background:transparent; border:none;">View All</a>
+                <a href="{% url 'view_assets' %}" class="view-btn" style="background:transparent; border:none;">View All</a>
             </div>
             <div class="d-flex flex-column h-100 justify-content-between pb-2" style="overflow-y: auto; max-height: 200px; padding-right: 5px;">
                 {% for stat in category_stats %}
@@ -856,7 +854,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="panel-card">
             <div class="panel-header mb-2">
                 <span class="panel-title">Recent Requests</span>
-                <a href="#" class="view-btn" style="background:transparent; border:none;">View All</a>
+                <a href="{% url 'procurement_list' %}" class="view-btn" style="background:transparent; border:none;">View All</a>
             </div>
             <table class="table-custom">
                 <thead>
@@ -881,7 +879,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             {% elif r.status == 'Rejected' %}<span class="badge-status bs-rejected">Rejected</span>
                             {% else %}<span class="badge-status bs-pending">Pending</span>{% endif %}
                         </td>
-                        <td><a href="#" style="color:#3b82f6; font-size:0.75rem; font-weight:600; text-decoration:none;">View</a></td>
+                        <td><a href="{% url 'procurement_list' %}" style="color:#3b82f6; font-size:0.75rem; font-weight:600; text-decoration:none;">View</a></td>
                     </tr>
                     {% empty %}
                     <tr><td colspan="6" class="text-center text-muted">No requests found.</td></tr>
@@ -897,7 +895,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="panel-card">
             <div class="panel-header mb-3">
                 <span class="panel-title">Branch Wise Assets</span>
-                <a href="#" class="view-btn" style="background:transparent; border:none;">View All</a>
+                <a href="{% url 'assigned_employees' %}" class="view-btn" style="background:transparent; border:none;">View All</a>
             </div>
             <div style="overflow-y: auto; max-height: 280px; padding-right: 5px;">
                 {% for b in branch_counts %}
@@ -932,7 +930,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <a href="{% url 'add_asset' %}" class="btn-quick bq-blue">
                     <i class="bi bi-box-seam"></i><span>Add Asset</span>
                 </a>
-                <a href="{% url 'add_user' %}" class="btn-quick bq-green">
+                <a href="{% url 'view_users' %}" class="btn-quick bq-green">
                     <i class="bi bi-person-plus"></i><span>Add User</span>
                 </a>
                 <a href="{% url 'create_procurement' %}" class="btn-quick bq-orange">

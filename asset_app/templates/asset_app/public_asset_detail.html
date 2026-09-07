@@ -9,15 +9,29 @@
 <body class="bg-light">
 <div class="container mt-4">
 
-  <!-- Asset Info Card -->
+    <!-- Asset Info Card -->
   <div class="card shadow-lg p-4 rounded-4 border-0 mb-4">
     <h1 class="text-center mb-4 fw-bold text-primary">🖥️ Asset Details</h1>
 
     <div class="row align-items-center">
-      <!-- Left Side - Asset Info -->
+      <!-- Left Side - Asset Image & Info -->
       <div class="col-md-6">
+        {% if asset.image %}
+        <div class="text-center mb-4">
+          <img src="{{ asset.image.url }}" alt="{{ asset.asset_id }}"
+               class="img-fluid rounded-4 shadow-sm"
+               style="max-height:280px; object-fit:contain;">
+        </div>
+        {% else %}
+        <div class="text-center mb-4">
+          <div class="bg-secondary bg-opacity-10 rounded-4 d-inline-flex align-items-center justify-content-center"
+               style="width:200px; height:200px;">
+            <i class="bi bi-display text-muted" style="font-size:4rem;"></i>
+          </div>
+        </div>
+        {% endif %}
         <p><strong>Asset ID:</strong> {{ asset.asset_id }}</p>
-        <p><strong>Type:</strong> {{ asset.asset_type }}</p>
+        <p><strong>Type:</strong> {{ asset.asset_type }}{% if asset.name %} <span class="text-muted">— {{ asset.name }}</span>{% endif %}</p>
         <p><strong>Company:</strong> {{ asset.company_name }}</p>
         <p><strong>Series Number:</strong> {{ asset.series_number }}</p>
         <p><strong>Model:</strong> {{ asset.model }}</p>
@@ -56,8 +70,8 @@
         {% for a in asset.assignment_set.all %}
           <li class="list-group-item d-flex justify-content-between align-items-center rounded-3 mb-2 shadow-sm">
             <div>
-              <strong class="text-dark">{{ a.employee_name }}</strong><br>
-              <small class="text-muted">{{ a.department }}</small>
+              <strong class="text-dark">{{ a.employee.name }}</strong><br>
+              <small class="text-muted">{{ a.employee.department }}</small>
             </div>
             <span class="badge 
               {% if a.status == 'In Use' %} bg-info text-dark

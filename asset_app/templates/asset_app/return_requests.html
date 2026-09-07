@@ -1,0 +1,329 @@
+{% extends 'asset_app/base.html' %}
+
+{% block title %}Return Requests{% endblock %}
+
+{% block content %}
+<style>
+    .initials-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #07518a, #0d6efd);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+    }
+
+    .stat-card {
+        border: 0;
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(13, 30, 49, 0.06);
+        overflow: hidden;
+        position: relative;
+    }
+    .stat-card .stat-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+    }
+    .stat-card .stat-label {
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #6c757d;
+    }
+    .stat-card .stat-value {
+        font-size: 1.9rem;
+        font-weight: 800;
+        line-height: 1.1;
+        color: #0f172a;
+    }
+
+    .rr-table thead th {
+        background-color: #f6f8fb;
+        color: #64748b;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        border-bottom: 2px solid #e9eef4;
+        white-space: nowrap;
+        padding: 0.9rem 1.1rem;
+    }
+    .rr-table tbody td {
+        padding: 1rem 1.1rem;
+        border-bottom: 1px solid #eef2f6;
+        vertical-align: middle;
+    }
+    .rr-table tbody tr:hover {
+        background-color: #f8fafc;
+    }
+
+    .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        border-radius: 999px;
+        padding: 0.3rem 0.8rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+    }
+    .pill-pending { background: #fff0eb; color: #d0451c; }
+    .pill-accepted { background: #e7f6ec; color: #16794a; }
+    .pill-rejected { background: #fdeeee; color: #c03636; }
+    .pill-type {
+        background: #eef3fa;
+        color: #455a75;
+        font-size: 0.68rem;
+        font-weight: 600;
+        padding: 0.15rem 0.55rem;
+    }
+
+    .btn-accept {
+        background: linear-gradient(135deg, #18a05c, #149c57);
+        border: none;
+        color: #fff;
+        border-radius: 10px;
+    }
+    .btn-accept:hover { background: #128a4e; color: #fff; }
+    .btn-reject {
+        border: 1px solid #e6c3c3;
+        color: #c03636;
+        background: #fff;
+        border-radius: 10px;
+    }
+    .btn-reject:hover { background: #fbecea; border-color: #e0abab; color: #a82e2e; }
+
+    .section-card {
+        border: 0;
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(13, 30, 49, 0.06);
+    }
+</style>
+
+<div class="container-fluid page-wrapper">
+
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-4">
+        <div>
+            <h1 class="display-6 fw-bold mb-1" style="color: var(--primary-blue);">
+                <i class="bi bi-arrow-return-left me-2"></i>Return Requests
+            </h1>
+            <p class="text-muted mb-0">Approve employee returns — accepted assets go back into stock.</p>
+        </div>
+        <div class="mt-3 mt-md-0">
+            <a href="{% url 'view_assets' %}" class="btn btn-primary-custom btn-action shadow-sm">
+                <i class="bi bi-box-seam me-1"></i>View Assets
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="row g-3 g-lg-4 mb-4">
+        <div class="col-6 col-lg-4">
+            <div class="card stat-card h-100">
+                <div class="card-body d-flex gap-3 align-items-center p-3 p-lg-4">
+                    <div class="stat-icon" style="background:#fff0eb;color:#d0451c;">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Awaiting</div>
+                        <div class="stat-value">{{ pending_count }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-4">
+            <div class="card stat-card h-100">
+                <div class="card-body d-flex gap-3 align-items-center p-3 p-lg-4">
+                    <div class="stat-icon" style="background:#e7f6ec;color:#16794a;">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Accepted</div>
+                        <div class="stat-value">{{ accepted_count }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-4">
+            <div class="card stat-card h-100">
+                <div class="card-body d-flex gap-3 align-items-center p-3 p-lg-4">
+                    <div class="stat-icon" style="background:#fdeeee;color:#c03636;">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Rejected</div>
+                        <div class="stat-value">{{ rejected_count }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Awaiting Approval -->
+    <div class="card section-card mb-4">
+        <div class="card-header bg-white border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 p-4 pb-2">
+            <div>
+                <h5 class="fw-bold mb-1 text-dark d-flex align-items-center">
+                    <span class="me-2" style="width:8px;height:8px;border-radius:50%;background:#e5533d;display:inline-block;"></span>
+                    Awaiting Approval
+                    {% if pending_returns %}<span class="badge bg-danger rounded-pill ms-2">{{ pending_returns|length }}</span>{% endif %}
+                </h5>
+                <p class="text-muted small mb-0">Employees requested to return these assets.</p>
+            </div>
+            {% if pending_returns %}
+            <input type="text" id="rr-search" class="form-control form-control-sm" style="max-width:260px;"
+                placeholder="Search employee or asset...">
+            {% endif %}
+        </div>
+        <div class="card-body p-4 pt-3">
+            {% if pending_returns %}
+            <div class="table-responsive">
+                <table class="table rr-table align-middle mb-0" id="rr-pending-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Asset</th>
+                            <th>Reason</th>
+                            <th>Requested</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rq in pending_returns %}
+                        <tr data-row="{{ rq.employee.name|lower }} {{ rq.employee.employee_id|lower }} {{ rq.asset.asset_id|lower }}">
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="initials-avatar">{{ rq.employee.name|make_list|first|upper }}</div>
+                                    <div>
+                                        <div class="fw-bold text-dark">{{ rq.employee.name }}</div>
+                                        <div class="text-muted small" style="font-size:0.78rem;">{{ rq.employee.employee_id }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ rq.asset.asset_id }}</div>
+                                <span class="pill pill-type mt-1 d-inline-block">{{ rq.asset.asset_type }}</span>
+                            </td>
+                            <td class="text-muted small" style="max-width: 280px;">{{ rq.reason }}</td>
+                            <td class="text-muted small">{{ rq.created_at|date:"d M Y" }}<div class="text-muted" style="font-size:0.78rem;">{{ rq.created_at|date:"H:i" }}</div></td>
+                            <td class="text-end">
+                                <form method="POST" action="{% url 'process_return' rq.pk %}"
+                                    class="d-flex justify-content-end gap-2">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{% url 'return_requests' %}">
+                                    <button type="submit" name="action" value="reject"
+                                        class="btn btn-reject btn-sm px-3 py-2"
+                                        onclick="return confirm('Decline return of {{ rq.asset.asset_id }} from {{ rq.employee.name }}? The asset stays with them.');">
+                                        <i class="bi bi-x-lg me-1"></i>Reject
+                                    </button>
+                                    <button type="submit" name="action" value="accept"
+                                        class="btn btn-accept btn-sm px-3 py-2"
+                                        onclick="return confirm('Accept return of {{ rq.asset.asset_id }} from {{ rq.employee.name }}? The asset will become available.');">
+                                        <i class="bi bi-check-lg me-1"></i>Accept
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="stat-icon mx-auto mb-3" style="background:#e7f6ec;color:#16794a;width:64px;height:64px;font-size:1.7rem;">
+                    <i class="bi bi-check2-circle"></i>
+                </div>
+                <p class="fw-bold text-dark mb-1">All caught up</p>
+                <p class="text-muted small mb-0">No return requests waiting for approval.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Processed history -->
+    <div class="card section-card">
+        <div class="card-header bg-white border-0 p-4 pb-2">
+            <h5 class="fw-bold mb-1 text-dark d-flex align-items-center">
+                <span class="me-2" style="width:8px;height:8px;border-radius:50%;background:#6c757d;display:inline-block;"></span>
+                Processed Requests
+            </h5>
+            <p class="text-muted small mb-0">Recent accepted / rejected requests.</p>
+        </div>
+        <div class="card-body p-4 pt-3">
+            {% if processed_returns %}
+            <div class="table-responsive">
+                <table class="table rr-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Asset</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th>Processed By</th>
+                            <th>Processed At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rq in processed_returns %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="initials-avatar" style="background:linear-gradient(135deg,#7d8597,#9aa3b5);">{{ rq.employee.name|make_list|first|upper }}</div>
+                                    <div>
+                                        <div class="fw-bold text-dark">{{ rq.employee.name }}</div>
+                                        <div class="text-muted small" style="font-size:0.78rem;">{{ rq.employee.employee_id }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ rq.asset.asset_id }}</div>
+                                <span class="pill pill-type mt-1 d-inline-block">{{ rq.asset.asset_type }}</span>
+                            </td>
+                            <td class="text-muted small" style="max-width: 240px;">{{ rq.reason|truncatechars:60 }}</td>
+                            <td>
+                                {% if rq.status == 'Accepted' %}
+                                <span class="pill pill-accepted"><i class="bi bi-check-circle-fill" style="font-size:0.7rem;"></i>Accepted</span>
+                                {% elif rq.status == 'Rejected' %}
+                                <span class="pill pill-rejected"><i class="bi bi-x-circle-fill" style="font-size:0.7rem;"></i>Rejected</span>
+                                {% else %}
+                                <span class="pill pill-pending">{{ rq.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted small">{{ rq.processed_by.username|default:"—" }}</td>
+                            <td class="text-muted small">{{ rq.processed_at|date:"d M Y, H:i"|default:"—" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted small mb-0 py-3">No processed requests yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    const rrSearch = document.getElementById('rr-search');
+    if (rrSearch) {
+        rrSearch.addEventListener('input', () => {
+            const q = rrSearch.value.trim().toLowerCase();
+            document.querySelectorAll('#rr-pending-table tbody tr').forEach(tr => {
+                tr.style.display = tr.dataset.row.includes(q) ? '' : 'none';
+            });
+        });
+    }
+</script>
+{% endblock %}

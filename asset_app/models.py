@@ -3,9 +3,10 @@ from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 import qrcode
 import base64
+import socket
 from io import BytesIO
 from django.urls import reverse
-from django.contrib.auth.models import User  # ✅ Add this line
+from django.contrib.auth.models import User
 
 # --------------------------------------------------------------------
 # Custom User Model
@@ -42,12 +43,12 @@ class Asset(models.Model):
     ASSET_STATUS = [
         ('Available', 'Available'),
         ('In Use', 'In Use'),
-       
+        ('Temporary', 'Temporary'),
     ]
 
     asset_id = models.CharField(max_length=20, unique=True, blank=True)
     asset_type = models.CharField(max_length=50, default='Laptop')
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, blank=True, default='')
     company_name = models.CharField(max_length=100, blank=True)
     series_number = models.CharField(max_length=100, blank=True)
     model = models.CharField(max_length=100, blank=True)
@@ -70,21 +71,25 @@ class Asset(models.Model):
         # Auto-generate unique asset_id
         if not self.asset_id:
             prefix_map = {'Laptop': 'LP', 'Desktop': 'DT', 'Printer': 'PR'}
-            last_asset = Asset.objects.filter(asset_type=self.asset_type).order_by('-id').first()
+            prefix = prefix_map.get(self.asset_type, 'AS')
+            used = set(
+                Asset.objects.filter(asset_id__startswith=f"{prefix}-")
+                .values_list('asset_id', flat=True)
+            )
             next_number = 1
-            if last_asset and last_asset.asset_id:
-                try:
-                    last_num = int(last_asset.asset_id.split('-')[-1])
-                    next_number = last_num + 1
-                except:
-                    pass
-            self.asset_id = f"{prefix_map.get(self.asset_type, 'AS')}-{next_number:04d}"
+            while f"{prefix}-{next_number:04d}" in used:
+                next_number += 1
+            self.asset_id = f"{prefix}-{next_number:04d}"
 
         super().save(*args, **kwargs)
 
         # Generate QR code for public view
+        from django.conf import settings
         qr_url = reverse('public_asset_detail', args=[self.id])
-        qr_full_url = f"http://172.21.7.102:8000{qr_url}"
+        base_url = getattr(settings, 'SITE_BASE_URL', None)
+        if not base_url:
+            base_url = f"http://{socket.gethostname()}:8000"
+        qr_full_url = f"{base_url}{qr_url}"
 
         qr = qrcode.QRCode(box_size=10, border=4)
         qr.add_data(qr_full_url)
@@ -201,13 +206,8 @@ class ProcurementRequestWorkflow(models.Model):
         ('Pending Manager Approval', 'Pending Manager Approval'),
         ('Rejected by Manager', 'Rejected by Manager'),
 
-        ('Pending Purchase Approval', 'Pending Purchase Approval'),
-        ('Rejected by Purchase Manager', 'Rejected by Purchase Manager'),
-
-        ('Invoice Pending', 'Invoice Pending'),
-
-        ('Payment Pending', 'Payment Pending'),
-        ('Rejected by Accounts Manager', 'Rejected by Accounts Manager'),
+        ('Pending Admin Approval', 'Pending Admin Approval'),
+        ('Rejected by Admin', 'Rejected by Admin'),
 
         ('Completed', 'Completed'),
     ]
@@ -284,6 +284,7 @@ class Assignment(models.Model):
     STATUS_CHOICES = [
         ('In Use', 'In Use'),
         ('Returned', 'Returned'),
+        ('Temporary', 'Temporary Use'),
     ]
 
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
@@ -294,12 +295,67 @@ class Assignment(models.Model):
         default='In Use'
     )
     assigned_at = models.DateTimeField(auto_now_add=True)
+    assigned_date = models.DateField(blank=True, null=True)
     
     # Digital Signature Fields
     signature = models.TextField(blank=True, null=True)
     is_signed = models.BooleanField(default=False)
     agreement_date = models.DateTimeField(null=True, blank=True)
 
+    # Return Fields
+    return_reason = models.TextField(blank=True, null=True)
+    returned_at = models.DateTimeField(null=True, blank=True)
+
     def __str__(self):
         return f"{self.employee.name} - {self.asset.asset_id}"
+
+
+class ReturnRequest(models.Model):
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Accepted', 'Accepted'),
+        ('Rejected', 'Rejected'),
+    ]
+
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    reason = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    processed_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+    processed_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Return {self.asset.asset_id} by {self.employee.name} ({self.status})"
+
+
+# --------------------------------------------------------------------
+# Notification Model
+# --------------------------------------------------------------------
+class Notification(models.Model):
+    NOTIFICATION_TYPES = [
+        ('asset_request', 'Asset Request'),
+        ('ticket', 'Ticket'),
+        ('procurement', 'Procurement Request'),
+        ('return_request', 'Return Request'),
+    ]
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications'
+    )
+    notification_type = models.CharField(
+        max_length=50, choices=NOTIFICATION_TYPES, default='asset_request'
+    )
+    title = models.CharField(max_length=255)
+    message = models.TextField(blank=True)
+    link = models.CharField(max_length=255, blank=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.recipient} - {self.title}"
 

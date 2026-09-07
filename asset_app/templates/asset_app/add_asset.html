@@ -124,6 +124,22 @@
                     <form id="assetForm" method="POST" enctype="multipart/form-data" novalidate>
                         {% csrf_token %}
 
+                        {% if form.non_field_errors or form.errors %}
+                        <div class="alert alert-danger border-0 rounded-3 shadow-sm py-3" role="alert" id="assetFormErrors">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                <strong class="fw-bold">Please fix the following to save the asset:</strong>
+                            </div>
+                            <ul class="mb-0 ps-3">
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <li>{{ field.label }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
                         <div class="row g-4">
                             <div class="col-md-6 animate__animated animate__fadeInLeft">
                                 <div class="form-floating position-relative">
@@ -140,6 +156,13 @@
                                     <label>Asset Type</label>
                                 </div>
                                 {{ form.other_asset_type }}
+                            </div>
+
+                            <div class="col-md-6 animate__animated animate__fadeInRight">
+                                <div class="form-floating">
+                                    {{ form.name|add_class:"form-control form-control-lg shadow-sm border-0"|attr:"placeholder:Asset Name" }}
+                                    <label>Asset Name</label>
+                                </div>
                             </div>
 
                             <div class="col-md-6 animate__animated animate__fadeInLeft">
