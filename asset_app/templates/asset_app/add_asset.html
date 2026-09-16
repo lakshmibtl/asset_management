@@ -195,8 +195,22 @@
 
                             <div class="col-md-6 animate__animated animate__fadeInLeft">
                                 <div class="form-floating">
+                                    {{ form.ram|add_class:"form-select form-select-lg shadow-sm border-0" }}
+                                    <label>RAM</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 animate__animated animate__fadeInRight">
+                                <div class="form-floating">
+                                    {{ form.storage|add_class:"form-select form-select-lg shadow-sm border-0" }}
+                                    <label>Storage</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 animate__animated animate__fadeInLeft">
+                                <div class="form-floating">
                                     {{ form.purchase_date|add_class:"form-control form-control-lg shadow-sm border-0"|attr:"placeholder:Purchase Date" }}
-                                    <label>Purchase Date</label>
+                                    <label>Purchase / Add Date</label>
                                 </div>
                             </div>
 
@@ -209,8 +223,15 @@
 
                             <div class="col-md-6 animate__animated animate__fadeInLeft">
                                 <div class="form-floating">
-                                    {{ form.warranty|add_class:"form-control form-control-lg shadow-sm border-0"|attr:"placeholder:Warranty" }}
+                                    {{ form.warranty|add_class:"form-select form-select-lg shadow-sm border-0"|attr:"id:id_warranty" }}
                                     <label>Warranty</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 animate__animated animate__fadeInRight">
+                                <div class="form-floating">
+                                    <input type="date" id="warrantyEndDate" class="form-control form-control-lg shadow-sm border-0" readonly>
+                                    <label>Warranty End Date (Auto)</label>
                                 </div>
                             </div>
 
@@ -295,6 +316,42 @@
                 otherAssetTypeInput.style.display = 'block';
             }
         }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const purchaseDateInput = document.getElementById('id_purchase_date');
+        const warrantySelect = document.getElementById('id_warranty');
+        const warrantyEndDate = document.getElementById('warrantyEndDate');
+        const today = new Date().toISOString().split('T')[0];
+        purchaseDateInput.max = today;
+
+        function calculateWarrantyEndDate() {
+            const baseDate = purchaseDateInput.value || today;
+            const years = parseInt(warrantySelect.value, 10);
+            if (!years || isNaN(years)) {
+                warrantyEndDate.value = '';
+                return;
+            }
+            const d = new Date(baseDate + 'T00:00:00');
+            if (isNaN(d.getTime())) {
+                warrantyEndDate.value = '';
+                return;
+            }
+            d.setFullYear(d.getFullYear() + years);
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            warrantyEndDate.value = d.getFullYear() + '-' + mm + '-' + dd;
+        }
+
+        if (warrantySelect) {
+            warrantySelect.addEventListener('change', calculateWarrantyEndDate);
+            warrantySelect.addEventListener('click', calculateWarrantyEndDate);
+        }
+        if (purchaseDateInput) {
+            purchaseDateInput.addEventListener('change', calculateWarrantyEndDate);
+            purchaseDateInput.addEventListener('input', calculateWarrantyEndDate);
+        }
+        calculateWarrantyEndDate();
     });
 </script>
 {% endblock %}

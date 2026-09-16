@@ -9,7 +9,7 @@ from xhtml2pdf import pisa
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.http import HttpResponse, JsonResponse
-from django.urls import reverse
+from django.urls import reverse, resolve
 from django.utils import timezone
 from django.utils.timezone import now
 from django.db.models import Count, Q
@@ -156,11 +156,38 @@ def notifications(request):
     })
 
 
+def _notification_target_missing(nxt):
+    """Return True if the notification link points to a deleted object."""
+    if not (nxt and nxt.startswith('/')):
+        return False
+    try:
+        match = resolve(nxt)
+    except Exception:
+        return False
+    checks = {
+        'ticket_detail': (Ticket, 'pk'),
+        'asset_detail': (Asset, 'pk'),
+        'request_detail': (AssetRequest, 'pk'),
+        'return_requests': (ReturnRequest, None),
+        'view_agreement': (None, None),
+    }
+    if match.url_name not in checks:
+        return False
+    model, fk = checks[match.url_name]
+    if fk is None or model is None:
+        return False
+    return not model.objects.filter(pk=match.kwargs.get(fk)).exists()
+
+
 @login_required
 def mark_notifications_read(request):
+    stale = [n for n in request.user.notifications.all() if _notification_target_missing(n.link)]
+    if stale:
+        Notification.objects.filter(pk__in=[n.pk for n in stale]).delete()
+        messages.info(request, f"Removed {len(stale)} notification(s) pointing to deleted items.")
     request.user.notifications.filter(is_read=False).update(is_read=True)
     nxt = request.GET.get('next', '')
-    if nxt and nxt.startswith('/'):
+    if nxt and nxt.startswith('/') and not _notification_target_missing(nxt):
         return redirect(nxt)
     return redirect('notifications')
 
@@ -169,7 +196,7 @@ def mark_notifications_read(request):
 def mark_notification_read(request, pk):
     Notification.objects.filter(pk=pk, recipient=request.user).update(is_read=True)
     nxt = request.GET.get('next', '')
-    if nxt and nxt.startswith('/'):
+    if nxt and nxt.startswith('/') and not _notification_target_missing(nxt):
         return redirect(nxt)
     return redirect('notifications')
 
@@ -177,6 +204,8 @@ def mark_notification_read(request, pk):
 # ------------------- USERS -------------------
 @login_required(login_url='/login/')
 def view_users(request):
+    from .sync_employees import sync_employees_from_api
+    sync_employees_from_api()
     users = User.objects.all().order_by('-id')
     employees = Employee.objects.all().order_by('name')
     emp_name_map = {e.employee_id: e.name for e in employees}
@@ -375,6 +404,18 @@ def dashboard(request):
     assigned_assets = assets_q.filter(status__in=['Assigned', 'In Use']).count()
     checked_out_assets = assets_q.filter(status__iexact='Checked Out').count()
 
+    # WARRANTY METRICS
+    today_local = timezone.localdate()
+    expiring_soon_warranty = assets_q.filter(
+        warranty_end_date__isnull=False,
+        warranty_end_date__gte=today_local,
+        warranty_end_date__lte=today_local + timezone.timedelta(days=30),
+    ).count()
+    expired_warranty = assets_q.filter(
+        warranty_end_date__isnull=False,
+        warranty_end_date__lt=today_local,
+    ).count()
+
     # MONTHLY METRICS
     added_this_month = assets_q.filter(created_at__gte=this_start, created_at__lt=this_end).count()
     assigned_this_month = assignments_q.filter(assigned_at__gte=this_start, assigned_at__lt=this_end).count()
@@ -528,7 +569,6 @@ def dashboard(request):
 
     import shutil
     from django.contrib.sessions.models import Session
-    from django.utils import timezone
     
     active_sessions = Session.objects.filter(expire_date__gte=timezone.now()).count()
     disk = shutil.disk_usage('/')
@@ -550,6 +590,8 @@ def dashboard(request):
         
         'added_this_month': added_this_month,
         'assigned_this_month': assigned_this_month,
+        'expiring_soon_warranty': expiring_soon_warranty,
+        'expired_warranty': expired_warranty,
         'approved': approved,
         'pending': pending,
         'rejected': rejected,
@@ -657,6 +699,27 @@ def asset_detail(request, pk):
         "current_assignment": current_assignment,
         "asset_history": asset_history,
     })
+
+
+# ------------------- WARRANTY TRACKING -------------------
+@login_required
+def warranty_tracking(request):
+    assets = Asset.objects.exclude(warranty="").exclude(warranty__isnull=True).order_by('warranty_end_date')
+
+    now = timezone.localdate()
+    ref_date = now + timezone.timedelta(days=30)
+
+    expired = [a for a in assets if a.warranty_end_date and a.warranty_end_date < now]
+    expiring = [a for a in assets if a.warranty_end_date and now <= a.warranty_end_date <= ref_date]
+    active = [a for a in assets if a.warranty_end_date and a.warranty_end_date > ref_date]
+
+    context = {
+        'expired': expired,
+        'expiring': expiring,
+        'active': active,
+        'today': now,
+    }
+    return render(request, 'asset_app/warranty_tracking.html', context)
 
 
 # ------------------- ASSIGN ASSET -------------------
@@ -1486,6 +1549,78 @@ def update_ticket_status(request, pk):
     ticket.save()
     messages.success(request, f"Ticket status updated to {ticket.status}.")
     return redirect('view_tickets')
+
+
+# -------------------
+# EMPLOYEE CONFIRM: TICKET IS SOLVED
+# -------------------
+@login_required
+def ticket_confirm_solved(request, pk):
+    ticket = get_object_or_404(Ticket, pk=pk)
+    is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
+    is_owner = ticket.created_by == request.user
+
+    if not (is_admin or is_owner):
+        messages.error(request, "Only the employee who raised the ticket or an admin can confirm it.")
+        return redirect('ticket_detail', pk=ticket.pk)
+
+    if ticket.status.lower() != "resolved":
+        messages.info(request, "This ticket is not awaiting employee confirmation.")
+        return redirect('ticket_detail', pk=ticket.pk)
+
+    ticket.status = "Closed"
+    ticket.save()
+
+    requester = _employee_display_name(
+        request.user if is_owner else ticket.created_by
+    )
+    if is_owner:
+        _notify_admins(
+            'ticket',
+            f"Ticket closed: {ticket.subject}",
+            f"{requester} confirmed the issue is solved.",
+            reverse('ticket_detail', args=[ticket.id]),
+        )
+        messages.success(request, "✅ Confirmed! Ticket is now Closed.")
+    else:
+        messages.success(request, f"✅ Ticket marked as Closed (confirmed by admin for {requester}).")
+    return redirect('ticket_detail', pk=ticket.pk)
+
+
+# -------------------
+# EMPLOYEE REOPEN: TICKET NOT SOLVED
+# -------------------
+@login_required
+def ticket_reopen(request, pk):
+    ticket = get_object_or_404(Ticket, pk=pk)
+    is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
+    is_owner = ticket.created_by == request.user
+
+    if not (is_admin or is_owner):
+        messages.error(request, "Only the employee who raised the ticket or an admin can reopen it.")
+        return redirect('ticket_detail', pk=ticket.pk)
+
+    if ticket.status.lower() != "resolved":
+        messages.info(request, "Only a Resolved ticket can be reopened.")
+        return redirect('ticket_detail', pk=ticket.pk)
+
+    ticket.status = "Pending"
+    ticket.save()
+
+    requester = _employee_display_name(
+        request.user if is_owner else ticket.created_by
+    )
+    if is_owner:
+        _notify_admins(
+            'ticket',
+            f"Ticket reopened: {ticket.subject}",
+            f"{requester} reported the issue is NOT yet solved.",
+            reverse('ticket_detail', args=[ticket.id]),
+        )
+        messages.warning(request, "↩️ Ticket reopened as Pending. The admin team has been notified.")
+    else:
+        messages.warning(request, f"↩️ Ticket reopened as Pending on behalf of {requester}.")
+    return redirect('ticket_detail', pk=ticket.pk)
 
 
 # -------------------

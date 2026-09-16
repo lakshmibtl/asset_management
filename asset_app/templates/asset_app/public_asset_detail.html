@@ -35,6 +35,11 @@
         <p><strong>Company:</strong> {{ asset.company_name }}</p>
         <p><strong>Series Number:</strong> {{ asset.series_number }}</p>
         <p><strong>Model:</strong> {{ asset.model }}</p>
+        <p><strong>RAM:</strong> {{ asset.ram|default:"—" }}</p>
+        <p><strong>Storage:</strong> {{ asset.storage|default:"—" }}</p>
+        <p><strong>Cost:</strong> {% if asset.cost %}Rs {{ asset.cost|floatformat:2 }}{% else %}—{% endif %}</p>
+        <p><strong>Warranty:</strong> {{ asset.warranty_label }}</p>
+        <p><strong>Warranty Ends:</strong> {{ asset.warranty_end_date|default:"—" }}</p>
         <p><strong>Status:</strong>
           <span class="badge 
             {% if asset.status == 'Available' %} bg-success

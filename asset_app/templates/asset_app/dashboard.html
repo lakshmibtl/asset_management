@@ -189,6 +189,29 @@
         </div>
     </div>
 
+    <!-- Warranty Alerts -->
+    {% if request.user.is_staff or request.user.role == 'manager' or request.user.role == 'superadmin' %}
+    {% if expired_warranty or expiring_soon_warranty %}
+    <div class="alert {% if expired_warranty %}alert-danger{% else %}alert-warning{% endif %} border-0 rounded-4 shadow-sm d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-shield-exclamation fs-3"></i>
+            <div>
+                {% if expired_warranty %}
+                <strong>{{ expired_warranty }} asset(s)</strong> have an expired warranty.
+                {% endif %}
+                {% if expired_warranty and expiring_soon_warranty %} &amp; {% endif %}
+                {% if expiring_soon_warranty %}
+                <strong>{{ expiring_soon_warranty }} asset(s)</strong> warranty expiring within 30 days.
+                {% endif %}
+            </div>
+        </div>
+        <a href="{% url 'warranty_tracking' %}" class="btn {% if expired_warranty %}btn-danger{% else %}btn-warning text-dark{% endif %} rounded-pill px-4 fw-bold shadow-sm">
+            <i class="bi bi-shield-check me-1"></i> View Tracking
+        </a>
+    </div>
+    {% endif %}
+    {% endif %}
+
     <!-- Metric Cards -->
     <div class="row g-4 mb-5">
         <div class="col-xl-3 col-md-6">

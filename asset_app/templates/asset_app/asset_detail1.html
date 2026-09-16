@@ -77,6 +77,44 @@
                                 <div>{{ asset.model }}</div>
                             </div>
 
+                            {% if asset.ram %}
+                            <div class="col-md-6 mb-2">
+                                <strong>RAM:</strong>
+                                <div>{{ asset.ram }}</div>
+                            </div>
+                            {% endif %}
+
+                            {% if asset.storage %}
+                            <div class="col-md-6 mb-2">
+                                <strong>Storage:</strong>
+                                <div>{{ asset.storage }}</div>
+                            </div>
+                            {% endif %}
+
+                            <div class="col-md-6 mb-2">
+                                <strong>Cost:</strong>
+                                <div>{% if asset.cost %}Rs {{ asset.cost|floatformat:2 }}{% else %}-{% endif %}</div>
+                            </div>
+
+                            <div class="col-md-6 mb-2">
+                                <strong>Warranty:</strong>
+                                <div>{{ asset.warranty_label }}</div>
+                            </div>
+
+                            <div class="col-md-6 mb-2">
+                                <strong>Warranty Ends:</strong>
+                                <div>
+                                    {{ asset.warranty_end_date|default:"-" }}
+                                    {% if asset.warranty_status == 'Expired' %}
+                                        <span class="badge bg-danger ms-2">Expired</span>
+                                    {% elif asset.warranty_status == 'Expiring Soon' %}
+                                        <span class="badge bg-warning text-dark ms-2">Expiring Soon</span>
+                                    {% elif asset.warranty_status == 'Active' %}
+                                        <span class="badge bg-success ms-2">{{ asset.days_until_warranty_end }} days left</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
                             <div class="col-md-6 mb-2">
                                 <strong>Status:</strong>
                                 <span class="badge 

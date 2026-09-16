@@ -73,9 +73,33 @@ class AssetForm(forms.ModelForm):
         })
     )
 
+    ram = forms.ChoiceField(
+        choices=Asset.RAM_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'form-select form-select-lg rounded-3 shadow-sm'
+        })
+    )
+
+    storage = forms.ChoiceField(
+        choices=Asset.STORAGE_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'form-select form-select-lg rounded-3 shadow-sm'
+        })
+    )
+
+    warranty = forms.ChoiceField(
+        choices=Asset.WARRANTY_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'form-select form-select-lg rounded-3 shadow-sm'
+        })
+    )
+
     class Meta:
         model = Asset
-        fields = ['asset_type', 'name', 'company_name', 'series_number', 'model', 'status', 'purchase_date', 'cost', 'warranty', 'image']
+        fields = ['asset_type', 'name', 'company_name', 'series_number', 'model', 'status', 'ram', 'storage', 'purchase_date', 'cost', 'warranty', 'image']
 
         widgets = {
             'company_name': forms.TextInput(attrs={
@@ -104,10 +128,6 @@ class AssetForm(forms.ModelForm):
             'cost': forms.NumberInput(attrs={
                 'class': 'form-control form-control-lg rounded-3 shadow-sm',
                 'placeholder': 'Enter Cost'
-            }),
-            'warranty': forms.TextInput(attrs={
-                'class': 'form-control form-control-lg rounded-3 shadow-sm',
-                'placeholder': 'Enter Warranty'
             }),
         }
 

@@ -52,6 +52,33 @@
 
             <hr class="my-5">
 
+            {% if ticket.status|lower == 'resolved' %}
+            {% if request.user == ticket.created_by or request.user.is_staff or request.user.role == 'manager' or request.user.role == 'superadmin' %}
+            <!-- Employee Confirmation Panel -->
+            <div class="text-center mb-4 p-4 rounded-4" style="background:#f0fdf4; border:2px solid #86efac;">
+                <h5 class="fw-semibold mb-2 text-success">
+                    <i class="bi bi-patch-check-fill me-2"></i>Confirm Resolution
+                </h5>
+                <p class="text-muted mb-3">Admin has marked this ticket as Resolved. Please confirm whether your issue is actually solved.</p>
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <form method="POST" action="{% url 'ticket_confirm_solved' ticket.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success rounded-pill px-4 py-2 fw-semibold shadow-sm">
+                            <i class="bi bi-check-circle-fill me-1"></i> Yes, Solved
+                        </button>
+                    </form>
+                    <form method="POST" action="{% url 'ticket_reopen' ticket.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger rounded-pill px-4 py-2 fw-semibold shadow-sm"
+                            onclick="return confirm('Reopen this ticket as Pending? Admins will be notified.');">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> No, Not Solved
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+            {% endif %}
+
             {% if request.user.is_staff or request.user.role == 'manager' or request.user.role == 'superadmin' %}
             <!-- Status Update -->
             <div class="text-center">

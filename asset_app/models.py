@@ -7,6 +7,7 @@ import socket
 from io import BytesIO
 from django.urls import reverse
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 # --------------------------------------------------------------------
 # Custom User Model
@@ -46,6 +47,31 @@ class Asset(models.Model):
         ('Temporary', 'Temporary'),
     ]
 
+    RAM_CHOICES = [
+        ('4GB', '4GB'),
+        ('8GB', '8GB'),
+        ('12GB', '12GB'),
+        ('16GB', '16GB'),
+        ('32GB', '32GB'),
+        ('64GB', '64GB'),
+        ('Other', 'Other'),
+    ]
+
+    STORAGE_CHOICES = [
+        ('128GB', '128GB'),
+        ('256GB', '256GB'),
+        ('512GB', '512GB'),
+        ('1TB', '1TB'),
+        ('2TB', '2TB'),
+        ('Other', 'Other'),
+    ]
+
+    WARRANTY_CHOICES = [
+        ('1', '1 Year'),
+        ('2', '2 Years'),
+        ('3', '3 Years'),
+    ]
+
     asset_id = models.CharField(max_length=20, unique=True, blank=True)
     asset_type = models.CharField(max_length=50, default='Laptop')
     name = models.CharField(max_length=100, blank=True, default='')
@@ -53,19 +79,44 @@ class Asset(models.Model):
     series_number = models.CharField(max_length=100, blank=True)
     model = models.CharField(max_length=100, blank=True)
     status = models.CharField(max_length=50, choices=ASSET_STATUS, default='Available')
-    
+
+    ram = models.CharField(max_length=50, choices=RAM_CHOICES, blank=True, null=True)
+    storage = models.CharField(max_length=50, choices=STORAGE_CHOICES, blank=True, null=True)
+
     image = models.ImageField(upload_to='assets/', blank=True, null=True)
     qr_code_base64 = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     purchase_date = models.DateField(blank=True, null=True)
     cost = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    warranty = models.CharField(max_length=100, blank=True, null=True)
+    warranty = models.CharField(max_length=10, choices=WARRANTY_CHOICES, blank=True, null=True)
+    warranty_end_date = models.DateField(blank=True, null=True)
 
 
  
 
     def __str__(self):
         return f"{self.asset_type} - {self.asset_id}"
+
+    @property
+    def warranty_label(self):
+        return dict(self.WARRANTY_CHOICES).get(self.warranty, self.warranty or "-")
+
+    @property
+    def days_until_warranty_end(self):
+        if not self.warranty_end_date:
+            return None
+        return (self.warranty_end_date - timezone.localdate()).days
+
+    @property
+    def warranty_status(self):
+        if not self.warranty_end_date:
+            return 'No Warranty'
+        days = self.days_until_warranty_end
+        if days < 0:
+            return 'Expired'
+        if days <= 30:
+            return 'Expiring Soon'
+        return 'Active'
 
     def save(self, *args, **kwargs):
         # Auto-generate unique asset_id
@@ -80,6 +131,21 @@ class Asset(models.Model):
             while f"{prefix}-{next_number:04d}" in used:
                 next_number += 1
             self.asset_id = f"{prefix}-{next_number:04d}"
+
+        # Auto-calculate warranty end date = add/purchase date + warranty years
+        try:
+            years = int(self.warranty) if self.warranty else 0
+        except (TypeError, ValueError):
+            years = 0
+
+        if years > 0:
+            base_date = self.purchase_date or timezone.localdate()
+            try:
+                self.warranty_end_date = base_date.replace(year=base_date.year + years)
+            except ValueError:  # Feb 29 in a non-leap target year -> leap to Feb 28
+                self.warranty_end_date = base_date.replace(year=base_date.year + years, day=28)
+        else:
+            self.warranty_end_date = None
 
         super().save(*args, **kwargs)
 
@@ -198,8 +264,6 @@ class ProcurementRequestInitial(models.Model):
 # --------------------------------------------------------------------
 # MODEL 2 (Manager → Purchase → Invoice → Payment)
 # --------------------------------------------------------------------
-from django.utils import timezone
-
 class ProcurementRequestWorkflow(models.Model):
 
     STATUS = [

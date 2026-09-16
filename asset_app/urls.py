@@ -34,6 +34,7 @@ urlpatterns = [
 
     # Asset CRUD
     path('add/', views.add_asset, name='add_asset'),
+    path('warranty-tracking/', views.warranty_tracking, name='warranty_tracking'),
     path('view/', views.view_assets, name='view_assets'),
     path('assigned-employees/', views.assigned_employees, name='assigned_employees'),
     path('delete/<int:pk>/', views.delete_asset, name='delete_asset'),
@@ -77,6 +78,8 @@ path('update-request-status/<int:pk>/', views.update_request_status, name='updat
     path('view_tickets/', views.view_tickets, name='view_tickets'),
     path('update_status/<int:pk>/', views.update_ticket_status, name='update_ticket_status'),
     path('ticket/<int:pk>/', views.ticket_detail, name='ticket_detail'),
+    path('ticket/<int:pk>/confirm-solved/', views.ticket_confirm_solved, name='ticket_confirm_solved'),
+    path('ticket/<int:pk>/reopen/', views.ticket_reopen, name='ticket_reopen'),
 
     # View Users
     path('view-users/', views.view_users, name='view_users'),

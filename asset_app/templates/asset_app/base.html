@@ -452,7 +452,7 @@
             class="{% if 'asset_dashboard' in request.resolver_match.url_name %}active{% endif %}">
             <i class="bi bi-grid-1x2-fill"></i><span class="link-text">Dashboard</span>
         </a>
-
+<!--
         {% if request.user.is_staff %}
         <a href="{% url 'add_asset' %}"
             class="{% if 'add_asset' in request.resolver_match.url_name %}active{% endif %}">
@@ -462,12 +462,16 @@
             class="{% if 'assign_asset' in request.resolver_match.url_name %}active{% endif %}">
             <i class="bi bi-person-plus"></i><span class="link-text">Assign Asset</span>
         </a>
-        {% endif %}
+        {% endif %}-->
 
         {% if request.user.is_staff or request.user.role == 'manager' or request.user.role == 'superadmin' %}
         <a href="{% url 'view_assets' %}"
             class="{% if 'view_assets' in request.resolver_match.url_name %}active{% endif %}">
             <i class="bi bi-box-seam"></i><span class="link-text">View Assets</span>
+        </a>
+        <a href="{% url 'warranty_tracking' %}"
+            class="{% if 'warranty_tracking' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="bi bi-shield-check"></i><span class="link-text">Warranty Tracking</span>
         </a>
         <a href="{% url 'assigned_employees' %}"
             class="{% if 'assigned_employees' in request.resolver_match.url_name %}active{% endif %}">
@@ -487,6 +491,11 @@
         <a href="{% url 'view_tickets' %}"
             class="{% if 'view_tickets' in request.resolver_match.url_name %}active{% endif %}">
             <i class="bi bi-ticket-perforated"></i><span class="link-text">View Tickets</span>
+        </a>
+        <a href="{% url 'notifications' %}"
+            class="{% if 'notifications' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="bi bi-bell"></i><span class="link-text">Notifications</span>
+            {% if unread_notifications_count %}<span class="badge rounded-pill return-badge">{{ unread_notifications_count }}</span>{% endif %}
         </a>
         <a href="{% url 'procurement_list' %}"
             class="{% if 'procurement_list' in request.resolver_match.url_name %}active{% endif %}">
