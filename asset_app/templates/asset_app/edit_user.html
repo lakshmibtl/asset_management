@@ -1,0 +1,63 @@
+{% extends 'asset_app/base.html' %}
+{% block content %}
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold m-0">Edit User: {{ edit_user_obj.username }}</h2>
+        <a href="{% url 'view_users' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Users
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible fade show shadow-sm" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm border-0 bg-white mx-auto" style="max-width: 600px;">
+        <div class="card-body p-4">
+            <form method="POST" action="{% url 'edit_user' edit_user_obj.id %}">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Username</label>
+                    <input type="text" name="username" class="form-control" value="{{ edit_user_obj.username }}" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Email Address</label>
+                    <input type="email" name="email" class="form-control" value="{{ edit_user_obj.email }}" required>
+                </div>
+                
+                {% if request.user.role == 'superadmin' %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Role</label>
+                    <select name="role" class="form-select">
+                        {% for value, label in ROLES %}
+                            <option value="{{ value }}" {% if edit_user_obj.role == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Department</label>
+                    <select name="department" class="form-select">
+                        <option value="" {% if not edit_user_obj.department %}selected{% endif %}>Unspecified</option>
+                        {% for dept in DEPARTMENTS %}
+                            <option value="{{ dept }}" {% if edit_user_obj.department == dept %}selected{% endif %}>{{ dept }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary w-100">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

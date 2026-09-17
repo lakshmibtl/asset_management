@@ -53,6 +53,8 @@ urlpatterns = [
     path('request-return/<int:pk>/', views.request_return_asset, name='request_return_asset'),
     path('process-return/<int:pk>/', views.process_return, name='process_return'),
     path('return-requests/', views.return_requests, name='return_requests'),
+    path('return-requests/edit/<int:pk>/', views.edit_return_request, name='edit_return_request'),
+    path('return-requests/delete/<int:pk>/', views.delete_return_request, name='delete_return_request'),
     path('transfer-asset/<int:pk>/', views.transfer_asset, name='transfer_asset'),
     
     # Digital Signature
@@ -87,6 +89,7 @@ path('update-request-status/<int:pk>/', views.update_request_status, name='updat
     # View Users
     path('view-users/', views.view_users, name='view_users'),
     path('delete-user/<int:pk>/', views.delete_user, name='delete_user'),
+    path('edit-user/<int:pk>/', views.edit_user, name='edit_user'),
 
 
 

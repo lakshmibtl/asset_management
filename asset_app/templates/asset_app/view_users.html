@@ -95,7 +95,13 @@
                             {% endif %}
                         </span>
 
-                        {% if request.user.is_staff or request.user.role == 'superadmin' %}
+                        {% if request.user.is_staff or request.user.role == 'admin' or request.user.role == 'superadmin' %}
+                            <a href="{% url 'edit_user' u.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3 mt-1">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </a>
+                        {% endif %}
+                        
+                        {% if request.user.role == 'superadmin' %}
                             {% if u.id != request.user.id %}
                             <a href="{% url 'delete_user' u.id %}" class="btn btn-sm btn-outline-danger rounded-pill px-3 mt-1" onclick="return confirm('Are you sure you want to delete user {{ u.username }}?');">
                                 <i class="bi bi-trash"></i> Delete

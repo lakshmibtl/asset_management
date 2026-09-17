@@ -1,0 +1,62 @@
+{% extends 'asset_app/base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Edit Return Request{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white border-0 pt-4 pb-0">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3 text-primary">
+                            <i class="bi bi-pencil-square fs-3"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-0 fw-bold text-dark">Edit Return Request</h4>
+                            <p class="text-muted small mb-0">Modify details of return request for {{ return_request.asset.asset_id }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Employee</label>
+                            <input type="text" class="form-control" value="{{ return_request.employee.name }} ({{ return_request.employee.employee_id }})" disabled>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Asset</label>
+                            <input type="text" class="form-control" value="{{ return_request.asset.asset_id }} - {{ return_request.asset.asset_type }}" disabled>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Reason</label>
+                            <textarea name="reason" class="form-control" rows="3" required>{{ return_request.reason }}</textarea>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Status</label>
+                            <select name="status" class="form-select" required>
+                                <option value="Pending" {% if return_request.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                <option value="Manager_Approved" {% if return_request.status == 'Manager_Approved' %}selected{% endif %}>Manager Approved</option>
+                                <option value="Admin_Approved" {% if return_request.status == 'Admin_Approved' %}selected{% endif %}>Admin Approved</option>
+                                <option value="Accepted" {% if return_request.status == 'Accepted' %}selected{% endif %}>Accepted</option>
+                                <option value="Rejected" {% if return_request.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                            </select>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <a href="{% url 'return_requests' %}" class="btn btn-light px-4 py-2 fw-semibold border">Cancel</a>
+                            <button type="submit" class="btn btn-primary px-4 py-2 fw-semibold text-white">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

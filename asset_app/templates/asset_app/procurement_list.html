@@ -76,31 +76,42 @@
 
                     <!-- ACTION BUTTONS -->
                     <td class="text-center">
-
-                        {% if user.role == "manager" or user.role == "admin" or user.role == "asset_admin" or user.is_staff or user.is_superuser %}
-                            {% if r.status == "Pending Manager Approval" %}
-                                <a href="{% url 'manager_approve' r.id %}" class="btn btn-success btn-sm action-btn">Approve (To Admin)</a>
-                                <a href="{% url 'manager_reject' r.id %}" class="btn btn-danger btn-sm action-btn">Reject</a>
-                            {% elif r.status == "Pending Admin Approval" %}
-                                {% if user.is_staff or user.is_superuser or user.role == "admin" or user.role == "asset_admin" %}
-                                <a href="{% url 'admin_approve' r.id %}" class="btn btn-success btn-sm action-btn">Approve (To Super Admin)</a>
-                                <a href="{% url 'admin_reject' r.id %}" class="btn btn-danger btn-sm action-btn">Reject</a>
-                                {% endif %}
-                            {% elif r.status == "Pending Super Admin Approval" %}
-                                {% if user.role == "superadmin" %}
-                                <a href="{% url 'superadmin_approve' r.id %}" class="btn btn-success btn-sm action-btn">Final Approve</a>
-                                <a href="{% url 'superadmin_reject' r.id %}" class="btn btn-danger btn-sm action-btn">Reject</a>
+                        <div class="d-flex justify-content-center gap-2 flex-wrap">
+                            {% if user.role == "manager" or user.role == "admin" or user.role == "asset_admin" or user.is_staff or user.is_superuser %}
+                                {% if r.status == "Pending Manager Approval" %}
+                                    <a href="{% url 'manager_approve' r.id %}" class="btn btn-outline-success btn-sm" title="Approve (To Admin)">
+                                        <i class="bi bi-check-lg"></i>
+                                    </a>
+                                    <a href="{% url 'manager_reject' r.id %}" class="btn btn-outline-danger btn-sm" title="Reject">
+                                        <i class="bi bi-x-lg"></i>
+                                    </a>
+                                {% elif r.status == "Pending Admin Approval" %}
+                                    {% if user.is_staff or user.is_superuser or user.role == "admin" or user.role == "asset_admin" %}
+                                    <a href="{% url 'admin_approve' r.id %}" class="btn btn-outline-success btn-sm" title="Approve (To Super Admin)">
+                                        <i class="bi bi-check-lg"></i>
+                                    </a>
+                                    <a href="{% url 'admin_reject' r.id %}" class="btn btn-outline-danger btn-sm" title="Reject">
+                                        <i class="bi bi-x-lg"></i>
+                                    </a>
+                                    {% endif %}
+                                {% elif r.status == "Pending Super Admin Approval" %}
+                                    {% if user.role == "superadmin" %}
+                                    <a href="{% url 'superadmin_approve' r.id %}" class="btn btn-outline-success btn-sm" title="Final Approve">
+                                        <i class="bi bi-check-lg"></i>
+                                    </a>
+                                    <a href="{% url 'superadmin_reject' r.id %}" class="btn btn-outline-danger btn-sm" title="Reject">
+                                        <i class="bi bi-x-lg"></i>
+                                    </a>
+                                    {% endif %}
                                 {% endif %}
                             {% endif %}
-                        {% endif %}
 
-                        {% if user.is_staff or user.is_superuser or user.role == "admin" or user.role == "asset_admin" %}
-                            <a href="{% url 'delete_procurement' r.id %}" class="btn btn-danger btn-sm action-btn mt-1" onclick="return confirm('Are you sure you want to delete this request?');" title="Delete">
-                                <i class="bi bi-trash"></i>
-                            </a>
-                        {% endif %}
-
-
+                            {% if user.is_staff or user.is_superuser or user.role == "admin" or user.role == "asset_admin" %}
+                                <a href="{% url 'delete_procurement' r.id %}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to delete this request?');" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
 

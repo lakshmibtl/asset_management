@@ -216,8 +216,8 @@ def view_users(request):
 
 @login_required(login_url='/login/')
 def delete_user(request, pk):
-    if not (request.user.is_staff or getattr(request.user, 'role', None) == 'superadmin'):
-        messages.error(request, "You do not have permission to delete users.")
+    if getattr(request.user, 'role', None) != 'superadmin':
+        messages.error(request, "Only Super Admin can delete users.")
         return redirect('view_users')
         
     user_to_delete = get_object_or_404(User, pk=pk)
@@ -229,6 +229,45 @@ def delete_user(request, pk):
         messages.success(request, f"User '{username}' deleted successfully.")
         
     return redirect('view_users')
+
+@login_required(login_url='/login/')
+def edit_user(request, pk):
+    if not (request.user.is_staff or getattr(request.user, 'role', None) in ['admin', 'superadmin']):
+        messages.error(request, "You do not have permission to edit users.")
+        return redirect('view_users')
+        
+    user_to_edit = get_object_or_404(User, pk=pk)
+    
+    if request.method == 'POST':
+        user_to_edit.username = request.POST.get('username', user_to_edit.username)
+        user_to_edit.email = request.POST.get('email', user_to_edit.email)
+        
+        # Only allow changing role/department if superadmin, or if it's not a superadmin user being edited by an admin
+        role = request.POST.get('role')
+        department = request.POST.get('department')
+        
+        if role and getattr(request.user, 'role', None) == 'superadmin':
+            user_to_edit.role = role
+        if department:
+            user_to_edit.department = department
+            
+        user_to_edit.save()
+        messages.success(request, f"User '{user_to_edit.username}' updated successfully.")
+        return redirect('view_users')
+        
+    context = {
+        'edit_user_obj': user_to_edit,
+        'ROLES': User.ROLE_CHOICES if hasattr(User, 'ROLE_CHOICES') else [('superadmin', 'Super Admin'), ('admin', 'Admin'), ('manager', 'Manager'), ('user', 'User')],
+        'DEPARTMENTS': [
+            'IT Support',
+            'Network',
+            'Software',
+            'Hardware',
+            'HR',
+            'Finance'
+        ]
+    }
+    return render(request, 'asset_app/edit_user.html', context)
 
 
 @login_required
@@ -1556,8 +1595,21 @@ def update_request_status(request, pk):
 # ------------------- DELETE / PUBLIC -------------------
 @login_required
 def delete_asset(request, pk):
+    is_superadmin = getattr(request.user, 'role', '') == 'superadmin'
+    if not is_superadmin:
+        messages.error(request, "Only Super Admin can delete assets.")
+        return redirect('view_assets')
+        
     asset = get_object_or_404(Asset, pk=pk)
+    
+    if request.method == 'POST':
+        asset.delete()
+        messages.success(request, f"Asset {asset.asset_id} deleted successfully.")
+        return redirect('view_assets')
+        
+    # If not POST (e.g. from the old <a> tag), delete anyway for backward compatibility, but ideally should be POST
     asset.delete()
+    messages.success(request, f"Asset {asset.asset_id} deleted successfully.")
     return redirect('view_assets')
 
 
@@ -2228,7 +2280,7 @@ def submit_work_report(request):
         messages.success(request, 'Work report submitted successfully!')
         return redirect('my_work_reports')
         
-    return render(request, 'asset_app/submit_work_report.html')
+    return redirect('my_work_reports')
 
 
 @login_required
@@ -2280,3 +2332,241 @@ def download_manual_reports(request):
         ])
         
     return response
+
+@login_required
+def edit_return_request(request, pk):
+    is_superadmin = getattr(request.user, 'role', '') == 'superadmin'
+    if not is_superadmin:
+        messages.error(request, "Only Super Admin can edit return requests.")
+        return redirect('return_requests')
+        
+    from .models import ReturnRequest
+    return_request = get_object_or_404(ReturnRequest, pk=pk)
+    
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        reason = request.POST.get('reason')
+        
+        if status:
+            return_request.status = status
+    return response
+
+# ------------------- PUBLIC ASSET DETAIdef asset_detail1(request, pk):-------
+def asset_detail1(request, pk):
+    asset = get_object_or_404(Asset, pk=pk)
+    asset_history = Assignment.objects.filter(asset=asset).select_related("employee").order_by("-id")
+
+    return render(request, "asset_app/asset_detail1.html", {
+        "asset": asset,
+        "asset_history": asset_history,
+    })
+@login_required
+def activity_log(request):
+    is_superadmin = getattr(request.user, 'role', '') == 'superadmin'
+    if not is_superadmin:
+        messages.error(request, "Access denied. Only Super Admin can view the Activity Log.")
+        return redirect('asset_dashboard')
+        
+    from .models import Assignment, ReturnRequest, ProcurementRequestWorkflow, Notification
+    
+    # Gather recent activities
+    recent_assignments = Assignment.objects.all().select_related('asset', 'employee', 'assigned_by').order_by('-assigned_at')[:30]
+    recent_returns = ReturnRequest.objects.exclude(status='Pending').select_related('asset', 'employee', 'processed_by').order_by('-processed_at')[:30]
+    recent_procurements = ProcurementRequestWorkflow.objects.exclude(status='Pending Manager Approval').select_related('requested_by').order_by('-created_at')[:30]
+    recent_reports = Notification.objects.filter(notification_type='work_report').select_related('recipient').order_by('-created_at')[:30]
+    
+    # Combine and sort them
+    activities = []
+    
+    for a in recent_assignments:
+        activities.append({
+            'type': 'Assignment',
+            'icon': 'bi-person-plus',
+            'color': '#0d6efd',
+            'bg': 'rgba(13,110,253,.12)',
+            'title': f"Asset Assigned: {a.asset.asset_id}",
+            'message': f"Assigned to {a.employee.name} by {a.assigned_by.username if a.assigned_by else 'System'}.",
+            'timestamp': a.assigned_at
+        })
+        
+    for r in recent_returns:
+        if r.processed_at:
+            activities.append({
+                'type': 'Return',
+                'icon': 'bi-arrow-return-left',
+                'color': '#198754',
+                'bg': 'rgba(25,135,84,.12)',
+                'title': f"Return {r.get_status_display()}: {r.asset.asset_id}",
+                'message': f"Processed by {r.processed_by.username if r.processed_by else 'System'}.",
+                'timestamp': r.processed_at
+            })
+            
+    for p in recent_procurements:
+        timestamp = p.completed_date if p.completed_date else p.created_at
+        activities.append({
+            'type': 'Procurement',
+            'icon': 'bi-cart-check',
+            'color': '#6f42c1',
+            'bg': 'rgba(111,66,193,.12)',
+            'title': f"Procurement: {p.asset_type}",
+            'message': f"Status: {p.status}. Requested by {p.requested_by.username}.",
+            'timestamp': timestamp
+        })
+        
+    for w in recent_reports:
+        activities.append({
+            'type': 'Work Report',
+            'icon': 'bi-journal-check',
+            'color': '#0dcaf0',
+            'bg': 'rgba(13,202,240,.12)',
+            'title': f"Work Report: {w.title}",
+            'message': f"Submitted by {w.recipient.username if w.recipient else 'Unknown'}.",
+            'timestamp': w.created_at
+        })
+        
+    activities.sort(key=lambda x: x['timestamp'], reverse=True)
+    
+    return render(request, 'asset_app/activity_log.html', {
+        'activities': activities[:50]
+    })
+
+
+def is_network_member(user):
+    from asset_app.models import Employee
+        
+    # Check if they are in the Network Support group
+    if user.groups.filter(name__icontains='Network').exists():
+        return True
+        
+    # Check if their employee record is in the Network department
+    if Employee.objects.filter(employee_id=user.username, department__icontains='Network').exists():
+        return True
+        
+    # Everyone else (including superadmin, admin, manager, user) gets denied
+    return False
+
+@login_required
+def submit_work_report(request):
+    if not is_network_member(request.user):
+        messages.error(request, "Access Denied: Only Network Department can submit work reports.")
+        return redirect('asset_dashboard')
+        
+    if request.method == 'POST':
+        title = request.POST.get('title', 'Work Report')
+        description = request.POST.get('description', '')
+        
+        file_url = ""
+        if 'excel_file' in request.FILES:
+            from django.core.files.storage import default_storage
+            excel_file = request.FILES['excel_file']
+            file_name = default_storage.save(f"work_reports/{excel_file.name}", excel_file)
+            file_url = default_storage.url(file_name)
+        
+        # Save as a Notification to avoid DB migration errors
+        from .models import Notification
+        Notification.objects.create(
+            recipient=request.user,
+            notification_type='work_report',
+            title=title,
+            message=description,
+            link=file_url,
+            is_read=True  # Mark true so it doesn't clutter their real notifications
+        )
+        messages.success(request, 'Work report submitted successfully!')
+        return redirect('my_work_reports')
+        
+    return redirect('my_work_reports')
+
+
+@login_required
+def my_work_reports(request):
+    if not is_network_member(request.user):
+        messages.error(request, "Access Denied: Only Network Department can view work reports.")
+        return redirect('asset_dashboard')
+        
+    from .models import Notification
+    
+    # Superadmins can see all reports, others see their own
+    if request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin'):
+        reports = Notification.objects.filter(notification_type='work_report').order_by('-created_at')
+    else:
+        reports = Notification.objects.filter(
+            recipient=request.user,
+            notification_type='work_report'
+        ).order_by('-created_at')
+    
+    return render(request, 'asset_app/my_work_reports.html', {'reports': reports})
+
+@login_required
+def download_manual_reports(request):
+    if not is_network_member(request.user):
+        messages.error(request, "Access Denied.")
+        return redirect('asset_dashboard')
+        
+    import csv
+    from django.http import HttpResponse
+    from .models import Notification
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="manual_work_reports.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['Date', 'Submitted By', 'Title', 'Description'])
+    
+    if request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin'):
+        reports = Notification.objects.filter(notification_type='work_report').order_by('-created_at')
+    else:
+        reports = Notification.objects.filter(recipient=request.user, notification_type='work_report').order_by('-created_at')
+        
+    for report in reports:
+        writer.writerow([
+            report.created_at.strftime("%Y-%m-%d %H:%M"),
+            report.recipient.username if report.recipient else 'Unknown',
+            report.title,
+            report.message
+        ])
+        
+    return response
+
+@login_required
+def edit_return_request(request, pk):
+    is_superadmin = getattr(request.user, 'role', '') == 'superadmin'
+    if not is_superadmin:
+        messages.error(request, "Only Super Admin can edit return requests.")
+        return redirect('return_requests')
+        
+    from .models import ReturnRequest
+    return_request = get_object_or_404(ReturnRequest, pk=pk)
+    
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        reason = request.POST.get('reason')
+        
+        if status:
+            return_request.status = status
+        if reason:
+            return_request.reason = reason
+            
+        return_request.save()
+        messages.success(request, f"Return request for {return_request.asset.asset_id} updated successfully.")
+        return redirect('return_requests')
+        
+    return redirect('return_requests')
+
+@login_required
+def delete_return_request(request, pk):
+    is_superadmin = getattr(request.user, 'role', '') == 'superadmin'
+    if not is_superadmin:
+        messages.error(request, "Only Super Admin can delete return requests.")
+        return redirect('return_requests')
+        
+    from .models import ReturnRequest
+    return_request = get_object_or_404(ReturnRequest, pk=pk)
+    
+    if request.method == 'POST':
+        asset_id = return_request.asset.asset_id
+        return_request.delete()
+        messages.success(request, f"Return request for {asset_id} deleted successfully.")
+        return redirect('return_requests')
+        
+    return redirect('return_requests')

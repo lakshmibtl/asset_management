@@ -307,6 +307,9 @@
                             <th>Status</th>
                             <th>Processed By</th>
                             <th>Processed At</th>
+                            {% if request.user.role == 'superadmin' %}
+                            <th class="text-end">Action</th>
+                            {% endif %}
                         </tr>
                     </thead>
                     <tbody>
@@ -337,6 +340,21 @@
                             </td>
                             <td class="text-muted small">{{ rq.processed_by_name|default:rq.processed_by.username|default:"—" }}</td>
                             <td class="text-muted small">{{ rq.processed_at|date:"d M Y, H:i"|default:"—" }}</td>
+                            {% if request.user.role == 'superadmin' %}
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="offcanvas" data-bs-target="#editReturnOffcanvas{{ rq.pk }}" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <form method="POST" action="{% url 'delete_return_request' rq.pk %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this return request?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                            {% endif %}
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -348,6 +366,51 @@
         </div>
     </div>
 </div>
+
+{% for rq in processed_returns %}
+<div class="offcanvas offcanvas-end" tabindex="-1" id="editReturnOffcanvas{{ rq.pk }}" aria-labelledby="editReturnOffcanvasLabel{{ rq.pk }}">
+  <div class="offcanvas-header border-bottom">
+    <h5 class="offcanvas-title fw-bold" id="editReturnOffcanvasLabel{{ rq.pk }}"><i class="bi bi-pencil-square me-2"></i>Edit Return Request</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <p class="text-muted small mb-4">Modify details of return request for {{ rq.asset.asset_id }}</p>
+    <form method="POST" action="{% url 'edit_return_request' rq.pk %}">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Employee</label>
+            <input type="text" class="form-control" value="{{ rq.employee.name }} ({{ rq.employee.employee_id }})" disabled>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Asset</label>
+            <input type="text" class="form-control" value="{{ rq.asset.asset_id }} - {{ rq.asset.asset_type }}" disabled>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Reason</label>
+            <textarea name="reason" class="form-control" rows="3" required>{{ rq.reason }}</textarea>
+        </div>
+        
+        <div class="mb-4">
+            <label class="form-label fw-semibold">Status</label>
+            <select name="status" class="form-select" required>
+                <option value="Pending" {% if rq.status == 'Pending' %}selected{% endif %}>Pending</option>
+                <option value="Manager_Approved" {% if rq.status == 'Manager_Approved' %}selected{% endif %}>Manager Approved</option>
+                <option value="Admin_Approved" {% if rq.status == 'Admin_Approved' %}selected{% endif %}>Admin Approved</option>
+                <option value="Accepted" {% if rq.status == 'Accepted' %}selected{% endif %}>Accepted</option>
+                <option value="Rejected" {% if rq.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 rounded-pill fw-semibold shadow-sm">
+            <i class="bi bi-check2-circle me-1"></i> Save Changes
+        </button>
+    </form>
+  </div>
+</div>
+{% endfor %}
 
 <script>
     const rrSearch = document.getElementById('rr-search');
