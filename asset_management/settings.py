@@ -101,6 +101,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'asset_app.context_processors.pending_return_count',
                 'asset_app.context_processors.notifications_processor',
+                'asset_app.context_processors.network_member_processor',
             ],
         },
     },

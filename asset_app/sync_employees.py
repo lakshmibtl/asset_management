@@ -51,13 +51,14 @@ def _do_sync():
                 name = str(item_lower.get('firstname') or item_lower.get('name') or item_lower.get('employee_name') or item_lower.get('full_name') or 'Unknown').strip()
                 department = str(item_lower.get('department') or item_lower.get('dept') or item_lower.get('department_name') or 'Unknown').strip()
                 branch = str(item_lower.get('branch') or item_lower.get('location') or '').strip()
+                email = str(item_lower.get('email') or item_lower.get('emailid') or item_lower.get('email_address') or '').strip()
 
                 if not emp_id or emp_id == 'None':
                     continue
 
                 Employee.objects.update_or_create(
                     employee_id=emp_id,
-                    defaults={'name': name, 'department': department, 'branch': branch}
+                    defaults={'name': name, 'department': department, 'branch': branch, 'email': email}
                 )
 
         _last_sync_time = timezone.now()

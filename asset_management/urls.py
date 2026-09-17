@@ -7,23 +7,20 @@ from django.contrib.auth import views as auth_views
 
 from accounts.views import login_user, logout_user
 from accounts.password_views import CustomPasswordResetView
+
 urlpatterns = [
-
     path("", lambda request: redirect("login"), name="home"),
-
     path("admin/", admin.site.urls),
-
     path("login/", login_user, name="login"),
     path("logout/", logout_user, name="logout"),
-path("logout/", logout_user, name="logout_user"),
+    path("logout/", logout_user, name="logout_user"),
+    
     # 🔑 PASSWORD RESET (BUILT-IN)
-     
-path(
-    "password-reset/",
-    CustomPasswordResetView.as_view(),
-    name="password_reset",
-),
-  
+    path(
+        "password-reset/",
+        CustomPasswordResetView.as_view(),
+        name="password_reset",
+    ),
     path(
         "reset/<uidb64>/<token>/",
         auth_views.PasswordResetConfirmView.as_view(
@@ -41,9 +38,6 @@ path(
 
     path("super-admin/", include("superadmin_app.urls")),
     path("asset/", include("asset_app.urls")),
-    path("api/", include("whatsapp_api.urls")),
- 
-
 ]
 
 if settings.DEBUG:

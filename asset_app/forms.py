@@ -99,7 +99,7 @@ class AssetForm(forms.ModelForm):
 
     class Meta:
         model = Asset
-        fields = ['asset_type', 'name', 'company_name', 'series_number', 'model', 'status', 'ram', 'storage', 'purchase_date', 'cost', 'warranty', 'image']
+        fields = ['asset_type', 'company_name', 'series_number', 'model', 'status', 'ram', 'storage', 'purchase_date', 'cost', 'warranty', 'image']
 
         widgets = {
             'company_name': forms.TextInput(attrs={
@@ -107,10 +107,7 @@ class AssetForm(forms.ModelForm):
                 'placeholder': 'Enter Company Name',
                 'required': 'required'   # ✅ browser validation
             }),
-            'name': forms.TextInput(attrs={
-                'class': 'form-control form-control-lg rounded-3 shadow-sm',
-                'placeholder': 'Enter Asset Name'
-            }),
+
             'series_number': forms.TextInput(attrs={
                 'class': 'form-control form-control-lg rounded-3 shadow-sm',
                 'placeholder': 'Enter Series Number',
@@ -288,9 +285,10 @@ class AddUserForm(UserCreationForm):
 class TicketForm(forms.ModelForm):
     class Meta:
         model = Ticket
-        fields = ['asset', 'subject', 'description']
+        fields = ['asset', 'department', 'subject', 'description']
         widgets = {
             'asset': forms.Select(attrs={'class': 'form-select'}),
+            'department': forms.Select(attrs={'class': 'form-select'}),
             'subject': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Enter subject'
@@ -301,6 +299,20 @@ class TicketForm(forms.ModelForm):
                 'rows': 3
             }),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from .models import Employee
+        from django.contrib.auth import get_user_model
+        from django.db.models import Q
+        User = get_user_model()
+        
+        choices = [
+            ('Network', 'Network'),
+        ]
+            
+        self.fields['department'].widget.choices = choices
+        self.fields['department'].choices = choices
 
 
 # ---------------------------------------------------------

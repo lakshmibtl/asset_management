@@ -11,6 +11,13 @@
         <h1 class="fw-bold text-primary m-0">
             <i class="bi bi-laptop me-2"></i>Asset Details
         </h1>
+        <div class="d-flex gap-2">
+            {% if request.user.is_staff or request.user.role == 'superadmin' or request.user.role == 'admin' or request.user.role == 'asset_admin' %}
+            <button class="btn btn-outline-info rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#editHistoryModal">
+                <i class="bi bi-pencil-square me-2"></i> View Edit History
+            </button>
+            {% endif %}
+        </div>
     </div>
 
     <div class="row g-4">
@@ -185,6 +192,11 @@
                             <div class="col-sm-6 mt-1 text-primary fw-medium">
                                 <i class="bi bi-calendar-event me-1"></i> Date: {% if record.assigned_date %}{{ record.assigned_date }}{% else %}{{ record.assigned_at|date:"d M Y, h:i A" }}{% endif %}
                             </div>
+                            {% if record.assigned_by %}
+                            <div class="col-sm-12 mt-2 pt-1 border-top">
+                                <small class="text-muted"><i class="bi bi-person-gear me-1"></i> Assigned by: <strong>{{ record.assigned_by.username }}</strong></small>
+                            </div>
+                            {% endif %}
                         </div>
                         
                         {% if record.is_signed %}
@@ -206,7 +218,65 @@
         {% endif %}
 
     </div>
+    </div>
 </div>
 
+{% if request.user.is_staff or request.user.role == 'admin' or request.user.role == 'superadmin' or request.user.role == 'asset_admin' %}
+<!-- Edit History Modal -->
+<div class="modal fade" id="editHistoryModal" tabindex="-1" aria-labelledby="editHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold text-info" id="editHistoryModalLabel">
+                    <i class="bi bi-pencil-square me-2"></i>Edit Tracking History
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                {% if edit_history %}
+                    <div class="timeline position-relative ps-4" style="border-left: 2px solid #e9ecef;">
+                        {% for record in edit_history %}
+                        <div class="mb-4 position-relative">
+                            <span class="position-absolute top-0 start-0 translate-middle p-2 rounded-circle bg-info" 
+                                style="width: 12px; height: 12px; margin-left: -24px; margin-top: 6px;">
+                            </span>
+                            <div class="p-3 rounded-3 shadow-sm border border-info bg-white">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="fw-bold m-0 text-info">
+                                        <i class="bi bi-pencil-square me-1"></i> Asset Edited
+                                    </h6>
+                                    <span class="badge bg-info text-white rounded-pill px-3 py-1">
+                                        Update
+                                    </span>
+                                </div>
+                                <div class="text-muted small mt-2">
+                                    <div class="mb-1 text-dark fw-medium">
+                                        <i class="bi bi-calendar-event me-1"></i> Date: {{ record.edited_at|date:"d M Y, h:i A" }}
+                                    </div>
+                                    <div class="mb-1">
+                                        <i class="bi bi-person-gear me-1"></i> Edited by: <strong>{{ record.edited_by.username|default:"Unknown Admin" }}</strong>
+                                    </div>
+                                    {% if record.changes %}
+                                    <div class="mt-2 pt-2 border-top border-info-subtle bg-light p-2 rounded">
+                                        <i class="bi bi-list-check me-1 text-info"></i> <strong class="text-dark">Changes:</strong>
+                                        <p class="mb-0 mt-1" style="white-space: pre-wrap; font-family: monospace;">{{ record.changes }}</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-info-circle text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted mt-2">No edits have been recorded for this asset yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 </div>
+{% endif %}
+
 {% endblock %}

@@ -34,6 +34,7 @@ urlpatterns = [
 
     # Asset CRUD
     path('add/', views.add_asset, name='add_asset'),
+    path('<int:pk>/edit/', views.edit_asset, name='edit_asset'),
     path('warranty-tracking/', views.warranty_tracking, name='warranty_tracking'),
     path('view/', views.view_assets, name='view_assets'),
     path('assigned-employees/', views.assigned_employees, name='assigned_employees'),
@@ -74,12 +75,14 @@ urlpatterns = [
 path('update-request-status/<int:pk>/', views.update_request_status, name='update_request_status'),
 
     # Tickets
-    path('raise_ticket/', views.raise_ticket, name='raise_ticket'),
     path('view_tickets/', views.view_tickets, name='view_tickets'),
+    path('download_ticket_report/', views.download_ticket_report, name='download_ticket_report'),
+    path('raise_ticket/', views.raise_ticket, name='raise_ticket'),
     path('update_status/<int:pk>/', views.update_ticket_status, name='update_ticket_status'),
     path('ticket/<int:pk>/', views.ticket_detail, name='ticket_detail'),
     path('ticket/<int:pk>/confirm-solved/', views.ticket_confirm_solved, name='ticket_confirm_solved'),
     path('ticket/<int:pk>/reopen/', views.ticket_reopen, name='ticket_reopen'),
+    path('ticket/<int:pk>/delete/', views.delete_ticket, name='delete_ticket'),
 
     # View Users
     path('view-users/', views.view_users, name='view_users'),
@@ -92,6 +95,8 @@ path('procurement/manager-reject/<int:pk>/', views.manager_reject, name='manager
 
 path('procurement/admin-approve/<int:pk>/', views.admin_approve, name='admin_approve'),
 path('procurement/admin-reject/<int:pk>/', views.admin_reject, name='admin_reject'),
+path('procurement/superadmin-approve/<int:pk>/', views.superadmin_approve, name='superadmin_approve'),
+path('procurement/superadmin-reject/<int:pk>/', views.superadmin_reject, name='superadmin_reject'),
 
     path('procurement/', views.procurement_list, name='procurement_list'),
     path('procurement/create/', views.create_procurement_request, name='create_procurement'),
@@ -104,6 +109,13 @@ path('procurement/admin-reject/<int:pk>/', views.admin_reject, name='admin_rejec
     path('notifications/mark-all-read/', views.mark_notifications_read, name='mark_notifications_read'),
     path('notifications/mark-read/<int:pk>/', views.mark_notification_read, name='mark_notification_read'),
 
+    path('network-support-team/', views.network_support_team, name='network_support_team'),
+    path('support-reports/', views.support_reports, name='support_reports'),
+    path('support-reports/download/', views.download_support_report, name='download_support_report'),
+    path('activity-log/', views.activity_log, name='activity_log'),
+    path('submit-work-report/', views.submit_work_report, name='submit_work_report'),
+    path('my-work-reports/', views.my_work_reports, name='my_work_reports'),
+    path('my-work-reports/download/', views.download_manual_reports, name='download_manual_reports'),
 ]
 
 

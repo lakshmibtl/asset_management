@@ -35,10 +35,29 @@
                 </div>
 
                 <div class="col-md-6">
+                    <label class="text-dark small fw-semibold">Department</label>
+                    <div class="p-3 bg-light rounded-3">
+                        <i class="bi bi-building text-secondary me-2"></i>
+                        <strong>{{ ticket.department }}</strong>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
                     <label class="text-dark small fw-semibold">Raised By</label>
                     <div class="p-3 bg-light rounded-3">
                         <i class="bi bi-person-circle text-secondary me-2"></i>
                         <strong>{{ display_name }}</strong>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="text-dark small fw-semibold">Assigned To</label>
+                    <div class="p-3 bg-light rounded-3 text-dark">
+                        {% if ticket.assigned_to %}
+                        <i class="bi bi-person-badge-fill text-primary me-2"></i><strong>{{ ticket.assigned_to.display_name }}</strong>
+                        {% else %}
+                        <span class="text-muted fst-italic">Unassigned</span>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -49,6 +68,13 @@
                     </div>
                 </div>
             </div>
+
+            {% if ticket.resolution_message %}
+            <div class="mt-4 p-4 rounded-4" style="background:#eef2ff; border:1px solid #c7d2fe;">
+                <h6 class="fw-bold text-primary mb-2"><i class="bi bi-info-circle-fill me-2"></i>Resolution Notes</h6>
+                <p class="mb-0 text-dark">{{ ticket.resolution_message }}</p>
+            </div>
+            {% endif %}
 
             <hr class="my-5">
 
@@ -79,21 +105,76 @@
             {% endif %}
             {% endif %}
 
-            {% if request.user.is_staff or request.user.role == 'manager' or request.user.role == 'superadmin' %}
+            {% if ticket.status|lower == 'closed' %}
+            <!-- Feedback Panel -->
+            <div class="text-center mb-4 p-4 rounded-4" style="background:#f8f9fa; border:2px solid #e9ecef;">
+                <h5 class="fw-semibold mb-3 text-dark">
+                    <i class="bi bi-chat-right-text-fill me-2 text-primary"></i>Ticket Feedback
+                </h5>
+                {% if ticket.feedback %}
+                <div class="p-4 bg-white rounded-4 text-dark text-start shadow-sm mx-auto position-relative" style="max-width: 600px;">
+                    <i class="bi bi-quote position-absolute text-light" style="font-size: 3rem; top: -10px; left: 10px; z-index: 0;"></i>
+                    <p class="mb-0 fw-medium position-relative" style="z-index: 1;">"{{ ticket.feedback }}"</p>
+                    <div class="text-end mt-2 position-relative" style="z-index: 1;">
+                        <small class="text-muted fst-italic">- {{ ticket.created_by.display_name }}</small>
+                    </div>
+                </div>
+                {% else %}
+                    {% if request.user == ticket.created_by %}
+                    <p class="text-muted mb-3">This ticket has been closed. Please share your feedback regarding the resolution.</p>
+                    <form method="POST" class="mx-auto" style="max-width: 600px;">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <textarea name="feedback" class="form-control rounded-3 shadow-sm border-0 p-3" rows="3" placeholder="Write your feedback here..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-semibold shadow-sm">
+                            <i class="bi bi-send-fill me-1"></i> Submit Feedback
+                        </button>
+                    </form>
+                    {% else %}
+                    <p class="text-muted mb-0 fst-italic">No feedback provided yet.</p>
+                    {% endif %}
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if not ticket.assigned_to %}
+            {% if is_network_support or request.user.is_staff or request.user.role == 'manager' or request.user.role == 'superadmin' or request.user.role == 'asset_admin' %}
+            <div class="text-center mb-4">
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="accept">
+                    <button type="submit" class="btn btn-success rounded-pill px-4 py-2 fw-semibold shadow-sm">
+                        <i class="bi bi-hand-index-thumb-fill me-2"></i> Accept Ticket
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+            {% endif %}
+
+            {% if request.user.is_staff or request.user.role == 'manager' or request.user.role == 'superadmin' or request.user.role == 'asset_admin' or ticket.assigned_to == request.user %}
             <!-- Status Update -->
             <div class="text-center">
                 <h5 class="fw-semibold mb-3 text-dark">Update Ticket Status</h5>
-                <form method="POST" class="d-inline-flex align-items-center gap-3">
+                <form method="POST" class="mx-auto" style="max-width: 500px;">
                     {% csrf_token %}
-                    <select name="status" class="form-select form-select-lg rounded-pill shadow-sm w-auto border-0 bg-light text-dark fw-semibold">
-                        <option value="Open" {% if ticket.status|lower == 'open' %}selected{% endif %}>Open</option>
-                        <option value="Pending" {% if ticket.status|lower == 'pending' %}selected{% endif %}>Pending</option>
-                        <option value="Resolved" {% if ticket.status|lower == 'resolved' %}selected{% endif %}>Resolved</option>
-                        <option value="Closed" {% if ticket.status|lower == 'closed' %}selected{% endif %}>Closed</option>
-                    </select>
-                    <button type="submit" class="btn update-btn rounded-pill px-4 py-2 fw-semibold shadow-sm">
-                        <i class="bi bi-arrow-repeat me-1"></i> Update
-                    </button>
+                    <input type="hidden" name="assigned_to" value="{{ ticket.assigned_to.id|default:'unassigned' }}">
+                    <div class="mb-3 text-start">
+                        <label class="form-label text-muted small fw-semibold">Resolution Notes</label>
+                        <textarea name="resolution_message" class="form-control rounded-3 shadow-sm border-0 bg-light p-3" rows="3" placeholder="Explain what was done to resolve this ticket..." required>{{ ticket.resolution_message|default_if_none:'' }}</textarea>
+                    </div>
+                    <div class="d-flex justify-content-center gap-3 align-items-center">
+                        <select name="status" class="form-select w-auto rounded-pill px-4 shadow-sm border-0 fw-semibold bg-light text-dark">
+                            <option value="Pending" {% if ticket.status|lower == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="Resolved" {% if ticket.status|lower == 'resolved' %}selected{% endif %}>Resolved</option>
+                            {% if request.user.is_staff or request.user.role == 'manager' or request.user.role == 'superadmin' %}
+                            <option value="Closed" {% if ticket.status|lower == 'closed' %}selected{% endif %}>Closed</option>
+                            {% endif %}
+                        </select>
+                        <button type="submit" class="btn update-btn rounded-pill px-4 py-2 fw-semibold shadow-sm">
+                            <i class="bi bi-arrow-repeat me-1"></i> Update
+                        </button>
+                    </div>
                 </form>
 
                 <div class="mt-4">

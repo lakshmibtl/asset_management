@@ -1,0 +1,63 @@
+{% extends 'asset_app/base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="fw-bold text-dark mb-1">My Work Reports</h4>
+            <p class="text-muted mb-0">History of all the work reports you have submitted.</p>
+        </div>
+        <div>
+            <a href="{% url 'download_manual_reports' %}" class="btn btn-outline-success rounded-pill px-4 shadow-sm fw-semibold me-2">
+                <i class="bi bi-file-earmark-excel me-2"></i>Download Excel
+            </a>
+            <a href="{% url 'submit_work_report' %}" class="btn btn-primary rounded-pill px-4 shadow-sm fw-semibold">
+                <i class="bi bi-plus-lg me-2"></i>New Report
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {% if reports %}
+        {% for report in reports %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                <i class="bi bi-journal-check"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold text-dark mb-0">{{ report.title }}</h5>
+                                <small class="text-muted">By: {{ report.recipient.username }}</small>
+                            </div>
+                        </div>
+                        <span class="badge bg-light text-secondary border px-2 py-1 rounded-pill" style="font-weight: 500;">
+                            <i class="bi bi-calendar3 me-1"></i>{{ report.created_at|date:"d M Y" }}
+                        </span>
+                    </div>
+                    
+                    <div class="p-3 bg-light rounded-3 text-dark mb-3" style="font-size: 0.95rem; white-space: pre-wrap;">{{ report.message }}</div>
+                    
+                    {% if report.link %}
+                    <a href="{{ report.link }}" class="btn btn-sm btn-outline-primary rounded-pill fw-semibold" target="_blank" download>
+                        <i class="bi bi-paperclip me-1"></i>Download Attached File
+                    </a>
+                    {% endif %}
+                    
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-journal-x text-muted" style="font-size: 3.5rem;"></i>
+            <h5 class="mt-3 text-dark fw-bold">No Reports Yet</h5>
+            <p class="text-muted">You haven't submitted any manual work reports.</p>
+            <a href="{% url 'submit_work_report' %}" class="btn btn-outline-primary rounded-pill mt-2">Submit Your First Report</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -169,6 +169,18 @@ class Asset(models.Model):
         Asset.objects.filter(pk=self.pk).update(qr_code_base64=qr_code_data)
 
 # --------------------------------------------------------------------
+# Asset History Model
+# --------------------------------------------------------------------
+class AssetHistory(models.Model):
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name='edit_history')
+    edited_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    edited_at = models.DateTimeField(auto_now_add=True)
+    changes = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.asset.asset_id} edited by {self.edited_by.username if self.edited_by else 'Unknown'} on {self.edited_at}"
+
+# --------------------------------------------------------------------
 # Asset Request Model
 # --------------------------------------------------------------------
 class AssetRequest(models.Model):
@@ -182,7 +194,9 @@ class AssetRequest(models.Model):
     ]
 
     STATUS_CHOICES = [
-        ('Pending', 'Pending'),
+        ('Pending_Manager', 'Pending Manager Approval'),
+        ('Pending_Admin', 'Pending Admin Approval'),
+        ('Pending_SuperAdmin', 'Pending Super Admin Approval'),
         ('Approved', 'Approved'),
         ('Rejected', 'Rejected'),
     ]
@@ -191,7 +205,7 @@ class AssetRequest(models.Model):
     asset_type = models.CharField(max_length=100)
     quantity = models.PositiveIntegerField(default=1)
     requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending_Manager')
     requested_at = models.DateTimeField(auto_now_add=True)
     reason = models.TextField(blank=True)
     required_date = models.DateField(null=True, blank=True)
@@ -201,11 +215,15 @@ class AssetRequest(models.Model):
 
 class Ticket(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name='tickets')
+    department = models.CharField(max_length=100, default='Network')
     subject = models.CharField(max_length=200)
     description = models.TextField()
     status = models.CharField(max_length=50, default='pending')
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+    feedback = models.TextField(blank=True, null=True)
+    resolution_message = models.TextField(blank=True, null=True)
+    assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_tickets')
 
     def __str__(self):
         return f"{self.subject} - {self.status}"
@@ -273,6 +291,9 @@ class ProcurementRequestWorkflow(models.Model):
         ('Pending Admin Approval', 'Pending Admin Approval'),
         ('Rejected by Admin', 'Rejected by Admin'),
 
+        ('Pending Super Admin Approval', 'Pending Super Admin Approval'),
+        ('Rejected by Super Admin', 'Rejected by Super Admin'),
+
         ('Completed', 'Completed'),
     ]
 
@@ -335,6 +356,7 @@ class Employee(models.Model):
     name = models.CharField(max_length=100)
     department = models.CharField(max_length=100)
     branch = models.CharField(max_length=100, blank=True, null=True)
+    email = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -370,13 +392,18 @@ class Assignment(models.Model):
     return_reason = models.TextField(blank=True, null=True)
     returned_at = models.DateTimeField(null=True, blank=True)
 
+    # Tracking
+    assigned_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='assignments_made', null=True, blank=True, on_delete=models.SET_NULL)
+
     def __str__(self):
         return f"{self.employee.name} - {self.asset.asset_id}"
 
 
 class ReturnRequest(models.Model):
     STATUS_CHOICES = [
-        ('Pending', 'Pending'),
+        ('Pending', 'Pending Manager Approval'),
+        ('Manager_Approved', 'Pending Admin Approval'),
+        ('Admin_Approved', 'Pending Super Admin Approval'),
         ('Accepted', 'Accepted'),
         ('Rejected', 'Rejected'),
     ]
@@ -422,4 +449,3 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.recipient} - {self.title}"
-

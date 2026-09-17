@@ -62,18 +62,13 @@
                         <h5 class="mb-1 fw-semibold">{{ u.display_name }}</h5>
 
                         <p class="text-muted small mb-1">
-                            <i class="bi bi-hash me-1"></i>Emp ID: {{ u.username }}
+                            Emp ID: {{ u.username }}
                         </p>
 
                         <p class="text-muted small mb-1">
                             <i class="bi bi-envelope me-1"></i>{{ u.email }}
                         </p>
 
-                        <!-- User ID Added Here -->
-                        <p class="text-muted small mb-0">
-                            <i class="bi bi-hash me-1"></i>ID: {{ u.id }}
-                        </p>
-                        
                         <!-- Department -->
                         <p class="text-muted small mb-0 mt-1">
                             <i class="bi bi-building me-1"></i>Dept: {{ u.department|default:"Unspecified" }}
@@ -331,7 +326,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const employees = [
         {% for emp in employees %}
-        { id: "{{ emp.employee_id }}", name: "{{ emp.name|escapejs }}", dept: "{{ emp.department|default:''|escapejs }}", branch: "{{ emp.branch|default:''|escapejs }}" },
+        { id: "{{ emp.employee_id }}", name: "{{ emp.name|escapejs }}", dept: "{{ emp.department|default:''|escapejs }}", branch: "{{ emp.branch|default:''|escapejs }}", email: "{{ emp.email|default:''|escapejs }}" },
         {% endfor %}
     ];
 
@@ -351,7 +346,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         empList.innerHTML = filtered.map(e => `
-            <div class="emp-item" data-id="${e.id}" data-name="${e.name}" data-dept="${e.dept}" data-branch="${e.branch}">
+            <div class="emp-item" data-id="${e.id}" data-name="${e.name}" data-dept="${e.dept}" data-branch="${e.branch}" data-email="${e.email}">
                 <div class="emp-avatar">${e.name.charAt(0)}</div>
                 <div class="flex-grow-1">
                     <div class="emp-name">${e.name}</div>
@@ -367,12 +362,19 @@ document.addEventListener("DOMContentLoaded", function() {
         const name = item.dataset.name;
         const dept = item.dataset.dept;
         const branch = item.dataset.branch;
+        const email = item.dataset.email;
 
         empIdInput.value = id;
         empFullName.value = name;
         empDept.value = dept;
         empBranch.value = branch;
         empSearchInput.value = name;
+        
+        // Auto-fill the email field if we have it
+        const emailInput = document.querySelector('input[name="email"]');
+        if (emailInput && email) {
+            emailInput.value = email;
+        }
 
         selectedEmpAvatar.textContent = name.charAt(0);
         selectedEmpName.textContent = name;
@@ -393,13 +395,14 @@ document.addEventListener("DOMContentLoaded", function() {
             if (item) selectEmployee(item);
         });
 
-        if (clearEmpBtn) {
+            if (clearEmpBtn) {
             clearEmpBtn.addEventListener('click', function() {
                 empIdInput.value = '';
                 empFullName.value = '';
                 empDept.value = '';
                 empBranch.value = '';
                 empSearchInput.value = '';
+                document.querySelector('input[name="email"]').value = '';
                 selectedEmpInfo.classList.add('d-none');
                 renderEmpList('');
             });

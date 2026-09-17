@@ -1,0 +1,2 @@
+PAYLOAD: {"apiver": "1.0", "whatsapp": {"ver": "2.0", "messages": [{"coding": 1, "id": "5a40b541-2f2e-4", "msgtype": 1, "templateid": "1802469", "templateinfo": "1802469~TKT-012~PR-0001~not work~prasuna~Network~Open", "addresses": [{"seq": "1", "to": "918297297247", "from": "919000552765"}]}]}}
+RESPONSE: {"status":"Success","statuscode":200,"statustext":"OK","messageack":{"guids":[{"guid":"kq9hh152132511f143e00bp54fBRIHASPATH","submitdate":"2026-09-17 17:15:21","id":"5a40b541-2f2e-4"}]}}

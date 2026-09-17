@@ -24,6 +24,7 @@ import qrcode
 
 from .models import (
     Asset,
+    AssetHistory,
     Assignment,
     AssetRequest,
     ProcurementRequestWorkflow,
@@ -210,7 +211,7 @@ def view_users(request):
     employees = Employee.objects.all().order_by('name')
     emp_name_map = {e.employee_id: e.name for e in employees}
     for u in users:
-        u.display_name = u.first_name or emp_name_map.get(u.username) or u.username
+        u._display_name = u.first_name or emp_name_map.get(u.username) or u.username
     return render(request, 'asset_app/view_users.html', {'users': users, 'employees': employees})
 
 @login_required(login_url='/login/')
@@ -409,7 +410,7 @@ def dashboard(request):
     expiring_soon_warranty = assets_q.filter(
         warranty_end_date__isnull=False,
         warranty_end_date__gte=today_local,
-        warranty_end_date__lte=today_local + timezone.timedelta(days=30),
+        warranty_end_date__lte=today_local + timezone.timedelta(days=60),
     ).count()
     expired_warranty = assets_q.filter(
         warranty_end_date__isnull=False,
@@ -656,6 +657,44 @@ def add_asset(request):
     return render(request, 'asset_app/add_asset.html', {'form': form})
 
 
+@login_required
+def edit_asset(request, pk):
+    is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
+    if not request.user.is_authenticated or not is_admin:
+        messages.error(request, "Only an admin can edit assets.")
+        return redirect("view_assets")
+
+    asset = get_object_or_404(Asset, pk=pk)
+    
+    if request.method == 'POST':
+        form = AssetForm(request.POST, request.FILES, instance=asset)
+        if form.is_valid():
+            try:
+                if form.has_changed():
+                    changed_fields = []
+                    for field in form.changed_data:
+                        old_val = form.initial.get(field, 'None')
+                        new_val = form.cleaned_data.get(field)
+                        changed_fields.append(f"{field.replace('_', ' ').title()}: '{old_val}' -> '{new_val}'")
+                    changes_str = " | ".join(changed_fields)
+                    form.save()
+                    AssetHistory.objects.create(
+                        asset=asset,
+                        edited_by=request.user,
+                        changes=changes_str
+                    )
+                else:
+                    form.save()
+                messages.success(request, "Asset updated successfully!")
+                return redirect('asset_detail', pk=asset.pk)
+            except IntegrityError:
+                messages.error(request, "Error: Asset ID must be unique.")
+    else:
+        form = AssetForm(instance=asset)
+
+    return render(request, 'asset_app/edit_asset.html', {'form': form, 'asset': asset})
+
+
 def get_network_host(request):
     host = request.get_host()
     if host.startswith('127.0.0.1') or host.startswith('localhost'):
@@ -691,13 +730,15 @@ def asset_detail(request, pk):
     current_assignment = Assignment.objects.filter(asset=asset, status='In Use').select_related("employee").last()
     
     # History of this specific asset
-    asset_history = Assignment.objects.filter(asset=asset).select_related("employee").order_by("-id")
+    assignments = list(Assignment.objects.filter(asset=asset).select_related("employee", "assigned_by").order_by("-assigned_at"))
+    edits = list(AssetHistory.objects.filter(asset=asset).select_related("edited_by").order_by("-edited_at"))
 
     return render(request, "asset_app/asset_detail.html", {
         "asset": asset,
         "qr_base64": qr_base64,
         "current_assignment": current_assignment,
-        "asset_history": asset_history,
+        "asset_history": assignments,
+        "edit_history": edits,
     })
 
 
@@ -707,7 +748,7 @@ def warranty_tracking(request):
     assets = Asset.objects.exclude(warranty="").exclude(warranty__isnull=True).order_by('warranty_end_date')
 
     now = timezone.localdate()
-    ref_date = now + timezone.timedelta(days=30)
+    ref_date = now + timezone.timedelta(days=60)
 
     expired = [a for a in assets if a.warranty_end_date and a.warranty_end_date < now]
     expiring = [a for a in assets if a.warranty_end_date and now <= a.warranty_end_date <= ref_date]
@@ -745,7 +786,9 @@ def assign_asset(request):
 
         form = AssignmentForm(request.POST)
         if form.is_valid():
-            assignment = form.save()
+            assignment = form.save(commit=False)
+            assignment.assigned_by = request.user
+            assignment.save()
             
             # Update employee branch if provided manually
             manual_branch = request.POST.get('branch')
@@ -895,7 +938,7 @@ def process_return(request, pk):
         messages.error(request, "Only an admin or manager can process return requests.")
         return redirect('return_requests')
 
-    if rq.status != 'Pending':
+    if rq.status not in ['Pending', 'Manager_Approved']:
         messages.error(request, f"Return request for {rq.asset.asset_id} was already processed.")
         return redirect('return_requests')
 
@@ -908,20 +951,34 @@ def process_return(request, pk):
         rq.save()
         messages.info(request, f"Return request for {rq.asset.asset_id} was declined. Asset stays with {rq.employee.name}.")
     else:
-        assign = rq.assignment
-        if assign.status == 'In Use':
-            assign.status = 'Returned'
-            assign.return_reason = rq.reason
-            assign.returned_at = timezone.now()
-            assign.save()
-            rq.asset.status = 'Available'
-            rq.asset.save()
+        is_admin = getattr(request.user, 'role', '') == 'admin' or (request.user.is_staff and getattr(request.user, 'role', '') != 'superadmin')
+        is_superadmin = getattr(request.user, 'role', '') == 'superadmin'
 
-        rq.status = 'Accepted'
-        rq.processed_by = request.user
-        rq.processed_at = timezone.now()
-        rq.save()
-        messages.success(request, f"Return request for {rq.asset.asset_id} accepted. Asset is now available.")
+        if is_manager and rq.status == 'Pending':
+            rq.status = 'Manager_Approved'
+            rq.save()
+            messages.success(request, f"Return request for {rq.asset.asset_id} approved. Forwarded to Admin.")
+        elif is_admin and rq.status == 'Manager_Approved':
+            rq.status = 'Admin_Approved'
+            rq.save()
+            messages.success(request, f"Return request for {rq.asset.asset_id} approved. Forwarded to Super Admin for final processing.")
+        elif is_superadmin and rq.status == 'Admin_Approved':
+            assign = rq.assignment
+            if assign.status == 'In Use':
+                assign.status = 'Returned'
+                assign.return_reason = rq.reason
+                assign.returned_at = timezone.now()
+                assign.save()
+                rq.asset.status = 'Available'
+                rq.asset.save()
+
+            rq.status = 'Accepted'
+            rq.processed_by = request.user
+            rq.processed_at = timezone.now()
+            rq.save()
+            messages.success(request, f"Return request for {rq.asset.asset_id} accepted. Asset is now available.")
+        else:
+            messages.error(request, "Invalid action or permission denied.")
 
     nxt = request.POST.get('next', '')
     if nxt and nxt.startswith('/'):
@@ -983,19 +1040,57 @@ def return_requests(request):
     if not (is_staff or is_manager):
         return redirect('asset_dashboard')
 
-    pending_returns = (
-        ReturnRequest.objects.filter(status='Pending')
-        .select_related('asset', 'employee')
-        .order_by('-created_at')
-    )
-    processed_returns = (
-        ReturnRequest.objects.exclude(status='Pending')
-        .select_related('asset', 'employee', 'processed_by')
-        .order_by('-processed_at')[:30]
-    )
-    pending_count = ReturnRequest.objects.filter(status='Pending').count()
-    accepted_count = ReturnRequest.objects.filter(status='Accepted').count()
-    rejected_count = ReturnRequest.objects.filter(status='Rejected').count()
+    if is_manager:
+        # Managers only see 'Pending' requests for their department
+        pending_returns = (
+            ReturnRequest.objects.filter(status='Pending', employee__department__iexact=request.user.department)
+            .select_related('asset', 'employee')
+            .order_by('-created_at')
+        )
+        processed_returns = (
+            ReturnRequest.objects.filter(employee__department__iexact=request.user.department)
+            .exclude(status='Pending')
+            .select_related('asset', 'employee', 'processed_by')
+            .order_by('-processed_at')[:30]
+        )
+        pending_count = ReturnRequest.objects.filter(status='Pending', employee__department__iexact=request.user.department).count()
+        accepted_count = ReturnRequest.objects.filter(status='Accepted', employee__department__iexact=request.user.department).count()
+        rejected_count = ReturnRequest.objects.filter(status='Rejected', employee__department__iexact=request.user.department).count()
+    elif getattr(request.user, 'role', '') == 'superadmin':
+        # Super Admins see 'Admin_Approved' requests
+        pending_returns = (
+            ReturnRequest.objects.filter(status__in=['Pending', 'Manager_Approved', 'Admin_Approved'])
+            .select_related('asset', 'employee')
+            .order_by('-created_at')
+        )
+        processed_returns = (
+            ReturnRequest.objects.exclude(status__in=['Pending', 'Manager_Approved', 'Admin_Approved'])
+            .select_related('asset', 'employee', 'processed_by')
+            .order_by('-processed_at')[:30]
+        )
+        pending_count = ReturnRequest.objects.filter(status='Admin_Approved').count()
+        accepted_count = ReturnRequest.objects.filter(status='Accepted').count()
+        rejected_count = ReturnRequest.objects.filter(status='Rejected').count()
+    else:
+        # Admins see 'Manager_Approved' requests
+        pending_returns = (
+            ReturnRequest.objects.filter(status__in=['Pending', 'Manager_Approved'])
+            .select_related('asset', 'employee')
+            .order_by('-created_at')
+        )
+        processed_returns = (
+            ReturnRequest.objects.exclude(status__in=['Pending', 'Manager_Approved'])
+            .select_related('asset', 'employee', 'processed_by')
+            .order_by('-processed_at')[:30]
+        )
+        pending_count = ReturnRequest.objects.filter(status='Manager_Approved').count()
+        accepted_count = ReturnRequest.objects.filter(status='Accepted').count()
+        rejected_count = ReturnRequest.objects.filter(status='Rejected').count()
+
+    for pr in processed_returns:
+        if pr.processed_by:
+            pr.processed_by_name = _employee_display_name(pr.processed_by)
+
     return render(request, 'asset_app/return_requests.html', {
         'pending_returns': pending_returns,
         'processed_returns': processed_returns,
@@ -1029,11 +1124,19 @@ def view_assets(request):
     unassigned_assets = Asset.objects.filter(status__iexact='Available')
 
     # Calculate asset stats
-    asset_stats = Asset.objects.values('asset_type').annotate(
-        total=Count('id'),
-        in_use=Count('id', filter=Q(status__iexact='In Use')),
-        available=Count('id', filter=Q(status__iexact='Available'))
-    ).order_by('asset_type')
+    if is_staff or is_manager:
+        asset_stats = Asset.objects.values('asset_type').annotate(
+            total=Count('id'),
+            in_use=Count('id', filter=Q(status__iexact='In Use')),
+            available=Count('id', filter=Q(status__iexact='Available'))
+        ).order_by('asset_type')
+    else:
+        assigned_asset_ids = assignments.values_list('asset_id', flat=True)
+        asset_stats = Asset.objects.filter(id__in=assigned_asset_ids).values('asset_type').annotate(
+            total=Count('id'),
+            in_use=Count('id'),
+            available=Count('id', filter=Q(status__iexact='Available'))
+        ).order_by('asset_type')
 
     # Employees see all assets; requests they have made
     employee_requested = []
@@ -1050,6 +1153,17 @@ def view_assets(request):
                 'subtypes': [{'name': a.name, 'pk': a.pk} for a in sub_assets],
             })
 
+    if is_manager:
+        pending_return_requests = ReturnRequest.objects.filter(status='Pending', employee__department__iexact=request.user.department).select_related('asset', 'employee').order_by('-created_at')
+    elif is_staff:
+        pending_return_requests = ReturnRequest.objects.filter(status__in=['Pending', 'Manager_Approved']).select_related('asset', 'employee').order_by('-created_at')
+    else:
+        pending_return_requests = []
+
+    pending_return_asset_pks = list(
+        ReturnRequest.objects.filter(employee__employee_id__iexact=request.user.username, status__in=['Pending', 'Manager_Approved']).values_list('asset_id', flat=True)
+    )
+
     return render(request, 'asset_app/view_assets.html', {
         'assignments': assignments,
         'unassigned_assets': unassigned_assets,
@@ -1059,10 +1173,8 @@ def view_assets(request):
         'is_employee': not (is_staff or is_manager),
         'type_dropdowns': type_dropdowns,
         'employee_requested': employee_requested,
-        'pending_return_requests': ReturnRequest.objects.filter(status='Pending').select_related('asset', 'employee').order_by('-created_at'),
-        'pending_return_asset_pks': list(
-            ReturnRequest.objects.filter(status='Pending').values_list('asset_id', flat=True)
-        ),
+        'pending_return_requests': pending_return_requests,
+        'pending_return_asset_pks': pending_return_asset_pks,
     })
 
 
@@ -1202,10 +1314,9 @@ def admin_approve(request, pk):
     if req.status != "Pending Admin Approval":
         messages.error(request, f"Request {req.asset_type} is not waiting for admin approval.")
         return redirect("procurement_list")
-    req.status = "Completed"
-    req.completed_date = timezone.now()
+    req.status = "Pending Super Admin Approval"
     req.save()
-    messages.success(request, f"Request {req.asset_type} approved and completed.")
+    messages.success(request, f"Request {req.asset_type} approved by admin. Awaiting super admin approval.")
     return redirect("procurement_list")
 
 
@@ -1221,6 +1332,37 @@ def admin_reject(request, pk):
     req.status = "Rejected by Admin"
     req.save()
     messages.info(request, f"Request {req.asset_type} rejected by admin.")
+    return redirect("procurement_list")
+
+
+@login_required
+def superadmin_approve(request, pk):
+    req = get_object_or_404(ProcurementRequestWorkflow, pk=pk)
+    if not (getattr(request.user, 'role', '') == 'superadmin'):
+        messages.error(request, "Only a super admin can finalize this approval.")
+        return redirect("procurement_list")
+    if req.status != "Pending Super Admin Approval":
+        messages.error(request, f"Request {req.asset_type} is not waiting for super admin approval.")
+        return redirect("procurement_list")
+    req.status = "Completed"
+    req.completed_date = timezone.now()
+    req.save()
+    messages.success(request, f"Request {req.asset_type} finally approved by Super Admin and completed.")
+    return redirect("procurement_list")
+
+
+@login_required
+def superadmin_reject(request, pk):
+    req = get_object_or_404(ProcurementRequestWorkflow, pk=pk)
+    if not (getattr(request.user, 'role', '') == 'superadmin'):
+        messages.error(request, "Only a super admin can reject at this stage.")
+        return redirect("procurement_list")
+    if req.status != "Pending Super Admin Approval":
+        messages.error(request, f"Request {req.asset_type} is not waiting for super admin approval.")
+        return redirect("procurement_list")
+    req.status = "Rejected by Super Admin"
+    req.save()
+    messages.info(request, f"Request {req.asset_type} rejected by Super Admin.")
     return redirect("procurement_list")
 
 
@@ -1440,12 +1582,22 @@ from django.utils import timezone
 # -------------------
 @login_required
 def view_tickets(request):
-    if request.user.is_staff or getattr(request.user, 'role', '') == 'superadmin':
+    is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
+    is_manager = getattr(request.user, 'role', '') == 'manager'
+    is_network_support = request.user.groups.filter(name='Network Support').exists() or 'Network' in (request.user.department or '')
+
+    if is_admin:
         tickets = Ticket.objects.all().order_by('-created_at')
-    elif getattr(request.user, 'role', '') == 'manager':
+    elif is_manager:
         tickets = Ticket.objects.filter(
             _department_user_q(request.user.department)
         ).order_by('-created_at')
+    elif is_network_support:
+        tickets = Ticket.objects.filter(
+            Q(assigned_to=request.user) |
+            (Q(department__icontains='Network') & Q(assigned_to__isnull=True)) |
+            Q(created_by=request.user)
+        ).distinct().order_by('-created_at')
     else:
         tickets = Ticket.objects.filter(created_by=request.user).order_by('-created_at')
 
@@ -1475,13 +1627,98 @@ def view_tickets(request):
     return render(request, 'asset_app/view_tickets.html', {
         'tickets': tickets,
         'form': form,
+        'is_network_support': is_network_support,
+        'is_admin': is_admin,
     })
 
+@login_required
+def download_ticket_report(request):
+    import csv
+    from django.http import HttpResponse
+    
+    is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
+    is_manager = getattr(request.user, 'role', '') == 'manager'
+    is_network_support = request.user.groups.filter(name='Network Support').exists() or 'Network' in (request.user.department or '')
+
+    if is_admin:
+        tickets = Ticket.objects.all().order_by('-created_at')
+    elif is_manager:
+        tickets = Ticket.objects.filter(
+            _department_user_q(request.user.department)
+        ).order_by('-created_at')
+    elif is_network_support:
+        tickets = Ticket.objects.filter(
+            Q(assigned_to=request.user) |
+            (Q(department__icontains='Network') & Q(assigned_to__isnull=True)) |
+            Q(created_by=request.user)
+        ).distinct().order_by('-created_at')
+    else:
+        tickets = Ticket.objects.filter(created_by=request.user).order_by('-created_at')
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="ticket_report.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['Ticket ID', 'Subject', 'Status', 'Department', 'Raised By', 'Created On', 'Solver (Assigned To)'])
+    
+    for ticket in tickets:
+        raised_by = _employee_display_name(ticket.created_by) if ticket.created_by else 'System'
+        assigned_to = ticket.assigned_to.display_name if ticket.assigned_to else 'Unassigned'
+        created_on = ticket.created_at.strftime('%b %d, %Y') if ticket.created_at else ''
+        
+        writer.writerow([
+            f'#{ticket.id}',
+            ticket.subject,
+            ticket.status,
+            ticket.department,
+            raised_by,
+            created_on,
+            assigned_to
+        ])
+        
+    return response
+
 
 # -------------------
-# RAISE NEW TICKET
+# RAISE NEW TICKET  whatapp
 # -------------------
-@login_required
+def _send_whatsapp_notification(ticket):
+    """
+    Sends a WhatsApp message when a ticket is created using the Infinity API.
+    """
+    from .whatsapp_utils import send_whatsapp_message
+    from .views import _employee_display_name
+    
+    # User requested a specific phone number to be provided later.
+    # For now, we will use a dummy number or can read from settings if available.
+    contact_number = "918297297247" # Placeholder
+    
+    template_id = "1802469"
+    
+    # Format the 6 variables exactly as requested:
+    # {1} Ticket ID
+    # {2} Asset ID
+    # {3} Issue Description
+    # {4} Raised By
+    # {5} Department
+    
+    
+    raised_by = _employee_display_name(ticket.created_by) if ticket.created_by else "System"
+    
+    template_params = [
+        f"TKT-{ticket.id:03d}",
+        ticket.asset.asset_id if ticket.asset else "N/A",
+        ticket.subject[:50], # Shorten subject if it's too long
+        raised_by,
+        ticket.department or "IT Support",
+        "Open"
+    ]
+    
+    try:
+        send_whatsapp_message(contact_number, template_id, template_params)
+    except Exception as e:
+        print(f"Failed to send WhatsApp message: {e}")
+
 def raise_ticket(request):
     # Determine which assets user can see
     if request.user.is_staff or getattr(request.user, 'role', '') == 'superadmin':
@@ -1509,6 +1746,7 @@ def raise_ticket(request):
                 ticket.created_at = timezone.now()
             if not getattr(ticket, 'status', None):
                 ticket.status = "Open"
+            
             ticket.save()
 
             requester = _employee_display_name(request.user)
@@ -1518,6 +1756,9 @@ def raise_ticket(request):
                 f"{requester} raised a ticket for {ticket.asset.asset_id}.",
                 reverse('ticket_detail', args=[ticket.id]),
             )
+            
+            # TRIGGER WHATSAPP MESSAGE
+            _send_whatsapp_notification(ticket)
 
             messages.success(request, "✅ Ticket raised successfully!")
             return redirect('view_tickets')   # 🔁 SIMPLE REDIRECT
@@ -1586,6 +1827,23 @@ def ticket_confirm_solved(request, pk):
         messages.success(request, f"✅ Ticket marked as Closed (confirmed by admin for {requester}).")
     return redirect('ticket_detail', pk=ticket.pk)
 
+@login_required
+def delete_ticket(request, pk):
+    is_superadmin = getattr(request.user, 'role', '') == 'superadmin'
+    if not is_superadmin:
+        messages.error(request, "Only Super Admin can delete tickets.")
+        return redirect('view_tickets')
+        
+    ticket = get_object_or_404(Ticket, pk=pk)
+    
+    if request.method == 'POST':
+        ticket_id = ticket.id
+        ticket.delete()
+        messages.success(request, f"Ticket #{ticket_id} deleted successfully.")
+        return redirect('view_tickets')
+        
+    return redirect('ticket_detail', pk=pk)
+
 
 # -------------------
 # EMPLOYEE REOPEN: TICKET NOT SOLVED
@@ -1631,28 +1889,222 @@ def ticket_detail(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
 
     if request.method == 'POST':
+        # Check if the user is accepting the ticket
+        if request.POST.get('action') == 'accept':
+            is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
+            ticket_dept = ticket.department or 'Network'
+            is_network_support = request.user.groups.filter(name='Network Support').exists() or ticket_dept in (request.user.department or '')
+            
+            if (is_network_support or is_admin) and not ticket.assigned_to:
+                ticket.assigned_to = request.user
+                if ticket.status.lower() == 'open':
+                    ticket.status = 'Pending'
+                ticket.save()
+                messages.success(request, f'✅ You have accepted this ticket!')
+            else:
+                messages.error(request, 'You cannot accept this ticket.')
+            return redirect('ticket_detail', pk=ticket.pk)
+
+        # Handle feedback submission
+        feedback = request.POST.get('feedback')
+        if feedback and ticket.status.lower() == 'closed' and request.user == ticket.created_by:
+            ticket.feedback = feedback
+            ticket.save()
+            messages.success(request, '✅ Thank you! Your feedback has been submitted successfully.')
+            return redirect('ticket_detail', pk=ticket.pk)
+
+        # Handle status update
         is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
         is_manager = getattr(request.user, 'role', '') == 'manager'
-        if not (is_admin or is_manager):
-            messages.error(request, "Only an admin or manager can update ticket status.")
-            return redirect('view_tickets')
+        # The user is considered network support if they are in the group or match department
+        ticket_dept = ticket.department or 'Network'
+        is_network_support = request.user.groups.filter(name='Network Support').exists() or ticket_dept in (request.user.department or '')
+        
+        # Determine if they have permission to update THIS ticket
+        can_update = False
+        if is_admin or is_manager:
+            can_update = True
+        elif is_network_support:
+            # Network support can only update if they accepted/are assigned to the ticket
+            if ticket.assigned_to == request.user:
+                can_update = True
+                
+        if not can_update:
+            messages.error(request, "Only the person who accepted the ticket (or an admin) can update its status.")
+            return redirect('ticket_detail', pk=ticket.pk)
+            
         new_status = request.POST.get('status')
+        resolution_message = request.POST.get('resolution_message')
+        assigned_to_id = request.POST.get('assigned_to')
+
         if new_status:
             # Capitalize to match backend conventions (Pending, Resolved, Closed, Open)
             new_status = new_status.capitalize()
-            if new_status != ticket.status:
-                ticket.status = new_status
+            
+            status_changed = (new_status != ticket.status)
+            res_changed = (resolution_message is not None and resolution_message.strip() != (ticket.resolution_message or ""))
+            
+            assigned_to_compare = 'unassigned' if assigned_to_id == 'unassigned' else str(assigned_to_id)
+            current_assigned = str(ticket.assigned_to_id) if ticket.assigned_to_id else 'unassigned'
+            assigned_changed = (assigned_to_id and assigned_to_compare != current_assigned)
+
+            if status_changed or res_changed or assigned_changed:
+                if status_changed:
+                    ticket.status = new_status
+                if res_changed:
+                    ticket.resolution_message = resolution_message.strip()
+                if assigned_changed:
+                    ticket.assigned_to_id = assigned_to_id if assigned_to_id != 'unassigned' else None
+                
                 ticket.save()
-                messages.success(request, '✅ Ticket status updated successfully!')
+                messages.success(request, '✅ Ticket updated successfully!')
             else:
-                messages.info(request, f'Ticket is already marked as {new_status}.')
+                messages.info(request, f'No changes made to the ticket.')
             return redirect('view_tickets')
 
-    return render(request, 'asset_app/ticket_detail.html', {'ticket': ticket, 'display_name': _employee_display_name(ticket.created_by)})
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    from django.db.models import Q
+    
+    # Filter assignable users based on the ticket's department, falling back/including Network
+    ticket_dept = ticket.department or 'Network'
+    from asset_app.models import Employee
+    network_employee_ids = Employee.objects.filter(department__icontains=ticket_dept).values_list('employee_id', flat=True)
+    fallback_network_ids = Employee.objects.filter(department__icontains='Network').values_list('employee_id', flat=True)
+    
+    admin_users = User.objects.filter(
+        Q(groups__name='Network Support') | 
+        Q(department__icontains=ticket_dept) |
+        Q(department__icontains='Network') |
+        Q(username__in=network_employee_ids) |
+        Q(username__in=fallback_network_ids)
+    ).distinct()
+    
+    is_network_support = request.user.groups.filter(name='Network Support').exists() or ticket_dept in (request.user.department or '')
+    
+    context = {
+        'ticket': ticket, 
+        'display_name': _employee_display_name(ticket.created_by),
+        'admin_users': admin_users,
+        'is_network_support': is_network_support
+    }
+    return render(request, 'asset_app/ticket_detail.html', context)
+
+
+@login_required
+def network_support_team(request):
+    is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
+    if not is_admin:
+        messages.error(request, "Access denied.")
+        return redirect('asset_dashboard')
+        
+    from django.contrib.auth.models import Group
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    
+    group, created = Group.objects.get_or_create(name='Network Support')
+    if created:
+        for username in ['1032', '339', '1004']:
+            try:
+                user = User.objects.get(username=username)
+                user.groups.add(group)
+            except User.DoesNotExist:
+                pass
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        user_id = request.POST.get('user_id')
+        if user_id:
+            try:
+                target_user = User.objects.get(id=user_id)
+                if action == 'add':
+                    target_user.groups.add(group)
+                    messages.success(request, f'Added {target_user.display_name} to Network Support.')
+                elif action == 'remove':
+                    target_user.groups.remove(group)
+                    messages.success(request, f'Removed {target_user.display_name} from Network Support.')
+            except User.DoesNotExist:
+                messages.error(request, 'User not found.')
+        return redirect('network_support_team')
+
+    team_members = group.user_set.all()
+    all_users = User.objects.exclude(id__in=team_members.values_list('id', flat=True)).filter(department__icontains='Network')
+    
+    return render(request, 'asset_app/network_support_team.html', {
+        'team_members': team_members,
+        'all_users': all_users
+    })
 
 
 
-# ------------------- PUBLIC ASSET DETAIL (alternate) -------------------
+@login_required
+def support_reports(request):
+    is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin', 'manager')
+    is_network = request.user.groups.filter(name='Network Support').exists() or 'Network' in (request.user.department or '')
+    
+    if not (is_admin or is_network):
+        messages.error(request, "Access denied.")
+        return redirect('asset_dashboard')
+        
+    from django.db.models import Count, Q, Prefetch
+    from django.contrib.auth.models import Group
+    from .models import Ticket
+    
+    group = Group.objects.filter(name='Network Support').first()
+    if group:
+        # Fetch tickets that are resolved or closed
+        resolved_tickets = Ticket.objects.filter(Q(status__icontains='resolv') | Q(status__icontains='clos'))
+        
+        team_members = group.user_set.annotate(
+            resolved_count=Count('assigned_tickets', filter=Q(assigned_tickets__status__icontains='resolv') | Q(assigned_tickets__status__icontains='clos'))
+        ).prefetch_related(
+            Prefetch('assigned_tickets', queryset=resolved_tickets, to_attr='resolved_ticket_list')
+        )
+    else:
+        team_members = []
+        
+    return render(request, 'asset_app/support_reports.html', {'team_members': team_members})
+
+@login_required
+def download_support_report(request):
+    is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin', 'manager')
+    if not is_admin:
+        messages.error(request, "Access denied.")
+        return redirect('asset_dashboard')
+        
+    import csv
+    from django.http import HttpResponse
+    from django.db.models import Q
+    from django.contrib.auth.models import Group
+    from .models import Ticket
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="network_support_report.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Ticket ID', 'Subject', 'Status', 'Reported On', 'Assigned To', 'Resolution Notes'])
+
+    group = Group.objects.filter(name='Network Support').first()
+    if group:
+        team_members = group.user_set.all()
+        for member in team_members:
+            resolved_tickets = Ticket.objects.filter(
+                assigned_to=member
+            ).filter(Q(status__icontains='resolv') | Q(status__icontains='clos'))
+            
+            for ticket in resolved_tickets:
+                writer.writerow([
+                    ticket.id,
+                    ticket.subject,
+                    ticket.status,
+                    ticket.created_at.strftime("%Y-%m-%d %H:%M"),
+                    member.display_name,
+                    ticket.resolution_message or 'None'
+                ])
+
+    return response
+
+# ------------------- PUBLIC ASSET DETAIdef asset_detail1(request, pk):-------
 def asset_detail1(request, pk):
     asset = get_object_or_404(Asset, pk=pk)
     asset_history = Assignment.objects.filter(asset=asset).select_related("employee").order_by("-id")
@@ -1661,3 +2113,170 @@ def asset_detail1(request, pk):
         "asset": asset,
         "asset_history": asset_history,
     })
+@login_required
+def activity_log(request):
+    is_superadmin = getattr(request.user, 'role', '') == 'superadmin'
+    if not is_superadmin:
+        messages.error(request, "Access denied. Only Super Admin can view the Activity Log.")
+        return redirect('asset_dashboard')
+        
+    from .models import Assignment, ReturnRequest, ProcurementRequestWorkflow, Notification
+    
+    # Gather recent activities
+    recent_assignments = Assignment.objects.all().select_related('asset', 'employee', 'assigned_by').order_by('-assigned_at')[:30]
+    recent_returns = ReturnRequest.objects.exclude(status='Pending').select_related('asset', 'employee', 'processed_by').order_by('-processed_at')[:30]
+    recent_procurements = ProcurementRequestWorkflow.objects.exclude(status='Pending Manager Approval').select_related('requested_by').order_by('-created_at')[:30]
+    recent_reports = Notification.objects.filter(notification_type='work_report').select_related('recipient').order_by('-created_at')[:30]
+    
+    # Combine and sort them
+    activities = []
+    
+    for a in recent_assignments:
+        activities.append({
+            'type': 'Assignment',
+            'icon': 'bi-person-plus',
+            'color': '#0d6efd',
+            'bg': 'rgba(13,110,253,.12)',
+            'title': f"Asset Assigned: {a.asset.asset_id}",
+            'message': f"Assigned to {a.employee.name} by {a.assigned_by.username if a.assigned_by else 'System'}.",
+            'timestamp': a.assigned_at
+        })
+        
+    for r in recent_returns:
+        if r.processed_at:
+            activities.append({
+                'type': 'Return',
+                'icon': 'bi-arrow-return-left',
+                'color': '#198754',
+                'bg': 'rgba(25,135,84,.12)',
+                'title': f"Return {r.get_status_display()}: {r.asset.asset_id}",
+                'message': f"Processed by {r.processed_by.username if r.processed_by else 'System'}.",
+                'timestamp': r.processed_at
+            })
+            
+    for p in recent_procurements:
+        timestamp = p.completed_date if p.completed_date else p.created_at
+        activities.append({
+            'type': 'Procurement',
+            'icon': 'bi-cart-check',
+            'color': '#6f42c1',
+            'bg': 'rgba(111,66,193,.12)',
+            'title': f"Procurement: {p.asset_type}",
+            'message': f"Status: {p.status}. Requested by {p.requested_by.username}.",
+            'timestamp': timestamp
+        })
+        
+    for w in recent_reports:
+        activities.append({
+            'type': 'Work Report',
+            'icon': 'bi-journal-check',
+            'color': '#0dcaf0',
+            'bg': 'rgba(13,202,240,.12)',
+            'title': f"Work Report: {w.title}",
+            'message': f"Submitted by {w.recipient.username if w.recipient else 'Unknown'}.",
+            'timestamp': w.created_at
+        })
+        
+    activities.sort(key=lambda x: x['timestamp'], reverse=True)
+    
+    return render(request, 'asset_app/activity_log.html', {
+        'activities': activities[:50]
+    })
+
+
+def is_network_member(user):
+    from asset_app.models import Employee
+        
+    # Check if they are in the Network Support group
+    if user.groups.filter(name__icontains='Network').exists():
+        return True
+        
+    # Check if their employee record is in the Network department
+    if Employee.objects.filter(employee_id=user.username, department__icontains='Network').exists():
+        return True
+        
+    # Everyone else (including superadmin, admin, manager, user) gets denied
+    return False
+
+@login_required
+def submit_work_report(request):
+    if not is_network_member(request.user):
+        messages.error(request, "Access Denied: Only Network Department can submit work reports.")
+        return redirect('asset_dashboard')
+        
+    if request.method == 'POST':
+        title = request.POST.get('title', 'Work Report')
+        description = request.POST.get('description', '')
+        
+        file_url = ""
+        if 'excel_file' in request.FILES:
+            from django.core.files.storage import default_storage
+            excel_file = request.FILES['excel_file']
+            file_name = default_storage.save(f"work_reports/{excel_file.name}", excel_file)
+            file_url = default_storage.url(file_name)
+        
+        # Save as a Notification to avoid DB migration errors
+        from .models import Notification
+        Notification.objects.create(
+            recipient=request.user,
+            notification_type='work_report',
+            title=title,
+            message=description,
+            link=file_url,
+            is_read=True  # Mark true so it doesn't clutter their real notifications
+        )
+        messages.success(request, 'Work report submitted successfully!')
+        return redirect('my_work_reports')
+        
+    return render(request, 'asset_app/submit_work_report.html')
+
+
+@login_required
+def my_work_reports(request):
+    if not is_network_member(request.user):
+        messages.error(request, "Access Denied: Only Network Department can view work reports.")
+        return redirect('asset_dashboard')
+        
+    from .models import Notification
+    
+    # Superadmins can see all reports, others see their own
+    if request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin'):
+        reports = Notification.objects.filter(notification_type='work_report').order_by('-created_at')
+    else:
+        reports = Notification.objects.filter(
+            recipient=request.user,
+            notification_type='work_report'
+        ).order_by('-created_at')
+    
+    return render(request, 'asset_app/my_work_reports.html', {'reports': reports})
+
+@login_required
+def download_manual_reports(request):
+    if not is_network_member(request.user):
+        messages.error(request, "Access Denied.")
+        return redirect('asset_dashboard')
+        
+    import csv
+    from django.http import HttpResponse
+    from .models import Notification
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="manual_work_reports.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['Date', 'Submitted By', 'Title', 'Description'])
+    
+    if request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin'):
+        reports = Notification.objects.filter(notification_type='work_report').order_by('-created_at')
+    else:
+        reports = Notification.objects.filter(recipient=request.user, notification_type='work_report').order_by('-created_at')
+        
+    for report in reports:
+        writer.writerow([
+            report.created_at.strftime("%Y-%m-%d %H:%M"),
+            report.recipient.username if report.recipient else 'Unknown',
+            report.title,
+            report.message
+        ])
+        
+    return response

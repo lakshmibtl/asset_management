@@ -1,0 +1,63 @@
+{% extends 'asset_app/base.html' %}
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="card border-0 shadow-lg" style="border-radius: 20px;">
+        <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+            <h3 class="fw-bold text-dark"><i class="bi bi-people-fill text-primary me-2"></i>Network Support Team Management</h3>
+            <p class="text-muted">Manage the members of the Network Support department who can accept and solve tickets.</p>
+        </div>
+        
+        <div class="card-body p-4">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="p-4 rounded-4" style="background:#eef2ff; border:1px solid #c7d2fe;">
+                        <h5 class="fw-bold text-primary mb-3"><i class="bi bi-person-check-fill me-2"></i>Current Team Members</h5>
+                        {% if team_members %}
+                        <ul class="list-group list-group-flush bg-transparent">
+                            {% for member in team_members %}
+                            <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center border-0 px-0 mb-2">
+                                <div>
+                                    <strong>{{ member.display_name }}</strong>
+                                    <br><small class="text-muted">Username: {{ member.username }}</small>
+                                </div>
+                                <form method="POST" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="remove">
+                                    <input type="hidden" name="user_id" value="{{ member.id }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold">Remove</button>
+                                </form>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <p class="text-muted fst-italic">No users are currently in the Network Support team.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="p-4 rounded-4 bg-light border">
+                        <h5 class="fw-bold text-dark mb-3"><i class="bi bi-person-plus-fill me-2"></i>Add Member</h5>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="add">
+                            <div class="mb-3">
+                                <label class="form-label text-muted fw-semibold">Select User to Add</label>
+                                <select name="user_id" class="form-select rounded-3 p-2 shadow-sm border-0" required>
+                                    <option value="">-- Choose User --</option>
+                                    {% for u in all_users %}
+                                    <option value="{{ u.id }}">{{ u.display_name }} ({{ u.username }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold w-100 shadow-sm">
+                                <i class="bi bi-plus-circle-fill me-2"></i>Add to Team
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

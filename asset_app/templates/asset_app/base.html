@@ -406,7 +406,7 @@
                     </li>
                     <li>
                         <div class="p-2 border-top text-center">
-                            <a href="{% url 'mark_notifications_read' %}" class="btn btn-sm btn-outline-secondary">
+                            <a href="{% url 'mark_notifications_read' %}?next={{ request.path }}" class="btn btn-sm btn-outline-secondary">
                                 <i class="bi bi-check2-all me-1"></i>Mark all as read
                             </a>
                         </div>
@@ -469,14 +469,13 @@
             class="{% if 'view_assets' in request.resolver_match.url_name %}active{% endif %}">
             <i class="bi bi-box-seam"></i><span class="link-text">View Assets</span>
         </a>
+        {% if request.user.role != 'manager' %}
         <a href="{% url 'warranty_tracking' %}"
             class="{% if 'warranty_tracking' in request.resolver_match.url_name %}active{% endif %}">
             <i class="bi bi-shield-check"></i><span class="link-text">Warranty Tracking</span>
         </a>
-        <a href="{% url 'assigned_employees' %}"
-            class="{% if 'assigned_employees' in request.resolver_match.url_name %}active{% endif %}">
-            <i class="bi bi-person-lines-fill"></i><span class="link-text">Assigned Employees</span>
-        </a>
+        {% endif %}
+
         <a href="{% url 'return_requests' %}"
             class="return-link {% if 'return_requests' in request.resolver_match.url_name %}active{% endif %}">
             <i class="bi bi-arrow-return-left"></i><span class="link-text">Return Requests</span>
@@ -492,15 +491,24 @@
             class="{% if 'view_tickets' in request.resolver_match.url_name %}active{% endif %}">
             <i class="bi bi-ticket-perforated"></i><span class="link-text">View Tickets</span>
         </a>
-        <a href="{% url 'notifications' %}"
-            class="{% if 'notifications' in request.resolver_match.url_name %}active{% endif %}">
-            <i class="bi bi-bell"></i><span class="link-text">Notifications</span>
-            {% if unread_notifications_count %}<span class="badge rounded-pill return-badge">{{ unread_notifications_count }}</span>{% endif %}
-        </a>
+
         <a href="{% url 'procurement_list' %}"
             class="{% if 'procurement_list' in request.resolver_match.url_name %}active{% endif %}">
             <i class="bi bi-cart-plus"></i><span class="link-text">Request Asset</span>
         </a>
+
+        {% if is_network_member %}
+        <a href="{% url 'support_reports' %}" class="{% if 'support_reports' in request.resolver_match.url_name or 'my_work_reports' in request.resolver_match.url_name or 'submit_work_report' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="bi bi-file-earmark-bar-graph"></i><span class="link-text">Work Reports</span>
+        </a>
+        {% endif %}
+
+        {% if request.user.role == 'superadmin' %}
+        <a href="{% url 'activity_log' %}"
+            class="{% if 'activity_log' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="bi bi-activity"></i><span class="link-text">Activity Log</span>
+        </a>
+        {% endif %}
 
         {% if request.user.is_staff %}
         <a href="{% url 'view_users' %}"
@@ -526,6 +534,17 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Automatically hide alert notifications after 3.5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                var alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    var bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 3500);
+        });
+
         const toggleButton = document.getElementById('menu-toggle');
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebar-overlay');
