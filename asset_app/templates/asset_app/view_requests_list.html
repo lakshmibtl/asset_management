@@ -1,182 +1,534 @@
 {% extends 'asset_app/base.html' %}
 {% block title %}Asset Requests{% endblock %}
 {% block content %}
-<div class="container py-5">
-    <!-- Header Section -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-5 gap-3">
+<style>
+    /* ========== PROFESSIONAL ASSET REQUESTS ========== */
+    :root {
+        --brand: #07518A;
+        --brand-hover: #064a7d;
+        --brand-soft: #eaf2fa;
+        --green: #15803d;
+        --green-soft: #e7f6ec;
+        --red: #b91c1c;
+        --red-soft: #fdeeee;
+        --amber: #b45309;
+        --amber-soft: #fff7ed;
+        --slate: #475569;
+        --slate-soft: #f1f5f9;
+        --ink: #1f2937;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --sha-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+    }
+
+    body {
+        background: #f3f6f9;
+    }
+
+    .rq-bcrumb {
+        font-size: 0.82rem;
+        color: var(--muted);
+        letter-spacing: 0.02em;
+    }
+
+    .rq-bcrumb a {
+        color: var(--muted);
+        text-decoration: none;
+    }
+
+    .rq-bcrumb a:hover {
+        color: var(--brand);
+    }
+
+    .rq-bcrumb .sep {
+        margin: 0 0.4rem;
+        color: #b6bdc7;
+    }
+
+    .rq-page-head h2 {
+        color: var(--ink);
+        font-weight: 650;
+        letter-spacing: -0.01em;
+        margin: 0;
+    }
+
+    .rq-page-head p {
+        color: var(--muted);
+        font-size: 0.92rem;
+        margin: 4px 0 0;
+    }
+
+    .btn-brand {
+        background: var(--brand);
+        color: #fff;
+        border: 1px solid var(--brand);
+        border-radius: 10px;
+        padding: 9px 18px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        transition: background 0.15s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .btn-brand:hover {
+        background: var(--brand-hover);
+        color: #fff;
+    }
+
+    .btn-outline-brand {
+        background: #fff;
+        color: var(--brand);
+        border: 1px solid rgba(7, 81, 138, 0.4);
+        border-radius: 10px;
+        padding: 9px 18px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        transition: background 0.15s ease, color 0.15s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .btn-outline-brand:hover {
+        background: var(--brand);
+        color: #fff;
+    }
+
+    /* Stat tiles */
+    .rq-stat {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px 22px;
+        box-shadow: var(--sha-card);
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .rq-stat:hover {
+        box-shadow: 0 8px 24px rgba(16, 24, 40, 0.08);
+        transform: translateY(-2px);
+    }
+
+    .rq-stat .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.05rem;
+        flex-shrink: 0;
+    }
+
+    .rq-stat .stat-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin-bottom: 4px;
+    }
+
+    .rq-stat .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--ink);
+        line-height: 1;
+        letter-spacing: -0.02em;
+    }
+
+    /* Table card */
+    .rq-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: var(--sha-card);
+        overflow: hidden;
+    }
+
+    .rq-card-head {
+        padding: 16px 22px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .rq-card-head .bar {
+        width: 4px;
+        height: 22px;
+        border-radius: 4px;
+        background: var(--brand);
+    }
+
+    .rq-card-head h5 {
+        margin: 0;
+        font-weight: 650;
+        font-size: 0.98rem;
+        color: var(--ink);
+    }
+
+    /* Table */
+    .rq-table {
+        margin: 0;
+        font-size: 0.88rem;
+    }
+
+    .rq-table thead th {
+        color: var(--muted);
+        font-size: 0.71rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        border-bottom: 1px solid var(--line);
+        background: #fafbfc;
+        padding: 12px 22px;
+        white-space: nowrap;
+    }
+
+    .rq-table tbody td {
+        padding: 14px 22px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+        color: var(--ink);
+    }
+
+    .rq-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .rq-table tbody tr {
+        transition: background 0.15s ease;
+    }
+
+    .rq-table tbody tr:hover {
+        background: #faf8f2;
+    }
+
+    /* ============ PREMIUM ENTERPRISE OVERRIDE ============ */
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap');
+
+    :root {
+        --brand: #0e6b4f;
+        --brand-hover: #0a5940;
+        --brand-soft: #e8f1ec;
+        --gold: #b0832b;
+        --gold-soft: #f7efdf;
+        --green: #2f7d5c;
+        --green-soft: #e8f2eb;
+        --red: #a34a3b;
+        --red-soft: #faebe8;
+        --amber: #b27a28;
+        --amber-soft: #f9f0df;
+        --slate: #5c6e67;
+        --slate-soft: #eef1ee;
+        --ink: #1c2b26;
+        --muted: #728079;
+        --line: #e4dfd1;
+        --paper: #f7f5ef;
+        --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+    }
+
+    body {
+        background-color: var(--paper) !important;
+        background-image: none !important;
+    }
+
+    h1, h2, h3, h4, h5, .stat-value {
+        font-family: var(--serif) !important;
+        letter-spacing: -0.01em;
+        color: var(--ink);
+        font-weight: 600;
+    }
+
+    .rq-bcrumb a:hover { color: var(--gold); }
+    .rq-bcrumb .sep { color: var(--gold); }
+
+    .rq-page-head h2 { font-size: 1.9rem; }
+    .rq-page-head h2 i { color: var(--gold) !important; }
+
+    .btn-brand {
+        background: var(--brand);
+        border-color: var(--brand);
+    }
+    .btn-brand:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
+
+    .btn-outline-brand {
+        border-color: rgba(14, 107, 79, 0.45);
+        color: var(--brand);
+    }
+    .btn-outline-brand:hover { background: var(--brand); border-color: var(--brand); color: #fff; }
+
+    .rq-stat { border-color: var(--line); box-shadow: 0 1px 2px rgba(28, 43, 38, 0.04), 0 1px 3px rgba(28, 43, 38, 0.06); }
+    .rq-stat:hover { box-shadow: 0 10px 26px rgba(28, 43, 38, 0.09); }
+    .rq-stat .stat-label { color: var(--muted); }
+    .rq-stat .stat-value { color: var(--ink); }
+
+    .rq-card { border-color: var(--line); box-shadow: 0 1px 2px rgba(28, 43, 38, 0.04), 0 1px 3px rgba(28, 43, 38, 0.06); }
+    .rq-card-head { border-bottom-color: var(--line); }
+    .rq-card-head .bar { background: var(--gold); }
+    .rq-card-head h5 { font-weight: 600; }
+
+    .rq-table thead th {
+        color: var(--muted);
+        border-bottom-color: var(--line);
+        background: #faf9f4;
+    }
+    .rq-table tbody td { color: var(--ink); border-bottom-color: #f2efe6; }
+
+    .asset-cell .a-icon, .avatar { background: var(--brand-soft); color: var(--brand); }
+
+    .btn-view {
+        border-color: rgba(14, 107, 79, 0.45);
+        color: var(--brand);
+    }
+    .btn-view:hover { background: var(--brand); border-color: var(--brand); color: #fff; }
+
+    .rq-empty { border: 1px dashed var(--line); border-radius: 16px; background: #fff; }
+    .rq-empty .icon { background: var(--gold-soft); color: var(--gold); }
+
+    .asset-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .asset-cell .a-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        background: var(--brand-soft);
+        color: var(--brand);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--brand-soft);
+        color: var(--brand);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.82rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .rq-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        border-radius: 999px;
+        padding: 5px 12px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .rq-pill.approved { background: var(--green-soft); color: var(--green); border: 1px solid rgba(21, 128, 61, 0.2); }
+    .rq-pill.rejected { background: var(--red-soft); color: var(--red); border: 1px solid rgba(185, 28, 28, 0.2); }
+    .rq-pill.pending { background: var(--amber-soft); color: var(--amber); border: 1px solid rgba(180, 83, 9, 0.2); }
+    .rq-pill.other { background: var(--slate-soft); color: var(--slate); border: 1px solid rgba(71, 85, 105, 0.2); }
+
+    .btn-view {
+        background: #fff;
+        color: var(--brand);
+        border: 1px solid rgba(7, 81, 138, 0.4);
+        border-radius: 9px;
+        padding: 7px 16px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: background 0.15s ease, color 0.15s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-view:hover {
+        background: var(--brand);
+        color: #fff;
+    }
+
+    .rq-empty {
+        text-align: center;
+        padding: 56px 20px;
+    }
+
+    .rq-empty .icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        background: var(--brand-soft);
+        color: var(--brand);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        margin: 0 auto 14px;
+    }
+
+    .rq-empty p:first-of-type {
+        font-weight: 700;
+        color: var(--ink);
+        margin-bottom: 2px;
+    }
+
+    .rq-empty p:last-of-type {
+        color: var(--muted);
+        font-size: 0.88rem;
+        margin: 0 0 18px;
+    }
+</style>
+
+<div class="container py-4">
+
+    <!-- Breadcrumb -->
+    <nav class="rq-bcrumb mb-2">
+        <a href="{% url 'asset_dashboard' %}">Dashboard</a>
+        <span class="sep"><i class="bi bi-chevron-right"></i></span>
+        <span style="color:#374151;">Asset Requests</span>
+    </nav>
+
+    <!-- Page heading -->
+    <div class="rq-page-head d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
         <div>
-            <h1 class="display-5 fw-bold text-primary mb-1">Asset Requests</h1>
-           <!-- <p class="text-muted mb-0">Manage and track all asset allocation requests</p>-->
+            <h2><i class="bi bi-list-check me-2" style="color:var(--brand);"></i>Asset Requests</h2>
+            <p>Manage and track all asset allocation requests.</p>
         </div>
-       
-        <!-- Request Asset Button -->
-        <a href="{% url 'request_asset' %}" class="btn btn-primary btn-lg shadow-sm d-flex align-items-center gap-2 px-4">
-            <i class="bi bi-plus-circle-fill"></i>
-            <span class="d-none d-sm-inline">Request New Asset</span>
-            <span class="d-inline d-sm-none">Request</span>
+        <a href="{% url 'request_asset' %}" class="btn btn-brand">
+            <i class="bi bi-plus-circle"></i> Request New Asset
         </a>
     </div>
 
-    <!-- Requests Table Card -->
-    <div class="card border-0 shadow-lg rounded-3 overflow-hidden">
-        <div class="card-header bg-gradient bg-primary text-white py-3">
-            <h5 class="mb-0 d-flex align-items-center gap-2">
-                <i class="bi bi-list-check"></i>
-                All Requests
-            </h5>
-        </div>
-        <div class="card-body p-0">
-            {% if requests %}
-            <div class="table-responsive">
-                <table class="table table-hover mb-0 align-middle borderless-table text-nowrap">
-                    <thead class="bg-light text-dark fw-semibold">
-                        <tr>
-                            <th class="ps-4">ID</th>
-                            <th>Asset Type</th>
-                            <th>Requested By</th>
-                            <th>Status</th>
-                            {% if request.user.is_staff %}
-                            <th class="text-center">Action</th>
-                            {% endif %}
-                        </tr>
-                    </thead>
-                    <tbody class="text-secondary">
-                        {% for req in requests %}
-                        <tr>
-                            <td class="ps-4 fw-medium">{{ req.id }}</td>
-                            <td>
-                                <div class="d-flex align-items-center gap-2">
-                                    <i class="bi {% if req.asset_type == 'Laptop' %}bi-laptop{% elif req.asset_type == 'Monitor' %}bi-display{% elif req.asset_type == 'Keyboard' %}bi-keyboard{% else %}bi-box-seam{% endif %} text-primary"></i>
-                                    <span>{{ req.asset_type }}</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="avatar avatar-sm bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center">
-                                        {{ req.requested_by.username|slice:":1"|upper }}
-                                    </div>
-                                    <span class="fw-medium">{{ req.requested_by.get_full_name|default:req.requested_by.username }}</span>
-                                </div>
-                            </td>
-                            <td>
-                                {% if req.status == "Approved" %}
-                                    <span class="badge bg-success-subtle text-success fw-semibold px-3 py-2">Approved</span>
-                                {% elif req.status == "Rejected" %}
-                                    <span class="badge bg-danger-subtle text-danger fw-semibold px-3 py-2">Rejected</span>
-                                {% elif req.status == "Pending" %}
-                                    <span class="badge bg-warning-subtle text-warning fw-semibold px-3 py-2">Pending</span>
-                                {% else %}
-                                    <span class="badge bg-secondary-subtle text-secondary fw-semibold px-3 py-2">{{ req.status }}</span>
-                                {% endif %}
-                            </td>
-                            {% if request.user.is_staff %}
-                            <td class="text-center">
-                                <a href="{% url 'view_request' req.id %}"
-                                   class="btn btn-outline-primary btn-sm rounded-pill px-3 d-flex align-items-center gap-1 mx-auto"
-                                   style="width: fit-content;">
-                                    <i class="bi bi-eye"></i>
-                                    <span class="d-none d-md-inline">View</span>
-                                </a>
-                            </td>
-                            {% endif %}
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <!-- Empty State -->
-            <div class="text-center py-5">
-                <div class="mb-4">
-                    <i class="bi bi-inbox display-1 text-muted opacity-25"></i>
+    <!-- Summary tiles -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="rq-stat d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:var(--brand-soft);color:var(--brand);">
+                    <i class="bi bi-layers"></i>
                 </div>
-                <h4 class="text-muted mb-2">No requests found</h4>
-                <p class="text-muted">When users request assets, they will appear here.</p>
-                <a href="{% url 'request_asset' %}" class="btn btn-outline-primary mt-3">
+                <div>
+                    <div class="stat-label">Total</div>
+                    <div class="stat-value">{{ status_counts.total|default:"0" }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="rq-stat d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:var(--amber-soft);color:var(--amber);">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-value">{{ status_counts.pending|default:"0" }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="rq-stat d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:var(--green-soft);color:var(--green);">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Approved</div>
+                    <div class="stat-value">{{ status_counts.approved|default:"0" }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="rq-stat d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:var(--red-soft);color:var(--red);">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Rejected</div>
+                    <div class="stat-value">{{ status_counts.rejected|default:"0" }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Requests table -->
+    <div class="rq-card">
+        <div class="rq-card-head">
+            <span class="bar"></span>
+            <h5>All Requests</h5>
+        </div>
+        <div class="table-responsive">
+            {% if requests %}
+            <table class="table rq-table align-middle">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Asset Type</th>
+                        <th>Requested By</th>
+                        <th>Status</th>
+                        {% if request.user.is_staff %}
+                        <th class="text-center">Action</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in requests %}
+                    <tr>
+                        <td class="fw-semibold text-muted">#{{ req.id }}</td>
+                        <td>
+                            <div class="asset-cell">
+                                <div class="a-icon">
+                                    <i class="bi {% if req.asset_type == 'Laptop' %}bi-laptop{% elif req.asset_type == 'Monitor' %}bi-display{% elif req.asset_type == 'Keyboard' %}bi-keyboard{% else %}bi-box-seam{% endif %}"></i>
+                                </div>
+                                <span class="fw-semibold">{{ req.asset_type }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar">{{ req.requested_by.username|slice:":1"|upper }}</div>
+                                <span class="fw-medium">{{ req.requested_by.get_full_name|default:req.requested_by.username }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            {% if req.status == "Approved" %}
+                            <span class="rq-pill approved"><i class="bi bi-check-circle-fill" style="font-size:0.7rem;"></i>Approved</span>
+                            {% elif req.status == "Rejected" %}
+                            <span class="rq-pill rejected"><i class="bi bi-x-circle-fill" style="font-size:0.7rem;"></i>Rejected</span>
+                            {% elif req.status == "Pending" %}
+                            <span class="rq-pill pending"><i class="bi bi-hourglass-split"></i>Pending</span>
+                            {% else %}
+                            <span class="rq-pill other">{{ req.status }}</span>
+                            {% endif %}
+                        </td>
+                        {% if request.user.is_staff %}
+                        <td class="text-center">
+                            <a href="{% url 'view_request' req.id %}" class="btn-view">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="rq-empty">
+                <div class="icon"><i class="bi bi-inbox"></i></div>
+                <p>No requests found</p>
+                <p>When users request assets, they will appear here.</p>
+                <a href="{% url 'request_asset' %}" class="btn btn-outline-brand">
                     <i class="bi bi-plus-circle"></i> Make First Request
                 </a>
             </div>
             {% endif %}
         </div>
     </div>
-
-    <!-- Optional: Summary Stats (for staff) -->
-   <!-- {% if request.user.is_staff and requests %}
-    <div class="row mt-4 g-3">
-        <div class="col-6 col-md-3">
-            <div class="card border-0 bg-success-subtle text-success h-100">
-                <div class="card-body text-center py-3">
-                    <h6 class="mb-1">Approved</h6>
-                    <h4 class="mb-0 fw-bold">{{ requests|length|add:0 }}</h4>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card border-0 bg-danger-subtle text-danger h-100">
-                <div class="card-body text-center py-3">
-                    <h6 class="mb-1">Rejected</h6>
-                    <h4 class="mb-0 fw-bold">0</h4>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card border-0 bg-warning-subtle text-warning h-100">
-                <div class="card-body text-center py-3">
-                    <h6 class="mb-1">Pending</h6>
-                    <h4 class="mb-0 fw-bold">0</h4>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="card border-0 bg-primary-subtle text-primary h-100">
-                <div class="card-body text-center py-3">
-                    <h6 class="mb-1">Total</h6>
-                    <h4 class="mb-0 fw-bold">{{ requests|length }}</h4>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}-->
 </div>
-
-<!-- Bootstrap Icons -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-
-<style>
-    .avatar {
-        width: 36px;
-        height: 36px;
-        font-size: 0.9rem;
-        font-weight: 600;
-    }
-    
-    /* Borderless Table */
-    .borderless-table {
-        border: none !important;
-    }
-    .borderless-table thead th {
-        border: none !important;
-        border-bottom: 1px solid #e9ecef !important;
-    }
-    .borderless-table tbody tr {
-        border: none !important;
-    }
-    .borderless-table tbody td {
-        border: none !important;
-        padding: 1rem 0.75rem;
-    }
-    .borderless-table tbody tr:hover {
-        background-color: rgba(0, 123, 255, 0.05) !important;
-    }
-    
-    .card-header {
-        border-bottom: none;
-    }
-    
-    @media (max-width: 576px) {
-        .display-5 {
-            font-size: 1.8rem;
-        }
-    }
-</style>
 {% endblock %}

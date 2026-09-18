@@ -5,453 +5,839 @@
 
 {% block content %}
 <style>
-  :root {
-    --primary-blue: #07518a;
-    --soft-bg: #f8f9fa;
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  body {
-    background-color: var(--soft-bg);
-  }
-
-  /* ---------- Page Animations & Layout ---------- */
-  .page-wrapper {
-    padding-top: 2.5rem;
-    padding-bottom: 4rem;
-    animation: fadeIn 0.5s ease-out;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(15px);
+    /* ========== PROFESSIONAL SUPPORT TICKETS ========== */
+    :root {
+        --brand: #07518A;
+        --brand-hover: #064a7d;
+        --brand-soft: #eaf2fa;
+        --blue: #0d6efd;
+        --blue-soft: #eaf2fa;
+        --amber: #b45309;
+        --amber-soft: #fff7ed;
+        --green: #15803d;
+        --green-soft: #e7f6ec;
+        --slate: #475569;
+        --slate-soft: #f1f5f9;
+        --red: #b91c1c;
+        --red-soft: #fdeeee;
+        --ink: #1f2937;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
     }
 
-    to {
-      opacity: 1;
-      transform: translateY(0);
+    body {
+        background: #f3f6f9;
     }
-  }
 
-  .page-title {
-    font-weight: 800;
-    color: var(--primary-blue);
-  }
+    /* Breadcrumb */
+    .tk-crumb {
+        font-size: 0.82rem;
+        color: var(--muted);
+        letter-spacing: 0.02em;
+    }
 
-  /* ---------- Raise Ticket Button ---------- */
-  .btn-action {
-    border-radius: 8px;
-    padding: 0.5rem 1rem;
-    font-weight: 500;
-    transition: var(--transition);
-  }
+    .tk-crumb a {
+        color: var(--muted);
+        text-decoration: none;
+    }
 
-  .btn-primary-custom {
-    background-color: var(--primary-blue) !important;
-    border-color: var(--primary-blue) !important;
-    color: white !important;
-  }
+    .tk-crumb a:hover {
+        color: var(--brand);
+    }
 
-  .btn-primary-custom:hover {
-    background-color: #064070 !important;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(7, 81, 138, 0.2);
-  }
+    .tk-crumb .sep {
+        margin: 0 0.4rem;
+        color: #b6bdc7;
+    }
 
-  /* ---------- Clean Ticket Cards ---------- */
-  .ticket-card {
-    border: none;
-    border-radius: 16px;
-    transition: var(--transition);
-    background: #ffffff;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    border-top: 4px solid var(--primary-blue);
-    height: 100%;
-  }
+    .tk-page-head h2 {
+        color: var(--ink);
+        font-weight: 650;
+        letter-spacing: -0.01em;
+        margin: 0;
+    }
 
-  .ticket-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  }
+    .tk-page-head p {
+        color: var(--muted);
+        font-size: 0.92rem;
+        margin: 4px 0 0;
+    }
 
-  .icon-box {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(7, 81, 138, 0.1);
-    color: var(--primary-blue);
-    font-size: 1.2rem;
-  }
+    .btn-outline-brand {
+        background: #ffffff;
+        color: var(--brand);
+        border: 1px solid rgba(7, 81, 138, 0.4);
+        border-radius: 10px;
+        padding: 9px 18px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
 
-  /* ---------- Status Badges ---------- */
-  .status-badge {
-    padding: 0.4rem 0.8rem;
-    border-radius: 50px;
-    font-weight: 600;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
+    .btn-outline-brand:hover {
+        background: var(--brand);
+        border-color: var(--brand);
+        color: #fff;
+    }
 
-  .status-open {
-    background: #e0f2fe;
-    color: #0369a1;
-  }
+    .btn-brand {
+        background: var(--brand);
+        color: #fff;
+        border: 1px solid var(--brand);
+        border-radius: 10px;
+        padding: 9px 18px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        transition: background 0.15s ease;
+    }
 
-  .status-pending {
-    background: #fff7ed;
-    color: #c2410c;
-  }
+    .btn-brand:hover {
+        background: var(--brand-hover);
+        color: #fff;
+    }
 
-  .status-resolved {
-    background: #dcfce7;
-    color: #15803d;
-  }
+    .btn-ghost {
+        background: #ffffff;
+        color: #374151;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 9px 18px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        transition: background 0.15s ease, border-color 0.15s ease;
+    }
 
-  .status-closed {
-    background: #f1f5f9;
-    color: #475569;
-  }
+    .btn-ghost:hover {
+        background: #f3f4f6;
+        border-color: #d1d5db;
+        color: #111827;
+    }
 
-  .hover-lift:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15) !important;
-  }
+    /* Stat tiles */
+    .tk-stat {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px 22px;
+        box-shadow: var(--shadow-card);
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .tk-stat:hover {
+        box-shadow: 0 8px 24px rgba(16, 24, 40, 0.08);
+        transform: translateY(-2px);
+    }
+
+    .tk-stat .stat-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .tk-stat .stat-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin-bottom: 4px;
+    }
+
+    .tk-stat .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--ink);
+        line-height: 1;
+        letter-spacing: -0.02em;
+    }
+
+    /* Status pills */
+    .tk-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        border-radius: 999px;
+        padding: 5px 12px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+    }
+
+    .tk-pill.pill-open { background: var(--blue-soft); color: var(--blue); border: 1px solid rgba(13, 110, 253, 0.2); }
+    .tk-pill.pill-pending { background: var(--amber-soft); color: var(--amber); border: 1px solid rgba(180, 83, 9, 0.2); }
+    .tk-pill.pill-resolved { background: var(--green-soft); color: var(--green); border: 1px solid rgba(21, 128, 61, 0.2); }
+    .tk-pill.pill-closed { background: var(--slate-soft); color: var(--slate); border: 1px solid rgba(71, 85, 105, 0.2); }
+
+    /* Ticket cards */
+    .tk-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: var(--shadow-card);
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .tk-card:hover {
+        box-shadow: 0 10px 26px rgba(16, 24, 40, 0.09);
+        transform: translateY(-2px);
+    }
+
+    .tk-card .accent {
+        height: 4px;
+        flex-shrink: 0;
+    }
+
+    .accent-open { background: var(--blue); }
+    .accent-pending { background: var(--amber); }
+    .accent-resolved { background: var(--green); }
+    .accent-closed { background: var(--slate); }
+
+    .tk-card-body {
+        padding: 18px 20px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .tk-ticket-id {
+        font-weight: 700;
+        color: var(--muted);
+        font-size: 0.82rem;
+        letter-spacing: 0.04em;
+    }
+
+    .tk-title {
+        font-weight: 700;
+        color: var(--ink);
+        letter-spacing: -0.01em;
+        margin-bottom: 8px;
+    }
+
+    .dept-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f1f5f9;
+        color: #475569;
+        font-size: 0.75rem;
+        font-weight: 500;
+        padding: 4px 12px;
+        border-radius: 7px;
+        margin-bottom: 14px;
+    }
+
+    .asset-row {
+        background: #f8fafc;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    .asset-row .a-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        background: var(--brand-soft);
+        color: var(--brand);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .tk-desc {
+        color: #4b5563;
+        font-size: 0.88rem;
+        line-height: 1.55;
+        margin-bottom: 14px;
+    }
+
+    .assignee-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--brand-soft);
+        border: 1px solid rgba(7, 81, 138, 0.15);
+        border-radius: 8px;
+        color: var(--brand);
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 6px 12px;
+        margin-bottom: 14px;
+    }
+
+    .tk-footer {
+        border-top: 1px solid var(--line);
+        margin-top: auto;
+        padding-top: 14px;
+    }
+
+    .tk-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: var(--brand-soft);
+        color: var(--brand);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .btn-accept {
+        background: var(--green);
+        border: 1px solid var(--green);
+        color: #fff;
+        border-radius: 9px;
+        padding: 8px 14px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: background 0.15s ease;
+    }
+
+    .btn-accept:hover {
+        background: #116b33;
+        color: #fff;
+    }
+
+    .icon-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--muted);
+        font-size: 0.85rem;
+        transition: all 0.15s ease;
+    }
+
+    .icon-btn-danger:hover {
+        border-color: var(--red);
+        color: var(--red);
+        background: var(--red-soft);
+    }
+
+    .hover-lift {
+        transition: all 0.15s ease;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(16, 24, 40, 0.1);
+    }
+
+    .btn-view {
+        background: var(--brand);
+        color: #fff;
+        border: 1px solid var(--brand);
+        border-radius: 9px;
+        padding: 8px 16px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: background 0.15s ease;
+    }
+
+    .btn-view:hover {
+        background: var(--brand-hover);
+        color: #fff;
+    }
+
+    /* Empty state */
+    .tk-empty {
+        text-align: center;
+        padding: 56px 20px;
+        background: #ffffff;
+        border: 1px dashed var(--line);
+        border-radius: 14px;
+    }
+
+    .tk-empty .icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        background: var(--brand-soft);
+        color: var(--brand);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        margin: 0 auto 14px;
+    }
+
+    .tk-empty p:first-of-type {
+        font-weight: 700;
+        color: var(--ink);
+        margin-bottom: 2px;
+    }
+
+    .tk-empty p:last-of-type {
+        color: var(--muted);
+        font-size: 0.88rem;
+        margin: 0;
+    }
+
+    /* Report modal + offcanvas shared form styling */
+    .tk-modal .modal-content {
+        border: none;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: var(--shadow-card);
+    }
+
+    .tk-modal .modal-header {
+        border-bottom: 1px solid var(--line);
+        padding: 16px 22px;
+    }
+
+    .tk-modal .modal-title {
+        font-weight: 650;
+        color: var(--ink);
+        font-size: 1.05rem;
+    }
+
+    .tk-modal .modal-body {
+        padding: 0;
+    }
+
+    .tk-modal .modal-footer {
+        border-top: 1px solid var(--line);
+        background: #fafbfc;
+        padding: 14px 22px;
+    }
+
+    .rep-table {
+        margin: 0;
+        font-size: 0.86rem;
+    }
+
+    .rep-table thead th {
+        color: var(--muted);
+        font-size: 0.71rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        border-bottom: 1px solid var(--line);
+        background: #fafbfc;
+        padding: 11px 18px;
+        white-space: nowrap;
+    }
+
+    .rep-table tbody td {
+        padding: 12px 18px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+        color: var(--ink);
+    }
+
+    .rep-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .f-label {
+        display: block;
+        font-size: 0.76rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin-bottom: 7px;
+    }
+
+    .tk-form .form-control,
+    .tk-form .form-select {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        background: #fbfcfd;
+        color: var(--ink);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .tk-form .form-control:focus,
+    .tk-form .form-select:focus {
+        outline: none;
+        border-color: var(--brand);
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(7, 81, 138, 0.12);
+    }
+
+    .tk-offcanvas .offcanvas-header {
+        border-bottom: 1px solid var(--line);
+        background: #ffffff;
+    }
+
+    .tk-offcanvas .offcanvas-title {
+        font-weight: 650;
+        color: var(--ink);
+        font-size: 1.05rem;
+    }
 </style>
-<div class="container-fluid page-wrapper">
 
-  <!-- Header Section -->
-  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-4">
-    <div>
-      <h1 class="display-6 fw-bold mb-1" style="color: var(--primary-blue);">
-        <i class="bi bi-headset me-2"></i>Support Tickets
-      </h1>
-      <p class="text-muted mb-0">Track and manage asset-related issues seamlessly.</p>
+<div class="container py-4">
+
+    <!-- Breadcrumb -->
+    <nav class="tk-crumb mb-2">
+        <a href="{% url 'asset_dashboard' %}">Dashboard</a>
+        <span class="sep"><i class="bi bi-chevron-right"></i></span>
+        <span style="color:#374151;">Support Tickets</span>
+    </nav>
+
+    <!-- Page heading -->
+    <div class="tk-page-head d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
+        <div>
+            <h2><i class="bi bi-ticket-perforated me-2" style="color: var(--brand);"></i>Support Tickets</h2>
+            <p>Track and manage asset-related issue tickets.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            {% if is_admin or is_network_support %}
+            <button type="button" class="btn btn-outline-brand" data-bs-toggle="modal" data-bs-target="#ticketReportModal">
+                <i class="bi bi-file-earmark-bar-graph me-1"></i> View Report
+            </button>
+            {% endif %}
+            <button type="button" class="btn btn-brand" data-bs-toggle="offcanvas" data-bs-target="#raiseTicketOffcanvas">
+                <i class="bi bi-plus-lg me-1"></i> Raise New Ticket
+            </button>
+        </div>
     </div>
-    <div class="mt-3 mt-md-0 d-flex gap-2">
-      {% if is_admin or is_network_support %}
-      <button type="button" class="btn btn-secondary shadow-sm" data-bs-toggle="modal" data-bs-target="#ticketReportModal">
-        <i class="bi bi-file-earmark-bar-graph me-1"></i> View Report
-      </button>
-      {% endif %}
-      <button type="button" class="btn btn-primary-custom btn-action shadow-sm" data-bs-toggle="offcanvas"
-        data-bs-target="#raiseTicketOffcanvas">
-        <i class="bi bi-plus-lg me-1"></i> Raise New Ticket
-      </button>
-    </div>
-  </div>
 
-  <!-- Ticket Report Modal -->
-  <div class="modal fade" id="ticketReportModal" tabindex="-1" aria-labelledby="ticketReportModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-      <div class="modal-content border-0 shadow-lg">
-        <div class="modal-header bg-light border-bottom-0">
-          <h5 class="modal-title fw-bold text-dark" id="ticketReportModalLabel">
-            <i class="bi bi-file-earmark-bar-graph text-primary me-2"></i>Ticket Assignment Report
-          </h5>
-          <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body p-0">
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-              <thead class="table-light">
-                <tr>
-                  <th class="ps-4">Ticket ID</th>
-                  <th>Subject</th>
-                  <th>Status</th>
-                  <th>Department</th>
-                  <th>Raised By</th>
-                  <th>Created On</th>
-                  <th>Solver (Assigned To)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for ticket in tickets %}
-                <tr>
-                  <td class="ps-4 fw-semibold text-muted">#{{ ticket.id }}</td>
-                  <td class="fw-bold text-dark">{{ ticket.subject }}</td>
-                  <td>
-                    <span class="badge status-{{ ticket.status|lower }} px-2 py-1 rounded-pill shadow-sm" style="font-size: 0.7rem;">
-                      {{ ticket.status|title }}
-                    </span>
-                  </td>
-                  <td>{{ ticket.department }}</td>
-                  <td>
-                    {% if ticket.created_by %}
-                      <span class="fw-medium text-dark"><i class="bi bi-person me-1 text-muted"></i>{{ ticket.created_by.display_name }}</span>
-                    {% else %}
-                      <span class="text-muted">System</span>
-                    {% endif %}
-                  </td>
-                  <td class="text-muted small">{{ ticket.created_at|date:"M d, Y" }}</td>
-                  <td>
-                    {% if ticket.assigned_to %}
-                      <div class="d-flex align-items-center">
-                        <i class="bi bi-person-check-fill text-success me-2"></i>
-                        <span class="fw-semibold">{{ ticket.assigned_to.display_name }}</span>
-                      </div>
-                    {% else %}
-                      <span class="text-muted fst-italic"><i class="bi bi-person-dash me-1"></i>Unassigned</span>
-                    {% endif %}
-                  </td>
-                </tr>
-                {% empty %}
-                <tr>
-                  <td colspan="6" class="text-center py-4 text-muted">No tickets found.</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div class="modal-footer border-top-0 bg-light justify-content-between">
-          <a href="{% url 'download_ticket_report' %}" class="btn btn-success px-4 rounded-pill shadow-sm fw-semibold">
-            <i class="bi bi-download me-1"></i> Download CSV
-          </a>
-          <button type="button" class="btn btn-secondary px-4 rounded-pill shadow-sm fw-semibold" data-bs-dismiss="modal">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {% if messages %}
-  {% for message in messages %}
-  <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm border-0 bg-white" role="alert">
-    <i class="bi bi-check-circle-fill text-success me-2"></i> {{ message }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-  </div>
-  {% endfor %}
-  {% endif %}
-
-  <!-- Tickets Grid -->
-  <div class="row g-4">
-    {% for ticket in tickets %}
-    <div class="col-xl-4 col-lg-4 col-md-6">
-      <div class="card ticket-card h-100 border-0 shadow-sm position-relative overflow-hidden">
-        
-        <!-- Top accent line based on status -->
-        <div class="position-absolute top-0 start-0 w-100" style="height: 4px; background: 
-          {% if ticket.status|lower == 'open' %}#0dcaf0
-          {% elif ticket.status|lower == 'pending' %}#fd7e14
-          {% elif ticket.status|lower == 'resolved' %}#198754
-          {% elif ticket.status|lower == 'closed' %}#6c757d
-          {% else %}var(--primary-blue){% endif %};">
-        </div>
-
-        <div class="card-body p-4 p-xl-5 d-flex flex-column">
-          
-          <!-- Header (Status & ID) -->
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <span class="status-badge status-{{ ticket.status|lower }} px-3 py-2 rounded-pill fw-bold shadow-sm" style="font-size: 0.75rem;">
-              {% if ticket.status|lower == 'open' %}<i class="bi bi-circle-fill me-1" style="font-size: 8px;"></i>
-              {% elif ticket.status|lower == 'pending' %}<i class="bi bi-hourglass-split me-1"></i>
-              {% elif ticket.status|lower == 'resolved' %}<i class="bi bi-check-circle-fill me-1"></i>
-              {% elif ticket.status|lower == 'closed' %}<i class="bi bi-archive-fill me-1"></i>
-              {% endif %}
-              {{ ticket.status|title }}
-            </span>
-            <div class="text-muted fw-bold" style="font-size: 0.85rem; letter-spacing: 0.5px;">#{{ ticket.id }}</div>
-          </div>
-
-          <!-- Title -->
-          <h4 class="fw-bolder text-dark mb-2" style="letter-spacing: -0.3px;">{{ ticket.subject }}</h4>
-          <div class="mb-3">
-              <span class="badge bg-secondary text-white px-2 py-1 rounded-pill shadow-sm" style="font-size: 0.75rem;">
-                  <i class="bi bi-building me-1"></i> {{ ticket.department }}
-              </span>
-          </div>
-
-          <!-- Asset Info -->
-          <div class="p-3 mb-4 rounded-3" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
-            <span class="text-muted d-block mb-1 fw-semibold text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Related Asset</span>
-            <div class="d-flex align-items-center text-dark fw-bold" style="font-size: 0.9rem;">
-              {% if ticket.asset %}
-                <i class="bi bi-pc-display me-2 text-primary fs-5"></i>
-                <span class="text-truncate">
-                  {% if ticket.asset.name %}{{ ticket.asset.name }}{% else %}{{ ticket.asset }}{% endif %}
-                </span>
-              {% else %}
-                <i class="bi bi-exclamation-circle text-warning me-2 fs-5"></i> 
-                <span class="text-warning">No Asset Selected</span>
-              {% endif %}
-            </div>
-          </div>
-
-          <!-- Description -->
-          <div class="mb-3 flex-grow-1">
-            <p class="text-secondary" style="font-size: 0.95rem; line-height: 1.6;">
-              {{ ticket.description|truncatewords:20 }}
-            </p>
-          </div>
-
-          <!-- Assignee Badge -->
-          {% if ticket.assigned_to %}
-          <div class="mb-4">
-            <span class="badge bg-light text-primary border border-primary px-2 py-1 rounded-pill shadow-sm" style="font-size: 0.75rem;">
-                <i class="bi bi-person-badge-fill me-1"></i> 
-                {% if ticket.status|lower == 'resolved' or ticket.status|lower == 'closed' %}
-                Solved by: 
-                {% else %}
-                Assigned to: 
-                {% endif %}
-                {{ ticket.assigned_to.display_name }}
-            </span>
-          </div>
-          {% endif %}
-
-          <!-- Footer (User & View Button) -->
-            <div class="d-flex align-items-center justify-content-between mt-auto pt-3 border-top">
-              <div class="d-flex align-items-center">
-                <div class="rounded-circle d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 40px; height: 40px; background: linear-gradient(135deg, #e0e7ff, #c7d2fe); color: #4f46e5;">
-                  <i class="bi bi-person-fill fs-5"></i>
+    <!-- Status stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md">
+            <div class="tk-stat d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:var(--brand-soft);color:var(--brand);">
+                    <i class="bi bi-layers"></i>
                 </div>
-                <div class="d-flex flex-column">
-                  <span class="fw-bold text-dark" style="font-size: 0.85rem;">{{ ticket.display_name }}</span>
-                  <span class="text-muted" style="font-size: 0.75rem;">{{ ticket.created_at|date:"M d, Y" }}</span>
+                <div>
+                    <div class="stat-label">Total</div>
+                    <div class="stat-value">{{ status_counts.total|default:"0" }}</div>
                 </div>
-              </div>
-              <div class="d-flex gap-2">
-                {% if request.user.role == 'superadmin' %}
-                <form method="POST" action="{% url 'delete_ticket' ticket.id %}" class="m-0 p-0 d-inline" onsubmit="return confirm('Are you sure you want to delete this ticket?');">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger rounded-pill px-3 py-2 fw-semibold shadow-sm hover-lift" style="font-size: 0.85rem; transition: all 0.3s ease;" title="Delete Ticket">
-                        <i class="bi bi-trash3-fill"></i>
-                    </button>
-                </form>
-                {% endif %}
-                {% if not ticket.assigned_to %}
-                {% if is_network_support or is_admin %}
-                <form method="POST" action="{% url 'ticket_detail' ticket.id %}" class="m-0 p-0 d-inline">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="accept">
-                    <button type="submit" class="btn btn-success rounded-pill px-3 py-2 fw-semibold shadow-sm hover-lift" style="font-size: 0.85rem; transition: all 0.3s ease;">
-                        <i class="bi bi-hand-index-thumb-fill me-1"></i> Accept
-                    </button>
-                </form>
-                {% endif %}
-                {% endif %}
-                <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-primary rounded-pill px-4 py-2 fw-semibold shadow-sm hover-lift" style="font-size: 0.85rem; transition: all 0.3s ease;">
-                  View <i class="bi bi-arrow-right ms-1"></i>
-                </a>
-              </div>
             </div>
-
         </div>
-      </div>
+        <div class="col-6 col-md">
+            <div class="tk-stat d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:var(--blue-soft);color:var(--blue);">
+                    <i class="bi bi-circle-fill"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Open</div>
+                    <div class="stat-value">{{ status_counts.open|default:"0" }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md">
+            <div class="tk-stat d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:var(--amber-soft);color:var(--amber);">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-value">{{ status_counts.pending|default:"0" }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md">
+            <div class="tk-stat d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:var(--green-soft);color:var(--green);">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Resolved</div>
+                    <div class="stat-value">{{ status_counts.resolved|default:"0" }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md">
+            <div class="tk-stat d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:var(--slate-soft);color:var(--slate);">
+                    <i class="bi bi-archive-fill"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Closed</div>
+                    <div class="stat-value">{{ status_counts.closed|default:"0" }}</div>
+                </div>
+            </div>
+        </div>
     </div>
-    {% empty %}
-    <div class="col-12 text-center py-5 mt-5">
-      <div class="d-inline-block p-5 bg-white rounded-4 shadow-sm">
-        <i class="bi bi-inbox text-secondary display-1"></i>
-        <h4 class="mt-3 fw-bold">No Tickets Found</h4>
-        <p class="text-muted">There are no active support tickets at the moment.</p>
-      </div>
+
+    <!-- Ticket Report Modal -->
+    <div class="modal fade tk-modal" id="ticketReportModal" tabindex="-1" aria-labelledby="ticketReportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ticketReportModalLabel">
+                        <i class="bi bi-file-earmark-bar-graph me-2" style="color:var(--brand);"></i>Ticket Assignment Report
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table rep-table align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="padding-left:22px;">Ticket ID</th>
+                                    <th>Subject</th>
+                                    <th>Status</th>
+                                    <th>Department</th>
+                                    <th>Raised By</th>
+                                    <th>Created On</th>
+                                    <th>Solver (Assigned To)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ticket in tickets %}
+                                <tr>
+                                    <td style="padding-left:22px;" class="fw-semibold text-muted">#{{ ticket.id }}</td>
+                                    <td class="fw-bold">{{ ticket.subject }}</td>
+                                    <td>
+                                        <span class="tk-pill
+                                            {% if ticket.status|lower == 'open' %} pill-open
+                                            {% elif ticket.status|lower == 'pending' %} pill-pending
+                                            {% elif ticket.status|lower == 'resolved' %} pill-resolved
+                                            {% elif ticket.status|lower == 'closed' %} pill-closed
+                                            {% else %} pill-open {% endif %}"
+                                            style="font-size:0.66rem; text-transform:capitalize;">
+                                            {{ ticket.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>{{ ticket.department }}</td>
+                                    <td>
+                                        {% if ticket.created_by %}
+                                        <span class="fw-medium"><i class="bi bi-person me-1 text-muted"></i>{{ ticket.created_by.display_name }}</span>
+                                        {% else %}
+                                        <span class="text-muted">System</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-muted small">{{ ticket.created_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        {% if ticket.assigned_to %}
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-person-check-fill me-2" style="color:var(--green);"></i>
+                                            <span class="fw-semibold">{{ ticket.assigned_to.display_name }}</span>
+                                        </div>
+                                        {% else %}
+                                        <span class="text-muted fst-italic"><i class="bi bi-person-dash me-1"></i>Unassigned</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">No tickets found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Close</button>
+                    <a href="{% url 'download_ticket_report' %}" class="btn btn-brand">
+                        <i class="bi bi-download me-1"></i> Download CSV
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-success alert-dismissible fade show shadow-sm border-0" role="alert" style="border-radius:12px;">
+        <i class="bi bi-check-circle-fill me-2" style="color:var(--green);"></i> {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
     {% endfor %}
-  </div>
+    {% endif %}
+
+    <!-- Tickets Grid -->
+    <div class="row g-4 mb-5">
+        {% for ticket in tickets %}
+        <div class="col-xl-4 col-lg-4 col-md-6">
+            <div class="tk-card h-100">
+                <div class="accent
+                    {% if ticket.status|lower == 'pending' %} accent-pending
+                    {% elif ticket.status|lower == 'resolved' %} accent-resolved
+                    {% elif ticket.status|lower == 'closed' %} accent-closed
+                    {% else %} accent-open {% endif %}"></div>
+                <div class="tk-card-body">
+
+                    <!-- Header (Status & ID) -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="tk-pill
+                            {% if ticket.status|lower == 'pending' %} pill-pending
+                            {% elif ticket.status|lower == 'resolved' %} pill-resolved
+                            {% elif ticket.status|lower == 'closed' %} pill-closed
+                            {% else %} pill-open {% endif %}">
+                            {% if ticket.status|lower == 'open' %}<i class="bi bi-circle-fill" style="font-size:7px;"></i>
+                            {% elif ticket.status|lower == 'pending' %}<i class="bi bi-hourglass-split"></i>
+                            {% elif ticket.status|lower == 'resolved' %}<i class="bi bi-check-circle-fill"></i>
+                            {% elif ticket.status|lower == 'closed' %}<i class="bi bi-archive-fill"></i>
+                            {% endif %}
+                            {{ ticket.status|title }}
+                        </span>
+                        <span class="tk-ticket-id">#{{ ticket.id }}</span>
+                    </div>
+
+                    <!-- Subject -->
+                    <h5 class="tk-title">{{ ticket.subject }}</h5>
+                    <span class="dept-chip"><i class="bi bi-building"></i> {{ ticket.department }}</span>
+
+                    <!-- Asset Info -->
+                    <div class="asset-row">
+                        <div class="a-icon"><i class="bi bi-pc-display"></i></div>
+                        {% if ticket.asset %}
+                        <span class="fw-semibold text-dark text-truncate">{{ ticket.asset }}</span>
+                        {% else %}
+                        <span class="fst-italic text-muted">No Asset Selected</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Description -->
+                    <p class="tk-desc">{{ ticket.description|truncatewords:20 }}</p>
+
+                    <!-- Assignee -->
+                    {% if ticket.assigned_to %}
+                    <div class="assignee-chip">
+                        <i class="bi bi-person-badge-fill"></i>
+                        {% if ticket.status|lower == 'resolved' or ticket.status|lower == 'closed' %}
+                        Solved by:
+                        {% else %}
+                        Assigned to:
+                        {% endif %}
+                        {{ ticket.assigned_to.display_name }}
+                    </div>
+                    {% endif %}
+
+                    <!-- Footer -->
+                    <div class="tk-footer">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="tk-avatar">{{ ticket.display_name|default:"?"|make_list|first|upper }}</div>
+                            <div class="d-flex flex-column ms-3 text-truncate">
+                                <span class="fw-semibold text-dark text-truncate" style="font-size:0.85rem;" title="{{ ticket.display_name }}">{{ ticket.display_name }}</span>
+                                <span class="text-muted" style="font-size:0.75rem;">
+                                    <i class="bi bi-clock me-1"></i>{{ ticket.created_at|date:"M d, Y" }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 justify-content-end">
+                            {% if request.user.role == 'superadmin' %}
+                            <form method="POST" action="{% url 'delete_ticket' ticket.id %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this ticket?');">
+                                {% csrf_token %}
+                                <button type="submit" class="icon-btn icon-btn-danger hover-lift" title="Delete Ticket">
+                                    <i class="bi bi-trash3-fill"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                            {% if not ticket.assigned_to %}
+                            {% if is_network_support or is_admin %}
+                            <form method="POST" action="{% url 'ticket_detail' ticket.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="accept">
+                                <button type="submit" class="btn btn-accept hover-lift">
+                                    <i class="bi bi-hand-index-thumb-fill me-1"></i> Accept
+                                </button>
+                            </form>
+                            {% endif %}
+                            {% endif %}
+                            <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-view hover-lift">
+                                View <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="tk-empty">
+                <div class="icon"><i class="bi bi-inbox"></i></div>
+                <p>No Tickets Found</p>
+                <p>There are no active support tickets at the moment.</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 </div>
 
-<!-- Offcanvas -->
-<div class="offcanvas offcanvas-end" tabindex="-1" id="raiseTicketOffcanvas" aria-labelledby="raiseTicketOffcanvasLabel"
-  style="width: 450px; z-index: 1060;">
-  <div class="offcanvas-header border-bottom" style="background-color: #f8fafc;">
-    <h5 class="offcanvas-title fw-bold" id="raiseTicketOffcanvasLabel" style="color: var(--primary-blue);">
-      <i class="bi bi-plus-circle-fill me-2"></i>Raise Support Ticket
-    </h5>
-    <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-  </div>
-  <div class="offcanvas-body p-4">
-    <form method="post" action="{% url 'raise_ticket' %}" id="raiseTicketForm">
-      {% csrf_token %}
+<!-- Raise Ticket Offcanvas -->
+<div class="offcanvas offcanvas-end tk-offcanvas tk-form" tabindex="-1" id="raiseTicketOffcanvas" aria-labelledby="raiseTicketOffcanvasLabel" style="width: 450px; z-index: 1060;">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="raiseTicketOffcanvasLabel">
+            <i class="bi bi-plus-circle-fill me-2" style="color:var(--brand);"></i>Raise Support Ticket
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body p-4">
+        <form method="post" action="{% url 'raise_ticket' %}" id="raiseTicketForm">
+            {% csrf_token %}
 
-      <div class="form-group mb-4">
-        <label class="form-label fw-bold small text-muted">SELECT ASSET</label>
-        {{ form.asset }}
-        {% if form.asset.errors %}
-        <div class="text-danger small mt-1 fw-medium">{{ form.asset.errors }}</div>
-        {% endif %}
-      </div>
+            <div class="form-group mb-4">
+                <label class="f-label">Select Asset</label>
+                {{ form.asset }}
+                {% if form.asset.errors %}<div class="text-danger small mt-1 fw-medium">{{ form.asset.errors }}</div>{% endif %}
+            </div>
 
-      <div class="form-group mb-4">
-        <label class="form-label fw-bold small text-muted">SUBJECT</label>
-        {{ form.subject }}
-        {% if form.subject.errors %}
-        <div class="text-danger small mt-1 fw-medium">{{ form.subject.errors }}</div>
-        {% endif %}
-      </div>
+            <div class="form-group mb-4">
+                <label class="f-label">Subject</label>
+                {{ form.subject }}
+                {% if form.subject.errors %}<div class="text-danger small mt-1 fw-medium">{{ form.subject.errors }}</div>{% endif %}
+            </div>
 
-      <div class="form-group mb-4">
-        <label class="form-label fw-bold small text-muted">DEPARTMENT</label>
-        {{ form.department }}
-        {% if form.department.errors %}
-        <div class="text-danger small mt-1 fw-medium">{{ form.department.errors }}</div>
-        {% endif %}
-      </div>
+            <div class="form-group mb-4">
+                <label class="f-label">Department</label>
+                {{ form.department }}
+                {% if form.department.errors %}<div class="text-danger small mt-1 fw-medium">{{ form.department.errors }}</div>{% endif %}
+            </div>
 
-      <div class="form-group mb-4">
-        <label class="form-label fw-bold small text-muted">DETAILED DESCRIPTION</label>
-        {{ form.description }}
-        {% if form.description.errors %}
-        <div class="text-danger small mt-1 fw-medium">{{ form.description.errors }}</div>
-        {% endif %}
-      </div>
+            <div class="form-group mb-4">
+                <label class="f-label">Detailed Description</label>
+                {{ form.description }}
+                {% if form.description.errors %}<div class="text-danger small mt-1 fw-medium">{{ form.description.errors }}</div>{% endif %}
+            </div>
 
-      <button type="submit" class="btn btn-primary-custom w-100 py-2 rounded-3 fw-bold shadow-sm border-0">
-        Submit Request
-      </button>
-
-    </form>
-  </div>
+            <button type="submit" class="btn btn-brand w-100 py-2">
+                <i class="bi bi-send me-1"></i> Submit Request
+            </button>
+        </form>
+    </div>
 </div>
-
-<style>
-  /* Style Django form inputs natively inside offcanvas */
-  .offcanvas-body input[type="text"],
-  .offcanvas-body select,
-  .offcanvas-body textarea {
-    display: block;
-    width: 100%;
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    font-weight: 400;
-    line-height: 1.5;
-    color: #212529;
-    background-color: #fff;
-    background-clip: padding-box;
-    border: 1px solid #ced4da;
-    appearance: none;
-    border-radius: 8px;
-    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
-  }
-
-  .offcanvas-body input[type="text"]:focus,
-  .offcanvas-body select:focus,
-  .offcanvas-body textarea:focus {
-    border-color: var(--primary-blue);
-    outline: 0;
-    box-shadow: 0 0 0 0.25rem rgba(7, 81, 138, 0.25);
-</style>
 
 <!-- Ticket Details AJAX Offcanvas -->
-<div class="offcanvas offcanvas-end shadow-lg" tabindex="-1" id="ticketDetailOffcanvas" aria-labelledby="ticketDetailOffcanvasLabel" style="width: 800px; z-index: 1060; border-left: 0;">
-  <div class="offcanvas-header bg-white border-bottom shadow-sm">
-    <h5 class="offcanvas-title fw-bold text-dark" id="ticketDetailOffcanvasLabel">
-      <i class="bi bi-ticket-detailed me-2 text-primary"></i>Ticket Overview
-    </h5>
-    <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-  </div>
-  <div class="offcanvas-body p-0" id="ticketDetailBody" style="background-color: #f4f5fb;">
-    <div class="text-center py-5 mt-5">
-        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <div class="mt-3 text-muted fw-semibold">Loading ticket details...</div>
+<div class="offcanvas offcanvas-end tk-offcanvas shadow-lg" tabindex="-1" id="ticketDetailOffcanvas" aria-labelledby="ticketDetailOffcanvasLabel" style="width: 800px; z-index: 1060;">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="ticketDetailOffcanvasLabel">
+            <i class="bi bi-ticket-detailed me-2" style="color:var(--brand);"></i>Ticket Overview
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
-  </div>
+    <div class="offcanvas-body p-0" id="ticketDetailBody" style="background-color: #f8fafc;">
+        <div class="text-center py-5 mt-5">
+            <div class="spinner-border" role="status" style="color: var(--brand); width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="mt-3 text-muted fw-semibold">Loading ticket details...</div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -460,11 +846,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const offcanvasEl = document.getElementById('ticketDetailOffcanvas');
     const offcanvasBody = document.getElementById('ticketDetailBody');
     let bsOffcanvas = null;
-    
+
     if (offcanvasEl) {
         bsOffcanvas = new bootstrap.Offcanvas(offcanvasEl);
     }
-    
+
     // Attach event listeners to all 'View' buttons
     detailButtons.forEach(btn => {
         // Find buttons that link to a ticket (a href)
@@ -472,17 +858,17 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
                 const url = this.getAttribute('href');
-                
+
                 if (bsOffcanvas) {
                     // Show loading spinner
                     offcanvasBody.innerHTML = `
                         <div class="text-center py-5 mt-5">
-                            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+                            <div class="spinner-border" role="status" style="color: var(--brand); width: 3rem; height: 3rem;"></div>
                             <div class="mt-3 text-muted fw-semibold">Loading ticket details...</div>
                         </div>`;
-                    
+
                     bsOffcanvas.show();
-                    
+
                     // Fetch ticket details via AJAX
                     fetch(url, {
                         headers: { 'X-Requested-With': 'XMLHttpRequest' }

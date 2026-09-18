@@ -543,6 +543,19 @@
                     bsAlert.close();
                 });
             }, 3500);
+
+            // Automatically make all tables responsive on mobile devices
+            var tables = document.querySelectorAll('table');
+            tables.forEach(function(table) {
+                // If it's not already wrapped in a table-responsive div
+                if (!table.parentElement.classList.contains('table-responsive')) {
+                    var wrapper = document.createElement('div');
+                    wrapper.className = 'table-responsive mt-3 mb-3';
+                    wrapper.style.border = 'none';
+                    table.parentNode.insertBefore(wrapper, table);
+                    wrapper.appendChild(table);
+                }
+            });
         });
 
         const toggleButton = document.getElementById('menu-toggle');

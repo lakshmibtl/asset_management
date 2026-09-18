@@ -1,23 +1,250 @@
 {% extends 'asset_app/base.html' %}
 {% block content %}
-<div class="container mt-5 d-flex justify-content-center">
-  <div class="card shadow-lg border-0 rounded-4 p-5" style="max-width:600px; width:100%;">
-    <h2 class="fw-bold text-center mb-4 text-primary">🎫 Raise  Ticket</h2>
-    <form method="post">
-      {% csrf_token %}
-      <div class="form-floating mb-3">{{ form.asset }}<label>Select Asset</label></div>
-      <div class="form-floating mb-3">{{ form.subject }}<label>Subject</label></div>
-      <div class="form-floating mb-4">{{ form.description }}<label>Description</label></div>
-      <div class="d-flex justify-content-center">
-        <button type="submit" class="btn btn-gradient px-5 py-2 fw-semibold">Submit Ticket</button>
-      </div>
-    </form>
-  </div>
-</div>
-
 <style>
-.btn-gradient{background:linear-gradient(90deg,#4e54c8,#8f94fb);color:white;border:none;transition:.3s}
-.btn-gradient:hover{opacity:.85;transform:scale(1.02)}
-.card{background:#fff;backdrop-filter:blur(10px)}
+    /* ========== PROFESSIONAL TICKET FORM ========== */
+    :root {
+        --brand: #07518A;
+        --brand-soft: #eaf2fa;
+        --brand-light: #f5f9fd;
+        --ink: #1f2937;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+        --shadow-hover: 0 8px 24px rgba(16, 24, 40, 0.08);
+    }
+
+    body {
+        background: #f3f6f9;
+    }
+
+    /* Breadcrumb */
+    .tk-breadcrumb {
+        font-size: 0.82rem;
+        color: var(--muted);
+        letter-spacing: 0.02em;
+    }
+
+    .tk-breadcrumb a {
+        color: var(--muted);
+        text-decoration: none;
+    }
+
+    .tk-breadcrumb a:hover {
+        color: var(--brand);
+    }
+
+    .tk-breadcrumb .sep {
+        margin: 0 0.4rem;
+        color: #b6bdc7;
+    }
+
+    .tk-page-head h2 {
+        color: var(--ink);
+        font-weight: 650;
+        letter-spacing: -0.01em;
+        margin: 0;
+    }
+
+    .tk-page-head p {
+        color: var(--muted);
+        font-size: 0.92rem;
+        margin: 4px 0 0;
+    }
+
+    /* Card */
+    .tk-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: var(--shadow-card);
+    }
+
+    .tk-card-head {
+        padding: 18px 26px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .tk-card-head .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--brand);
+        flex-shrink: 0;
+    }
+
+    .tk-card-head h6 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--ink);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .tk-card-body {
+        padding: 26px;
+    }
+
+    /* Fields */
+    .f-label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 6px;
+        letter-spacing: 0.01em;
+    }
+
+    .f-label .req {
+        color: #dc2626;
+        margin-left: 2px;
+    }
+
+    .f-control,
+    .form-control,
+    .form-select {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        color: var(--ink);
+        background: #fbfcfd;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .f-control:focus,
+    .form-control:focus,
+    .form-select:focus {
+        outline: none;
+        border-color: var(--brand);
+        background: #ffffff;
+        box-shadow: 0 0 0 3px rgba(7, 81, 138, 0.12);
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 96px;
+    }
+
+    .f-hint {
+        font-size: 0.75rem;
+        color: var(--muted);
+        margin-top: 5px;
+    }
+
+    /* Footer */
+    .tk-card-foot {
+        padding: 16px 26px;
+        border-top: 1px solid var(--line);
+        background: #fafbfc;
+        border-radius: 0 0 14px 14px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn-brand {
+        background: var(--brand);
+        color: #fff;
+        border: 1px solid var(--brand);
+        border-radius: 10px;
+        padding: 10px 24px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        transition: background 0.15s ease, transform 0.05s ease;
+    }
+
+    .btn-brand:hover {
+        background: #064a7d;
+        color: #fff;
+    }
+
+    .btn-brand:active {
+        transform: translateY(1px);
+    }
+
+    .btn-ghost {
+        background: #ffffff;
+        color: #374151;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        transition: background 0.15s ease, border-color 0.15s ease;
+        text-decoration: none;
+    }
+
+    .btn-ghost:hover {
+        background: #f3f4f6;
+        border-color: #d1d5db;
+        color: #111827;
+    }
 </style>
+
+<div class="container py-4" style="max-width: 760px;">
+
+    <!-- Breadcrumb -->
+    <nav class="tk-breadcrumb mb-2">
+        <a href="{% url 'view_tickets' %}">Support Tickets</a>
+        <span class="sep"><i class="bi bi-chevron-right"></i></span>
+        <span style="color:#374151;">Raise a Ticket</span>
+    </nav>
+
+    <!-- Page heading -->
+    <div class="tk-page-head mb-4">
+        <h2>Raise a Support Ticket</h2>
+        <p>Submit an issue for your assigned assets. Your request will be routed to the Network Support team.</p>
+    </div>
+
+    <!-- Form card -->
+    <div class="tk-card">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="tk-card-head">
+                <span class="dot"></span>
+                <h6>Ticket Information</h6>
+            </div>
+
+            <div class="tk-card-body">
+                <div class="row g-4">
+                    <div class="col-12">
+                        <label class="f-label" for="{{ form.asset.id_for_label }}">Asset<span class="req">*</span></label>
+                        {{ form.asset }}
+                        {% if form.asset.help_text %}<div class="f-hint">{{ form.asset.help_text }}</div>{% endif %}
+                        {% if form.asset.errors %}<div class="f-hint text-danger">{{ form.asset.errors }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-12">
+                        <label class="f-label" for="{{ form.subject.id_for_label }}">Subject<span class="req">*</span></label>
+                        {{ form.subject }}
+                        {% if form.subject.help_text %}<div class="f-hint">{{ form.subject.help_text }}</div>{% endif %}
+                        {% if form.subject.errors %}<div class="f-hint text-danger">{{ form.subject.errors }}</div>{% endif %}
+                    </div>
+
+                    <div class="col-12">
+                        <label class="f-label" for="{{ form.description.id_for_label }}">Description<span class="req">*</span></label>
+                        {{ form.description }}
+                        <div class="f-hint">Provide as much detail as possible to help our team resolve the issue quickly.</div>
+                        {% if form.description.errors %}<div class="f-hint text-danger">{{ form.description.errors }}</div>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="tk-card-foot">
+                <a href="{% url 'view_tickets' %}" class="btn-ghost">Cancel</a>
+                <button type="submit" class="btn-brand">
+                    <i class="bi bi-send me-1"></i> Submit Ticket
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

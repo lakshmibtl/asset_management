@@ -1,103 +1,410 @@
 {% extends base_template|default:'asset_app/base.html' %}
 {% block content %}
-<div class="container {% if not is_ajax %}mt-5 mb-5{% else %}p-3 mt-2{% endif %}">
-    <div class="card ticket-card mx-auto border-0 {% if not is_ajax %}shadow-lg{% endif %}">
-        
-        {% if not is_ajax %}
-        <!-- Title -->
-        <div class="text-center py-4 border-bottom">
-            <h2 class="fw-bold mb-0" style="color: #08010e;">
-                🎟️ Ticket Details
-            </h2>
-        </div>
-        {% endif %}
+<style>
+    /* ========== PROFESSIONAL TICKET DETAIL ========== */
+    :root {
+        --brand: #07518A;
+        --brand-hover: #064a7d;
+        --brand-soft: #eaf2fa;
+        --blue: #0d6efd;
+        --blue-soft: #eaf2fa;
+        --amber: #b45309;
+        --amber-soft: #fff7ed;
+        --green: #15803d;
+        --green-soft: #e7f6ec;
+        --slate: #475569;
+        --slate-soft: #f1f5f9;
+        --red: #b91c1c;
+        --red-soft: #fdeeee;
+        --ink: #1f2937;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+    }
 
-        <!-- Ticket Info -->
-        <div class="card-body {% if not is_ajax %}p-5{% else %}p-3{% endif %}">
-            <div class="row g-4">
+    body {
+        background: #f3f6f9;
+    }
+
+    .tk-crumb {
+        font-size: 0.82rem;
+        color: var(--muted);
+        letter-spacing: 0.02em;
+    }
+
+    .tk-crumb a {
+        color: var(--muted);
+        text-decoration: none;
+    }
+
+    .tk-crumb a:hover {
+        color: var(--brand);
+    }
+
+    .tk-crumb .sep {
+        margin: 0 0.4rem;
+        color: #b6bdc7;
+    }
+
+    .tk-page-head h2 {
+        color: var(--ink);
+        font-weight: 650;
+        letter-spacing: -0.01em;
+        margin: 0;
+    }
+
+    .tk-page-head p {
+        color: var(--muted);
+        font-size: 0.92rem;
+        margin: 4px 0 0;
+    }
+
+    .tk-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: var(--shadow-card);
+        overflow: hidden;
+    }
+
+    .tk-card-head {
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .tk-card-head .ttl {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .tk-card-head .ttl .bar {
+        width: 4px;
+        height: 22px;
+        border-radius: 4px;
+        background: var(--brand);
+    }
+
+    .tk-card-head h6 {
+        margin: 0;
+        font-weight: 650;
+        font-size: 0.98rem;
+        color: var(--ink);
+    }
+
+    .tk-card-body {
+        padding: 24px;
+    }
+
+    .tk-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        border-radius: 999px;
+        padding: 6px 14px;
+        font-size: 0.74rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+    }
+
+    .tk-pill.pill-open { background: var(--blue-soft); color: var(--blue); border: 1px solid rgba(13, 110, 253, 0.2); }
+    .tk-pill.pill-pending { background: var(--amber-soft); color: var(--amber); border: 1px solid rgba(180, 83, 9, 0.2); }
+    .tk-pill.pill-resolved { background: var(--green-soft); color: var(--green); border: 1px solid rgba(21, 128, 61, 0.2); }
+    .tk-pill.pill-closed { background: var(--slate-soft); color: var(--slate); border: 1px solid rgba(71, 85, 105, 0.2); }
+
+    .info-tile {
+        background: #f8fafc;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px 14px;
+        height: 100%;
+    }
+
+    .info-tile .tile-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin-bottom: 5px;
+    }
+
+    .info-tile .tile-value {
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: var(--ink);
+        word-break: break-word;
+    }
+
+    .action-panel {
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        padding: 20px;
+    }
+
+    .panel-confirm {
+        background: linear-gradient(135deg, #f7fbf8, #eef7f1);
+        border-color: rgba(21, 128, 61, 0.3);
+    }
+
+    .panel-feedback {
+        background: #fafbfc;
+    }
+
+    .btn-brand {
+        background: var(--brand);
+        color: #fff;
+        border: 1px solid var(--brand);
+        border-radius: 10px;
+        padding: 10px 22px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        transition: background 0.15s ease;
+    }
+
+    .btn-brand:hover {
+        background: var(--brand-hover);
+        color: #fff;
+    }
+
+    .btn-green {
+        background: var(--green);
+        color: #fff;
+        border: 1px solid var(--green);
+        border-radius: 10px;
+        padding: 10px 22px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        transition: background 0.15s ease;
+    }
+
+    .btn-green:hover {
+        background: #116b33;
+        color: #fff;
+    }
+
+    .btn-amber {
+        background: var(--amber);
+        color: #fff;
+        border: 1px solid var(--amber);
+        border-radius: 10px;
+        padding: 10px 22px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        transition: background 0.15s ease;
+    }
+
+    .btn-amber:hover {
+        background: #994000;
+        color: #fff;
+    }
+
+    .btn-outline-danger {
+        background: #fff;
+        border: 1px solid #fecaca;
+        color: var(--red);
+        border-radius: 10px;
+        padding: 10px 22px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .btn-outline-danger:hover {
+        background: #fef2f2;
+        border-color: #f87171;
+        color: #b91c1c;
+    }
+
+    .btn-back {
+        background: #ffffff;
+        color: var(--brand);
+        border: 1px solid rgba(7, 81, 138, 0.4);
+        border-radius: 10px;
+        padding: 10px 22px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .btn-back:hover {
+        background: var(--brand);
+        color: #fff;
+    }
+
+    .f-label {
+        display: block;
+        font-size: 0.76rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin-bottom: 7px;
+    }
+
+    .tk-form .form-control,
+    .tk-form .form-select {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        background: #fbfcfd;
+        color: var(--ink);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .tk-form .form-control:focus,
+    .tk-form .form-select:focus {
+        outline: none;
+        border-color: var(--brand);
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(7, 81, 138, 0.12);
+    }
+
+    .divider {
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(7, 81, 138, 0.3), transparent);
+    }
+</style>
+
+<div class="container {% if not is_ajax %}py-4{% else %}p-3 mt-2{% endif %}" style="max-width: 860px;">
+
+    {% if not is_ajax %}
+    <!-- Breadcrumb -->
+    <nav class="tk-crumb mb-2">
+        <a href="{% url 'view_tickets' %}">Support Tickets</a>
+        <span class="sep"><i class="bi bi-chevron-right"></i></span>
+        <span style="color:#374151;">Ticket Details</span>
+    </nav>
+
+    <!-- Page heading -->
+    <div class="tk-page-head mb-4">
+        <h2><i class="bi bi-ticket-detailed me-2" style="color:var(--brand);"></i>Ticket Details</h2>
+        <p>Overview and management for ticket #{{ ticket.id }}.</p>
+    </div>
+    {% endif %}
+
+    <!-- Ticket card -->
+    <div class="tk-card">
+        <div class="tk-card-head">
+            <div class="ttl">
+                <span class="bar"></span>
+                <div>
+                    <h6>Ticket Information</h6>
+                    {% if not is_ajax %}
+                    <div class="tk-crumb" style="font-size:0.75rem;">#{{ ticket.id }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            <span class="tk-pill
+                {% if ticket.status|lower == 'open' %} pill-open
+                {% elif ticket.status|lower == 'pending' %} pill-pending
+                {% elif ticket.status|lower == 'resolved' %} pill-resolved
+                {% elif ticket.status|lower == 'closed' %} pill-closed
+                {% else %} pill-open {% endif %}">
+                {% if ticket.status|lower == 'open' %}<i class="bi bi-circle-fill" style="font-size:7px;"></i>
+                {% elif ticket.status|lower == 'pending' %}<i class="bi bi-hourglass-split"></i>
+                {% elif ticket.status|lower == 'resolved' %}<i class="bi bi-check-circle-fill"></i>
+                {% elif ticket.status|lower == 'closed' %}<i class="bi bi-archive-fill"></i>
+                {% endif %}
+                {{ ticket.status|title }}
+            </span>
+        </div>
+
+        <div class="tk-card-body">
+            <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="text-dark small fw-semibold">Asset</label>
-                    <div class="p-3 bg-light rounded-3 fw-semibold text-dark">
-                        {{ ticket.asset }}
+                    <div class="info-tile">
+                        <div class="tile-label"><i class="bi bi-box-seam me-1"></i>Asset</div>
+                        <div class="tile-value">{{ ticket.asset }}</div>
                     </div>
                 </div>
 
                 <div class="col-md-6">
-                    <label class="text-dark small fw-semibold">Subject</label>
-                    <div class="p-3 bg-light rounded-3 fw-semibold text-dark">
-                        {{ ticket.subject }}
+                    <div class="info-tile">
+                        <div class="tile-label"><i class="bi bi-type me-1"></i>Subject</div>
+                        <div class="tile-value">{{ ticket.subject }}</div>
                     </div>
                 </div>
 
                 <div class="col-md-12">
-                    <label class="text-dark small fw-semibold">Description</label>
-                    <div class="p-3 bg-light rounded-3 text-dark">
-                        {{ ticket.description }}
+                    <div class="info-tile">
+                        <div class="tile-label"><i class="bi bi-list-task me-1"></i>Description</div>
+                        <div class="tile-value">{{ ticket.description }}</div>
                     </div>
                 </div>
 
                 <div class="col-md-6">
-                    <label class="text-dark small fw-semibold">Department</label>
-                    <div class="p-3 bg-light rounded-3">
-                        <i class="bi bi-building text-secondary me-2"></i>
-                        <strong>{{ ticket.department }}</strong>
+                    <div class="info-tile">
+                        <div class="tile-label"><i class="bi bi-building me-1"></i>Department</div>
+                        <div class="tile-value">{{ ticket.department }}</div>
                     </div>
                 </div>
 
                 <div class="col-md-6">
-                    <label class="text-dark small fw-semibold">Raised By</label>
-                    <div class="p-3 bg-light rounded-3">
-                        <i class="bi bi-person-circle text-secondary me-2"></i>
-                        <strong>{{ display_name }}</strong>
+                    <div class="info-tile">
+                        <div class="tile-label"><i class="bi bi-person-circle me-1"></i>Raised By</div>
+                        <div class="tile-value">{{ display_name }}</div>
                     </div>
                 </div>
 
                 <div class="col-md-6">
-                    <label class="text-dark small fw-semibold">Assigned To</label>
-                    <div class="p-3 bg-light rounded-3 text-dark">
-                        {% if ticket.assigned_to %}
-                        <i class="bi bi-person-badge-fill text-primary me-2"></i><strong>{{ ticket.assigned_to.display_name }}</strong>
-                        {% else %}
-                        <span class="text-muted fst-italic">Unassigned</span>
-                        {% endif %}
+                    <div class="info-tile">
+                        <div class="tile-label"><i class="bi bi-person-badge-fill me-1"></i>Assigned To</div>
+                        <div class="tile-value">
+                            {% if ticket.assigned_to %}
+                            {{ ticket.assigned_to.display_name }}
+                            {% else %}
+                            <span class="text-muted fst-italic">Unassigned</span>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
 
                 <div class="col-md-6">
-                    <label class="text-dark small fw-semibold">Created On</label>
-                    <div class="p-3 bg-light rounded-3 text-dark">
-                        {{ ticket.created_at|date:"M d, Y H:i" }}
+                    <div class="info-tile">
+                        <div class="tile-label"><i class="bi bi-calendar-event me-1"></i>Created On</div>
+                        <div class="tile-value">{{ ticket.created_at|date:"M d, Y H:i" }}</div>
                     </div>
                 </div>
             </div>
 
             {% if ticket.resolution_message %}
-            <div class="mt-4 p-4 rounded-4" style="background:#eef2ff; border:1px solid #c7d2fe;">
-                <h6 class="fw-bold text-primary mb-2"><i class="bi bi-info-circle-fill me-2"></i>Resolution Notes</h6>
-                <p class="mb-0 text-dark">{{ ticket.resolution_message }}</p>
+            <div class="action-panel mt-4" style="background:linear-gradient(135deg, #eef2ff, #e0e7ff); border-color: rgba(99,102,241,0.35);">
+                <h6 class="fw-bold mb-2" style="color:var(--brand);"><i class="bi bi-info-circle-fill me-2"></i>Resolution Notes</h6>
+                <p class="mb-0" style="color:var(--ink);">{{ ticket.resolution_message }}</p>
             </div>
             {% endif %}
 
-            <hr class="my-5">
+            <hr class="divider my-5">
 
             {% if ticket.status|lower == 'resolved' %}
             {% if request.user == ticket.created_by or request.user.is_staff or request.user.role == 'manager' or request.user.role == 'superadmin' %}
             <!-- Employee Confirmation Panel -->
-            <div class="text-center mb-4 p-4 rounded-4" style="background:#f0fdf4; border:2px solid #86efac;">
-                <h5 class="fw-semibold mb-2 text-success">
+            <div class="action-panel panel-confirm text-center mb-4">
+                <h5 class="fw-semibold mb-2" style="color:var(--green);">
                     <i class="bi bi-patch-check-fill me-2"></i>Confirm Resolution
                 </h5>
-                <p class="text-muted mb-3">Admin has marked this ticket as Resolved. Please confirm whether your issue is actually solved.</p>
+                <p class="text-muted mb-3">The support team has marked this ticket as Resolved. Please confirm whether your issue is actually solved.</p>
                 <div class="d-flex justify-content-center gap-3 flex-wrap">
                     <form method="POST" action="{% url 'ticket_confirm_solved' ticket.pk %}">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-success rounded-pill px-4 py-2 fw-semibold shadow-sm">
+                        <button type="submit" class="btn btn-green">
                             <i class="bi bi-check-circle-fill me-1"></i> Yes, Solved
                         </button>
                     </form>
                     <form method="POST" action="{% url 'ticket_reopen' ticket.pk %}">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-outline-danger rounded-pill px-4 py-2 fw-semibold shadow-sm"
+                        <button type="submit" class="btn btn-outline-danger"
                             onclick="return confirm('Reopen this ticket as Pending? Admins will be notified.');">
                             <i class="bi bi-arrow-counterclockwise me-1"></i> No, Not Solved
                         </button>
@@ -109,33 +416,32 @@
 
             {% if ticket.status|lower == 'closed' %}
             <!-- Feedback Panel -->
-            <div class="text-center mb-4 p-4 rounded-4" style="background:#f8f9fa; border:2px solid #e9ecef;">
-                <h5 class="fw-semibold mb-3 text-dark">
-                    <i class="bi bi-chat-right-text-fill me-2 text-primary"></i>Ticket Feedback
+            <div class="action-panel panel-feedback text-center mb-4">
+                <h5 class="fw-semibold mb-3" style="color:var(--ink);">
+                    <i class="bi bi-chat-right-text-fill me-2" style="color:var(--brand);"></i>Ticket Feedback
                 </h5>
                 {% if ticket.feedback %}
-                <div class="p-4 bg-white rounded-4 text-dark text-start shadow-sm mx-auto position-relative" style="max-width: 600px;">
-                    <i class="bi bi-quote position-absolute text-light" style="font-size: 3rem; top: -10px; left: 10px; z-index: 0;"></i>
-                    <p class="mb-0 fw-medium position-relative" style="z-index: 1;">"{{ ticket.feedback }}"</p>
-                    <div class="text-end mt-2 position-relative" style="z-index: 1;">
+                <div class="p-4 bg-white rounded-3 text-dark text-start shadow-sm mx-auto border" style="max-width: 600px;">
+                    <p class="mb-0 fw-medium">"{{ ticket.feedback }}"</p>
+                    <div class="text-end mt-2">
                         <small class="text-muted fst-italic">- {{ ticket.created_by.display_name }}</small>
                     </div>
                 </div>
                 {% else %}
-                    {% if request.user == ticket.created_by %}
-                    <p class="text-muted mb-3">This ticket has been closed. Please share your feedback regarding the resolution.</p>
-                    <form method="POST" action="{% url 'ticket_detail' ticket.id %}" class="mx-auto" style="max-width: 600px;">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <textarea name="feedback" class="form-control rounded-3 shadow-sm border-0 p-3" rows="3" placeholder="Write your feedback here..." required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-semibold shadow-sm">
-                            <i class="bi bi-send-fill me-1"></i> Submit Feedback
-                        </button>
-                    </form>
-                    {% else %}
-                    <p class="text-muted mb-0 fst-italic">No feedback provided yet.</p>
-                    {% endif %}
+                {% if request.user == ticket.created_by %}
+                <p class="text-muted mb-3">This ticket has been closed. Please share your feedback regarding the resolution.</p>
+                <form method="POST" action="{% url 'ticket_detail' ticket.id %}" class="tk-form mx-auto" style="max-width: 600px;">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <textarea name="feedback" class="form-control" rows="3" placeholder="Write your feedback here..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-brand">
+                        <i class="bi bi-send-fill me-1"></i> Submit Feedback
+                    </button>
+                </form>
+                {% else %}
+                <p class="text-muted mb-0 fst-italic">No feedback provided yet.</p>
+                {% endif %}
                 {% endif %}
             </div>
             {% endif %}
@@ -146,7 +452,7 @@
                 <form method="POST" action="{% url 'ticket_detail' ticket.id %}">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="accept">
-                    <button type="submit" class="btn btn-success rounded-pill px-4 py-2 fw-semibold shadow-sm">
+                    <button type="submit" class="btn btn-green">
                         <i class="bi bi-hand-index-thumb-fill me-2"></i> Accept Ticket
                     </button>
                 </form>
@@ -157,44 +463,36 @@
             {% if request.user.is_staff or request.user.role == 'manager' or request.user.role == 'superadmin' or request.user.role == 'asset_admin' or ticket.assigned_to == request.user %}
             <!-- Status Update -->
             <div class="text-center">
-                <h5 class="fw-semibold mb-3 text-dark">Update Ticket Status</h5>
-                <form method="POST" action="{% url 'ticket_detail' ticket.id %}" class="mx-auto" style="max-width: 500px;">
+                <h5 class="fw-semibold mb-3" style="color:var(--ink);">
+                    <i class="bi bi-arrow-repeat me-2" style="color:var(--brand);"></i>Update Ticket Status
+                </h5>
+                <form method="POST" action="{% url 'ticket_detail' ticket.id %}" class="tk-form mx-auto" style="max-width: 520px;">
                     {% csrf_token %}
                     <input type="hidden" name="assigned_to" value="{{ ticket.assigned_to.id|default:'unassigned' }}">
                     <div class="mb-3 text-start">
-                        <label class="form-label text-muted small fw-semibold">Resolution Notes</label>
-                        <textarea name="resolution_message" class="form-control rounded-3 shadow-sm border-0 bg-light p-3" rows="3" placeholder="Explain what was done to resolve this ticket..." required>{{ ticket.resolution_message|default_if_none:'' }}</textarea>
+                        <label class="f-label"><i class="bi bi-journal-text me-1"></i>Resolution Notes</label>
+                        <textarea name="resolution_message" class="form-control" rows="3" placeholder="Explain what was done to resolve this ticket..." required>{{ ticket.resolution_message|default_if_none:'' }}</textarea>
                     </div>
-                    <div class="d-flex justify-content-center gap-3 align-items-center">
-                        <select name="status" class="form-select w-auto rounded-pill px-4 shadow-sm border-0 fw-semibold bg-light text-dark">
+                    <div class="d-flex justify-content-center gap-3 align-items-center flex-wrap">
+                        <select name="status" class="form-select w-auto" style="border-radius:8px;">
                             <option value="Pending" {% if ticket.status|lower == 'pending' %}selected{% endif %}>Pending</option>
                             <option value="Resolved" {% if ticket.status|lower == 'resolved' %}selected{% endif %}>Resolved</option>
                             {% if request.user.is_staff or request.user.role == 'manager' or request.user.role == 'superadmin' %}
                             <option value="Closed" {% if ticket.status|lower == 'closed' %}selected{% endif %}>Closed</option>
                             {% endif %}
                         </select>
-                        <button type="submit" class="btn update-btn rounded-pill px-4 py-2 fw-semibold shadow-sm">
+                        <button type="submit" class="btn btn-amber">
                             <i class="bi bi-arrow-repeat me-1"></i> Update
                         </button>
                     </div>
                 </form>
-
-                <div class="mt-4">
-                    <span class="badge px-4 py-2 rounded-pill fs-6 shadow-sm
-                        {% if ticket.status|lower == 'pending' %} bg-light text-dark
-                        {% elif ticket.status == 'Resolved' %} bg-success
-                        {% elif ticket.status == 'Closed' %} bg-secondary
-                        {% endif %}">
-                        {{ ticket.status }}
-                    </span>
-                </div>
             </div>
             {% endif %}
 
             {% if not is_ajax %}
             <!-- Back Button -->
             <div class="text-center mt-5">
-                <a href="{% url 'view_tickets' %}" class="btn back-btn rounded-pill px-4 py-2 fw-semibold">
+                <a href="{% url 'view_tickets' %}" class="btn btn-back">
                     <i class="bi bi-arrow-left me-1"></i> Back to Tickets
                 </a>
             </div>
@@ -202,64 +500,4 @@
         </div>
     </div>
 </div>
-
-<style>
-body {
-    background-color: #f4f5fb;
-}
-
-.ticket-card {
-    max-width: 800px;
-    background: #ffffff;
-    border-radius: 20px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.ticket-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.12);
-}
-
-/* Update button – light violet gradient */
-.update-btn {
-    background: linear-gradient(90deg, #c3a6ff, #b58cff);
-    color: #fff;
-    border: none;
-    transition: all 0.3s ease;
-}
-
-.update-btn:hover {
-    background: linear-gradient(90deg, #b491ff, #a173ff);
-    transform: translateY(-2px);
-}
-
-/* Back button – soft lavender border */
-.back-btn {
-    border: 2px solid #c3a6ff;
-    color: #6a0dad;
-    background: #f3edff;
-    transition: all 0.3s ease;
-}
-
-.back-btn:hover {
-    background-color: #b58cff;
-    color: #fff;
-}
-
-label {
-    letter-spacing: 0.5px;
-}
-
-.card-body {
-    animation: fadeIn 0.5s ease-in-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(15px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-</style>
 {% endblock %}
-
-

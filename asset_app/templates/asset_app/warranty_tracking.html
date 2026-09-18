@@ -4,303 +4,561 @@
 {% block title %}Warranty Tracking{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
 <style>
-    /* Modern Aesthetic Variables */
+    /* ========== PROFESSIONAL WARRANTY TRACKING ========== */
     :root {
-        --glass-bg: rgba(255, 255, 255, 0.85);
-        --glass-border: rgba(255, 255, 255, 0.4);
-        --danger-glow: 0 8px 32px rgba(220, 53, 69, 0.15);
-        --warning-glow: 0 8px 32px rgba(255, 193, 7, 0.15);
-        --success-glow: 0 8px 32px rgba(25, 135, 84, 0.15);
+        --brand: #07518A;
+        --brand-hover: #064a7d;
+        --brand-soft: #eaf2fa;
+        --red: #b91c1c;
+        --red-soft: #fdeeee;
+        --amber: #b45309;
+        --amber-soft: #fff7ed;
+        --green: #15803d;
+        --green-soft: #e7f6ec;
+        --ink: #1f2937;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
     }
 
     body {
-        background-color: #f4f7f6;
-        /* Ensure a nice off-white background */
+        background: #f3f6f9;
     }
 
-    /* Asset Grid Cards */
-    .asset-grid-card {
-        background: #fff;
-        border-radius: 16px;
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        transition: all 0.3s ease;
+    /* Breadcrumb */
+    .wt-breadcrumb {
+        font-size: 0.82rem;
+        color: var(--muted);
+        letter-spacing: 0.02em;
+    }
+
+    .wt-breadcrumb a {
+        color: var(--muted);
+        text-decoration: none;
+    }
+
+    .wt-breadcrumb a:hover {
+        color: var(--brand);
+    }
+
+    .wt-breadcrumb .sep {
+        margin: 0 0.4rem;
+        color: #b6bdc7;
+    }
+
+    .wt-page-head h2 {
+        color: var(--ink);
+        font-weight: 650;
+        letter-spacing: -0.01em;
+        margin: 0;
+    }
+
+    .wt-page-head p {
+        color: var(--muted);
+        font-size: 0.92rem;
+        margin: 4px 0 0;
+    }
+
+    /* Stat tiles */
+    .wt-stat {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px 22px;
+        box-shadow: var(--shadow-card);
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .wt-stat:hover {
+        box-shadow: 0 8px 24px rgba(16, 24, 40, 0.08);
+        transform: translateY(-2px);
+    }
+
+    .wt-stat .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.05rem;
+        flex-shrink: 0;
+    }
+
+    .wt-stat .stat-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin-bottom: 4px;
+    }
+
+    .wt-stat .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--ink);
+        line-height: 1;
+        letter-spacing: -0.02em;
+    }
+
+    /* Tabs */
+    .wt-tabs {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .wt-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 9px 18px;
+        font-size: 0.86rem;
+        font-weight: 600;
+        color: var(--ink);
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .wt-tab .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .wt-tab .tab-count {
+        background: #f1f5f9;
+        color: var(--muted);
+        font-size: 0.74rem;
+        font-weight: 700;
+        border-radius: 999px;
+        padding: 2px 10px;
+        transition: all 0.15s ease;
+    }
+
+    .wt-tab:hover {
+        border-color: #cbd5e1;
+        background: #fafbfc;
+    }
+
+    .wt-tab.active {
+        border-color: var(--brand);
+        background: var(--brand-soft);
+        color: var(--brand);
+    }
+
+    .wt-tab.active .tab-count {
+        background: var(--brand);
+        color: #fff;
+    }
+
+    /* Asset cards */
+    .wt-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: var(--shadow-card);
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
         height: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .wt-card:hover {
+        box-shadow: 0 10px 26px rgba(16, 24, 40, 0.09);
+        transform: translateY(-2px);
+    }
+
+    .wt-card .accent {
+        height: 4px;
+        flex-shrink: 0;
+    }
+
+    .accent-red { background: var(--red); }
+    .accent-amber { background: var(--amber); }
+    .accent-green { background: var(--green); }
+
+    .wt-card-body {
+        padding: 18px 20px;
+        flex-grow: 1;
         display: flex;
         flex-direction: column;
     }
 
-    .asset-grid-card:hover {
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-        transform: translateY(-3px);
+    .wt-card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 14px;
     }
 
-    /* Badges */
-    .badge-modern {
-        padding: 0.5em 1em;
+    .wt-card-head .t-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .t-icon-red { background: var(--red-soft); color: var(--red); }
+    .t-icon-amber { background: var(--amber-soft); color: var(--amber); }
+    .t-icon-green { background: var(--green-soft); color: var(--green); }
+
+    .wt-asset-link {
+        color: var(--ink);
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 1rem;
+        letter-spacing: -0.01em;
+    }
+
+    .wt-asset-link:hover {
+        color: var(--brand);
+    }
+
+    .wt-asset-name {
+        color: var(--muted);
+        font-size: 0.8rem;
+        margin-top: 1px;
+    }
+
+    .wt-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        border-radius: 999px;
+        padding: 4px 12px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+    }
+
+    .wt-pill.pill-danger { background: var(--red-soft); color: var(--red); border: 1px solid rgba(185, 28, 28, 0.2); }
+    .wt-pill.pill-warning { background: var(--amber-soft); color: var(--amber); border: 1px solid rgba(180, 83, 9, 0.2); }
+    .wt-pill.pill-success { background: var(--green-soft); color: var(--green); border: 1px solid rgba(21, 128, 61, 0.2); }
+
+    .wt-rows {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        flex-grow: 1;
+    }
+
+    .wt-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.84rem;
+    }
+
+    .wt-row .k {
+        color: var(--muted);
+    }
+
+    .wt-row .v {
         font-weight: 600;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        color: var(--ink);
+        text-align: right;
     }
 
-    .text-gradient-primary {
-        background: linear-gradient(135deg, #0d6efd, #0dcaf0);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+    .v-danger { color: var(--red) !important; }
+    .v-warning { color: var(--amber) !important; }
+    .v-success { color: var(--green) !important; }
+
+    .wt-card-foot {
+        border-top: 1px solid var(--line);
+        padding-top: 12px;
+        margin-top: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.82rem;
+        color: #4b5563;
     }
 
-    /* Nav Tabs Styling */
-    .nav-pills .nav-link {
-        border-radius: 50rem !important;
-        border: 2px solid transparent !important;
-        background-color: white;
-        transition: all 0.3s ease;
-        cursor: pointer;
+    /* Empty states */
+    .wt-empty {
+        text-align: center;
+        padding: 48px 20px;
+        background: #ffffff;
+        border: 1px dashed var(--line);
+        border-radius: 14px;
     }
 
-    .nav-pills .nav-link:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    .wt-empty .icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: #eef0f3;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        margin: 0 auto 12px;
     }
 
-    .nav-pills .nav-link.active {
-        background-color: #f8f9fa !important;
-        border-color: #dee2e6 !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-        transform: translateY(-2px);
+    .wt-empty p:first-of-type {
+        font-weight: 600;
+        color: var(--ink);
+        margin-bottom: 2px;
+    }
+
+    .wt-empty p:last-of-type {
+        color: var(--muted);
+        font-size: 0.85rem;
+        margin: 0;
     }
 </style>
 
-<div class="container py-5 animate__animated animate__fadeIn">
+<div class="container py-4">
 
-    <!-- Header Section -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-3">
+    <!-- Breadcrumb -->
+    <nav class="wt-breadcrumb mb-2">
+        <a href="{% url 'asset_dashboard' %}">Dashboard</a>
+        <span class="sep"><i class="bi bi-chevron-right"></i></span>
+        <span style="color:#374151;">Warranty Tracking</span>
+    </nav>
+
+    <!-- Page heading -->
+    <div class="wt-page-head d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
         <div>
-            <nav aria-label="breadcrumb" class="mb-2">
-                <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{% url 'asset_dashboard' %}"
-                            class="text-decoration-none text-muted">Dashboard</a></li>
-                    <li class="breadcrumb-item active fw-bold text-dark" aria-current="page">Warranty Tracking</li>
-                </ol>
-            </nav>
-            <h2 class="fw-bolder mb-1 text-dark" style="letter-spacing: -0.5px;">
-                <i class="bi bi-shield-check me-2 text-primary"></i>Warranty <span
-                    class="text-gradient-primary">Tracking</span>
-            </h2>
-            <p class="text-muted mb-0 fs-6">Real-time monitor for asset lifecycles and warranties.</p>
+            <h2><i class="bi bi-shield-check me-2" style="color: var(--brand);"></i>Warranty Tracking</h2>
+            <p>Monitor asset warranty status and lifecycle across the organisation.</p>
         </div>
 
-        <ul class="nav nav-pills d-flex gap-3 flex-wrap m-0 p-0" id="warrantyTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active px-4 py-2 shadow-sm d-flex align-items-center text-dark" id="expired-tab"
-                    data-bs-toggle="pill" data-bs-target="#expired-pane" type="button" role="tab"
-                    aria-controls="expired-pane" aria-selected="true">
-                    <div class="rounded-circle bg-danger me-2" style="width: 10px; height: 10px;"></div>
-                    <span class="fw-bold me-2">Expired</span>
-                    <span class="badge bg-danger rounded-pill">{{ expired|length }}</span>
+        <ul class="wt-tabs" id="warrantyTabs" role="tablist">
+            <li class="nav-item" role="presentation" style="list-style:none;">
+                <button class="wt-tab active" id="expired-tab" data-bs-toggle="pill" data-bs-target="#expired-pane"
+                    type="button" role="tab" aria-controls="expired-pane" aria-selected="true">
+                    <span class="dot" style="background:var(--red);"></span>
+                    Expired
+                    <span class="tab-count">{{ expired|length }}</span>
                 </button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link px-4 py-2 shadow-sm d-flex align-items-center text-dark" id="expiring-tab"
-                    data-bs-toggle="pill" data-bs-target="#expiring-pane" type="button" role="tab"
-                    aria-controls="expiring-pane" aria-selected="false">
-                    <div class="rounded-circle bg-warning me-2" style="width: 10px; height: 10px;"></div>
-                    <span class="fw-bold me-2">Expiring</span>
-                    <span class="badge bg-warning text-dark rounded-pill">{{ expiring|length }}</span>
+            <li class="nav-item" role="presentation" style="list-style:none;">
+                <button class="wt-tab" id="expiring-tab" data-bs-toggle="pill" data-bs-target="#expiring-pane"
+                    type="button" role="tab" aria-controls="expiring-pane" aria-selected="false">
+                    <span class="dot" style="background:var(--amber);"></span>
+                    Expiring
+                    <span class="tab-count">{{ expiring|length }}</span>
                 </button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link px-4 py-2 shadow-sm d-flex align-items-center text-dark" id="active-tab"
-                    data-bs-toggle="pill" data-bs-target="#active-pane" type="button" role="tab"
-                    aria-controls="active-pane" aria-selected="false">
-                    <div class="rounded-circle bg-success me-2" style="width: 10px; height: 10px;"></div>
-                    <span class="fw-bold me-2">Active</span>
-                    <span class="badge bg-success rounded-pill">{{ active|length }}</span>
+            <li class="nav-item" role="presentation" style="list-style:none;">
+                <button class="wt-tab" id="active-tab" data-bs-toggle="pill" data-bs-target="#active-pane"
+                    type="button" role="tab" aria-controls="active-pane" aria-selected="false">
+                    <span class="dot" style="background:var(--green);"></span>
+                    Active
+                    <span class="tab-count">{{ active|length }}</span>
                 </button>
             </li>
         </ul>
     </div>
 
+    <!-- Summary tiles -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-4">
+            <div class="wt-stat d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:var(--red-soft);color:var(--red);">
+                    <i class="bi bi-exclamation-circle"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Expired</div>
+                    <div class="stat-value">{{ expired|length }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-4">
+            <div class="wt-stat d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:var(--amber-soft);color:var(--amber);">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Expiring (60d)</div>
+                    <div class="stat-value">{{ expiring|length }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-4">
+            <div class="wt-stat d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:var(--green-soft);color:var(--green);">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Active</div>
+                    <div class="stat-value">{{ active|length }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="tab-content" id="warrantyTabsContent">
 
-        <!-- Expired Warranty Section -->
-        <div class="tab-pane fade show active" id="expired-pane" role="tabpanel" aria-labelledby="expired-tab"
-            tabindex="0">
-            <div class="animate__animated animate__fadeInUp">
-                {% if expired %}
-                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                    {% for a in expired %}
-                    <div class="col">
-                        <div class="asset-grid-card p-4">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <div class="d-flex align-items-center">
-                                    <div class="bg-danger bg-opacity-10 rounded p-2 me-3 text-center"
-                                        style="width: 45px; height: 45px;">
-                                        <i class="bi bi-laptop text-danger fs-5"></i>
-                                    </div>
+        <!-- Expired Warranty -->
+        <div class="tab-pane fade show active" id="expired-pane" role="tabpanel" aria-labelledby="expired-tab" tabindex="0">
+            {% if expired %}
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for a in expired %}
+                <div class="col">
+                    <div class="wt-card">
+                        <div class="accent accent-red"></div>
+                        <div class="wt-card-body">
+                            <div class="wt-card-head">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="t-icon t-icon-red"><i class="bi bi-laptop"></i></div>
                                     <div>
-                                        <a href="{% url 'asset_detail' a.pk %}"
-                                            class="text-decoration-none fw-bold text-dark fs-5">{{ a.asset_id }}</a>
-                                        {% if a.name %}<div class="text-muted small">{{ a.name }}</div>{% endif %}
+                                        <a href="{% url 'asset_detail' a.pk %}" class="wt-asset-link">{{ a.asset_id }}</a>
+                                        {% if a.name %}<div class="wt-asset-name">{{ a.name }}</div>{% endif %}
                                     </div>
                                 </div>
-                                <span class="badge bg-danger badge-modern rounded-pill"><i
-                                        class="bi bi-exclamation-circle me-1"></i>Expired</span>
+                                <span class="wt-pill pill-danger"><i class="bi bi-exclamation-circle"></i>Expired</span>
                             </div>
 
-                            <div class="flex-grow-1">
-                                <div class="mb-2"><span class="text-muted small">Type:</span> <span
-                                        class="fw-medium text-dark float-end">{{ a.asset_type }}</span></div>
-                                <div class="mb-2"><span class="text-muted small">Warranty:</span> <span
-                                        class="fw-medium text-dark float-end">{{ a.warranty_label }}</span></div>
-                                <div class="mb-2"><span class="text-muted small">Ends:</span> <span class="fw-bold text-danger float-end">{{ a.warranty_end_date|date:"d M, Y" }}</span></div>
+                            <div class="wt-rows">
+                                <div class="wt-row"><span class="k">Type</span><span class="v">{{ a.asset_type }}</span></div>
+                                <div class="wt-row"><span class="k">Warranty</span><span class="v">{{ a.warranty_label }}</span></div>
+                                <div class="wt-row"><span class="k">Ends</span><span class="v v-danger">{{ a.warranty_end_date|date:"d M, Y" }}</span></div>
                             </div>
 
-                            <div class="mt-3 pt-3 border-top">
+                            <div class="wt-card-foot">
                                 {% with a.assignment_set.all|dictsortreversed:"assigned_at"|first as cur %}
                                 {% if cur and cur.status == 'In Use' %}
-                                <div class="d-flex align-items-center text-muted small">
-                                    <i class="bi bi-person-circle me-2"></i>
-                                    <span class="fw-medium text-dark text-truncate">{{ cur.employee.name }}</span>
-                                </div>
+                                <i class="bi bi-person-circle" style="color:var(--muted);"></i>
+                                <span class="text-truncate">{{ cur.employee.name }}</span>
                                 {% else %}
-                                <span class="text-muted fst-italic small">Unassigned</span>
+                                <span class="fst-italic" style="color:var(--muted);">Unassigned</span>
                                 {% endif %}
                                 {% endwith %}
                             </div>
                         </div>
                     </div>
-                    {% endfor %}
                 </div>
-                {% else %}
-                <div class="text-center py-5">
-                    <div class="opacity-50">
-                        <i class="bi bi-emoji-smile fs-1 text-muted mb-3 d-block"></i>
-                        <p class="text-muted fw-medium mb-0">No expired warranties found.</p>
-                    </div>
-                </div>
-                {% endif %}
+                {% endfor %}
             </div>
+            {% else %}
+            <div class="wt-empty">
+                <div class="icon"><i class="bi bi-emoji-smile"></i></div>
+                <p>All warranties active</p>
+                <p>No expired warranties found.</p>
+            </div>
+            {% endif %}
         </div>
 
-        <!-- Expiring Soon Section -->
+        <!-- Expiring Soon -->
         <div class="tab-pane fade" id="expiring-pane" role="tabpanel" aria-labelledby="expiring-tab" tabindex="0">
-            <div class="animate__animated animate__fadeInUp">
-                {% if expiring %}
-                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                    {% for a in expiring %}
-                    <div class="col">
-                        <div class="asset-grid-card p-4">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <div class="d-flex align-items-center">
-                                    <div class="bg-warning bg-opacity-10 rounded p-2 me-3 text-center"
-                                        style="width: 45px; height: 45px;">
-                                        <i class="bi bi-display text-warning-emphasis fs-5"></i>
-                                    </div>
+            {% if expiring %}
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for a in expiring %}
+                <div class="col">
+                    <div class="wt-card">
+                        <div class="accent accent-amber"></div>
+                        <div class="wt-card-body">
+                            <div class="wt-card-head">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="t-icon t-icon-amber"><i class="bi bi-display"></i></div>
                                     <div>
-                                        <a href="{% url 'asset_detail' a.pk %}"
-                                            class="text-decoration-none fw-bold text-dark fs-5">{{ a.asset_id }}</a>
-                                        {% if a.name %}<div class="text-muted small">{{ a.name }}</div>{% endif %}
+                                        <a href="{% url 'asset_detail' a.pk %}" class="wt-asset-link">{{ a.asset_id }}</a>
+                                        {% if a.name %}<div class="wt-asset-name">{{ a.name }}</div>{% endif %}
                                     </div>
                                 </div>
-                                <span class="badge bg-warning text-dark badge-modern rounded-pill"><i
-                                        class="bi bi-clock-history me-1"></i>Expiring</span>
+                                <span class="wt-pill pill-warning"><i class="bi bi-clock-history"></i>Expiring</span>
                             </div>
 
-                            <div class="flex-grow-1">
-                                <div class="mb-2"><span class="text-muted small">Type:</span> <span
-                                        class="fw-medium text-dark float-end">{{ a.asset_type }}</span></div>
-                                <div class="mb-2"><span class="text-muted small">Ends:</span> <span class="fw-bold text-warning-emphasis float-end">{{ a.warranty_end_date|date:"d M, Y" }}</span></div>
-                                <div class="mb-2"><span class="text-muted small">Time Left:</span> <span
-                                        class="fw-bolder text-warning-emphasis float-end">{{ a.days_until_warranty_end
-                                        }} days</span></div>
+                            <div class="wt-rows">
+                                <div class="wt-row"><span class="k">Type</span><span class="v">{{ a.asset_type }}</span></div>
+                                <div class="wt-row"><span class="k">Ends</span><span class="v v-warning">{{ a.warranty_end_date|date:"d M, Y" }}</span></div>
+                                <div class="wt-row"><span class="k">Time Left</span><span class="v v-warning">{{ a.days_until_warranty_end }} days</span></div>
                             </div>
 
-                            <div class="mt-3 pt-3 border-top">
+                            <div class="wt-card-foot">
                                 {% with a.assignment_set.all|dictsortreversed:"assigned_at"|first as cur %}
                                 {% if cur and cur.status == 'In Use' %}
-                                <div class="d-flex align-items-center text-muted small">
-                                    <i class="bi bi-person-circle me-2"></i>
-                                    <span class="fw-medium text-dark text-truncate">{{ cur.employee.name }}</span>
-                                </div>
+                                <i class="bi bi-person-circle" style="color:var(--muted);"></i>
+                                <span class="text-truncate">{{ cur.employee.name }}</span>
                                 {% else %}
-                                <span class="text-muted fst-italic small">Unassigned</span>
+                                <span class="fst-italic" style="color:var(--muted);">Unassigned</span>
                                 {% endif %}
                                 {% endwith %}
                             </div>
                         </div>
                     </div>
-                    {% endfor %}
                 </div>
-                {% else %}
-                <div class="text-center py-5">
-                    <div class="opacity-50">
-                        <i class="bi bi-shield-check fs-1 text-muted mb-3 d-block"></i>
-                        <p class="text-muted fw-medium mb-0">Nothing expiring in the next 30 days.</p>
-                    </div>
-                </div>
-                {% endif %}
+                {% endfor %}
             </div>
+            {% else %}
+            <div class="wt-empty">
+                <div class="icon"><i class="bi bi-shield-check"></i></div>
+                <p>Nothing expiring soon</p>
+                <p>No warranties expiring in the next 60 days.</p>
+            </div>
+            {% endif %}
         </div>
 
-        <!-- Active Warranty Section -->
+        <!-- Active Warranty -->
         <div class="tab-pane fade" id="active-pane" role="tabpanel" aria-labelledby="active-tab" tabindex="0">
-            <div class="animate__animated animate__fadeInUp">
-                {% if active %}
-                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                    {% for a in active %}
-                    <div class="col">
-                        <div class="asset-grid-card p-4">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <div class="d-flex align-items-center">
-                                    <div class="bg-success bg-opacity-10 rounded p-2 me-3 text-center"
-                                        style="width: 45px; height: 45px;">
-                                        <i class="bi bi-pc-display text-success fs-5"></i>
-                                    </div>
+            {% if active %}
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for a in active %}
+                <div class="col">
+                    <div class="wt-card">
+                        <div class="accent accent-green"></div>
+                        <div class="wt-card-body">
+                            <div class="wt-card-head">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="t-icon t-icon-green"><i class="bi bi-pc-display"></i></div>
                                     <div>
-                                        <a href="{% url 'asset_detail' a.pk %}"
-                                            class="text-decoration-none fw-bold text-dark fs-5">{{ a.asset_id }}</a>
-                                        {% if a.name %}<div class="text-muted small">{{ a.name }}</div>{% endif %}
+                                        <a href="{% url 'asset_detail' a.pk %}" class="wt-asset-link">{{ a.asset_id }}</a>
+                                        {% if a.name %}<div class="wt-asset-name">{{ a.name }}</div>{% endif %}
                                     </div>
                                 </div>
-                                <span class="badge bg-success badge-modern rounded-pill"><i
-                                        class="bi bi-check2-circle me-1"></i>Active</span>
+                                <span class="wt-pill pill-success"><i class="bi bi-check2-circle"></i>Active</span>
                             </div>
 
-                            <div class="flex-grow-1">
-                                <div class="mb-2"><span class="text-muted small">Type:</span> <span
-                                        class="fw-medium text-dark float-end">{{ a.asset_type }}</span></div>
-                                <div class="mb-2"><span class="text-muted small">Ends:</span> <span class="fw-bold text-success float-end">{{ a.warranty_end_date|date:"d M, Y" }}</span></div>
-                                <div class="mb-2"><span class="text-muted small">Time Left:</span> <span
-                                        class="fw-bolder text-success float-end">{{ a.days_until_warranty_end }}
-                                        days</span></div>
+                            <div class="wt-rows">
+                                <div class="wt-row"><span class="k">Type</span><span class="v">{{ a.asset_type }}</span></div>
+                                <div class="wt-row"><span class="k">Ends</span><span class="v v-success">{{ a.warranty_end_date|date:"d M, Y" }}</span></div>
+                                <div class="wt-row"><span class="k">Time Left</span><span class="v v-success">{{ a.days_until_warranty_end }} days</span></div>
                             </div>
 
-                            <div class="mt-3 pt-3 border-top">
+                            <div class="wt-card-foot">
                                 {% with a.assignment_set.all|dictsortreversed:"assigned_at"|first as cur %}
                                 {% if cur and cur.status == 'In Use' %}
-                                <div class="d-flex align-items-center text-muted small">
-                                    <i class="bi bi-person-circle me-2"></i>
-                                    <span class="fw-medium text-dark text-truncate">{{ cur.employee.name }}</span>
-                                </div>
+                                <i class="bi bi-person-circle" style="color:var(--muted);"></i>
+                                <span class="text-truncate">{{ cur.employee.name }}</span>
                                 {% else %}
-                                <span class="text-muted fst-italic small">Unassigned</span>
+                                <span class="fst-italic" style="color:var(--muted);">Unassigned</span>
                                 {% endif %}
                                 {% endwith %}
                             </div>
                         </div>
                     </div>
-                    {% endfor %}
                 </div>
-                {% else %}
-                <div class="text-center py-5">
-                    <div class="opacity-50">
-                        <i class="bi bi-box-seam fs-1 text-muted mb-3 d-block"></i>
-                        <p class="text-muted fw-medium mb-0">No assets with active warranties.</p>
-                    </div>
-                </div>
-                {% endif %}
+                {% endfor %}
             </div>
+            {% else %}
+            <div class="wt-empty">
+                <div class="icon"><i class="bi bi-box-seam"></i></div>
+                <p>No active warranties</p>
+                <p>No assets with active warranties found.</p>
+            </div>
+            {% endif %}
         </div>
 
     </div>

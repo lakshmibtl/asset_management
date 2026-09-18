@@ -3,27 +3,246 @@
 {% block title %}Request Details{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="card shadow-sm rounded-4 p-4">
-        <h3 class="fw-bold mb-3">📝 Request Details</h3>
+<style>
+    :root {
+        --brand: #07518A;
+        --brand-hover: #064a7d;
+        --brand-soft: #eaf2fa;
+        --ink: #1f2937;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --sha-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+    }
 
-        <p><strong>Employee:</strong> {{ asset_request.requested_by.username }}</p>
-        <p><strong>Asset Type:</strong> {{ asset_request.asset_type }}</p>
-        <p><strong>Reason:</strong> {{ asset_request.reason }}</p>
-        <p><strong>Requested At:</strong> {{ asset_request.requested_at }}</p>
+    body {
+        background: #f3f6f9;
+    }
 
-        <form method="POST" class="mt-4">
-            {% csrf_token %}
-            <div class="mb-3">
-                <label for="status" class="form-label fw-bold">Update Status</label>
-                <select name="status" id="status" class="form-select">
-                    <option value="Pending" {% if asset_request.status == 'Pending' %}selected{% endif %}>Pending</option>
-                    <option value="Approved" {% if asset_request.status == 'Approved' %}selected{% endif %}>Approved</option>
-                    <option value="Rejected" {% if asset_request.status == 'Rejected' %}selected{% endif %}>Rejected</option>
-                </select>
+    .rq-crumb {
+        font-size: 0.82rem;
+        color: var(--muted);
+        letter-spacing: 0.02em;
+    }
+
+    .rq-crumb a {
+        color: var(--muted);
+        text-decoration: none;
+    }
+
+    .rq-crumb a:hover {
+        color: var(--brand);
+    }
+
+    .rq-crumb .sep {
+        margin: 0 0.4rem;
+        color: #b6bdc7;
+    }
+
+    .rq-page-head h2 {
+        color: var(--ink);
+        font-weight: 650;
+        letter-spacing: -0.01em;
+        margin: 0;
+    }
+
+    .rq-page-head p {
+        color: var(--muted);
+        font-size: 0.92rem;
+        margin: 4px 0 0;
+    }
+
+    .rq-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: var(--sha-card);
+        overflow: hidden;
+    }
+
+    .rq-card-head {
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .rq-card-head .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--brand);
+        flex-shrink: 0;
+    }
+
+    .rq-card-head h6 {
+        margin: 0;
+        font-weight: 650;
+        font-size: 0.98rem;
+        color: var(--ink);
+    }
+
+    .rq-card-body {
+        padding: 24px;
+    }
+
+    .info-tile {
+        background: #f8fafc;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px 14px;
+        height: 100%;
+    }
+
+    .info-tile .tile-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin-bottom: 5px;
+    }
+
+    .info-tile .tile-value {
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: var(--ink);
+        word-break: break-word;
+    }
+
+    .f-label {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+
+    .rq-form .form-select {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        background: #fbfcfd;
+        color: var(--ink);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .rq-form .form-select:focus {
+        outline: none;
+        border-color: var(--brand);
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(7, 81, 138, 0.12);
+    }
+
+    .btn-brand {
+        background: var(--brand);
+        color: #fff;
+        border: 1px solid var(--brand);
+        border-radius: 10px;
+        padding: 10px 24px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        transition: background 0.15s ease;
+    }
+
+    .btn-brand:hover {
+        background: var(--brand-hover);
+        color: #fff;
+    }
+
+    .divider {
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(7, 81, 138, 0.3), transparent);
+    }
+</style>
+
+<div class="container py-4" style="max-width: 760px;">
+
+    <!-- Breadcrumb -->
+    <nav class="rq-crumb mb-2">
+        <a href="{% url 'view_requests_list' %}">Asset Requests</a>
+        <span class="sep"><i class="bi bi-chevron-right"></i></span>
+        <span style="color:#374151;">Request Details</span>
+    </nav>
+
+    <!-- Page heading -->
+    <div class="rq-page-head mb-4">
+        <h2><i class="bi bi-file-earmark-text me-2" style="color:var(--brand);"></i>Request Details</h2>
+        <p>Overview and status update for asset request #{{ asset_request.id }}.</p>
+    </div>
+
+    <!-- Card -->
+    <div class="rq-card">
+        <div class="rq-card-head">
+            <span class="dot"></span>
+            <h6>Request Information</h6>
+        </div>
+
+        <div class="rq-card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="info-tile">
+                        <div class="tile-label"><i class="bi bi-person-circle me-1"></i>Employee</div>
+                        <div class="tile-value">{{ asset_request.requested_by.username }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-tile">
+                        <div class="tile-label"><i class="bi bi-type me-1"></i>Asset Type</div>
+                        <div class="tile-value">{{ asset_request.asset_type }}</div>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <div class="info-tile">
+                        <div class="tile-label"><i class="bi bi-list-task me-1"></i>Reason</div>
+                        <div class="tile-value">{{ asset_request.reason }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-tile">
+                        <div class="tile-label"><i class="bi bi-calendar-event me-1"></i>Requested At</div>
+                        <div class="tile-value">{{ asset_request.requested_at|date:"M d, Y H:i" }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-tile">
+                        <div class="tile-label"><i class="bi bi-patch-check me-1"></i>Status</div>
+                        <div class="tile-value">
+                            {% if asset_request.status == "Approved" %}
+                            <span class="text-success fw-bold">{{ asset_request.status }}</span>
+                            {% elif asset_request.status == "Rejected" %}
+                            <span class="text-danger fw-bold">{{ asset_request.status }}</span>
+                            {% else %}
+                            <span class="text-warning fw-bold">{{ asset_request.status }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
             </div>
-            <button type="submit" class="btn btn-success w-100 mt-3">💾 Update Status</button>
-        </form>
+
+            <hr class="divider my-5">
+
+            <!-- Update Status -->
+            <h5 class="fw-semibold mb-3" style="color:var(--ink);">
+                <i class="bi bi-pen me-2" style="color:var(--brand);"></i>Update Status
+            </h5>
+            <form method="POST" class="rq-form" style="max-width: 400px;">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="f-label" for="status">Status</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="Pending" {% if asset_request.status == 'Pending' %}selected{% endif %}>Pending</option>
+                        <option value="Approved" {% if asset_request.status == 'Approved' %}selected{% endif %}>Approved</option>
+                        <option value="Rejected" {% if asset_request.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-brand w-100">
+                    <i class="bi bi-check-circle me-1"></i> Update Status
+                </button>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

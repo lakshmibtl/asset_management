@@ -4,397 +4,692 @@
 
 {% block content %}
 <style>
-    .initials-avatar {
-        width: 42px;
-        height: 42px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #4f46e5, #ec4899);
-        color: #fff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 1rem;
-        flex-shrink: 0;
-        box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3);
+    /* ========== PROFESSIONAL RETURN REQUESTS ========== */
+    :root {
+        --brand: #07518A;
+        --brand-hover: #064a7d;
+        --brand-soft: #eaf2fa;
+        --green: #15803d;
+        --green-soft: #e7f6ec;
+        --red: #b91c1c;
+        --red-soft: #fdeeee;
+        --amber: #b45309;
+        --amber-soft: #fff7ed;
+        --ink: #1f2937;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
     }
 
-    .stat-card {
-        border: 0;
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-        overflow: hidden;
-        position: relative;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.4);
+    body {
+        background: #f3f6f9;
     }
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+
+    /* Breadcrumb */
+    .rr-breadcrumb {
+        font-size: 0.82rem;
+        color: var(--muted);
+        letter-spacing: 0.02em;
     }
-    .stat-card .stat-icon {
-        width: 58px;
-        height: 58px;
-        border-radius: 16px;
+
+    .rr-breadcrumb a {
+        color: var(--muted);
+        text-decoration: none;
+    }
+
+    .rr-breadcrumb a:hover {
+        color: var(--brand);
+    }
+
+    .rr-breadcrumb .sep {
+        margin: 0 0.4rem;
+        color: #b6bdc7;
+    }
+
+    .rr-page-head h2 {
+        color: var(--ink);
+        font-weight: 650;
+        letter-spacing: -0.01em;
+        margin: 0;
+    }
+
+    .rr-page-head p {
+        color: var(--muted);
+        font-size: 0.92rem;
+        margin: 4px 0 0;
+    }
+
+    .btn-outline-brand {
+        background: #ffffff;
+        color: var(--brand);
+        border: 1px solid rgba(7, 81, 138, 0.4);
+        border-radius: 10px;
+        padding: 9px 18px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .btn-outline-brand:hover {
+        background: var(--brand);
+        border-color: var(--brand);
+        color: #fff;
+    }
+
+    /* Stat tiles */
+    .rr-stat {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 18px 22px;
+        box-shadow: var(--shadow-card);
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .rr-stat:hover {
+        box-shadow: 0 8px 24px rgba(16, 24, 40, 0.08);
+        transform: translateY(-2px);
+    }
+
+    .rr-stat .stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.6rem;
-        box-shadow: inset 0 2px 4px rgba(255,255,255,0.5), 0 4px 8px rgba(0,0,0,0.05);
+        font-size: 1.15rem;
+        flex-shrink: 0;
     }
-    .stat-card .stat-label {
-        font-size: 0.85rem;
+
+    .rr-stat .stat-label {
+        font-size: 0.72rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 1px;
-        color: #64748b;
-        margin-bottom: 0.25rem;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin-bottom: 4px;
     }
-    .stat-card .stat-value {
-        font-size: 2.2rem;
-        font-weight: 800;
+
+    .rr-stat .stat-value {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: var(--ink);
         line-height: 1;
-        color: #0f172a;
-        letter-spacing: -1px;
+        letter-spacing: -0.02em;
+    }
+
+    /* Section cards */
+    .rr-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: var(--shadow-card);
+        overflow: hidden;
+    }
+
+    .rr-card-head {
+        padding: 16px 22px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .rr-card-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .rr-card-title .bar {
+        width: 4px;
+        height: 22px;
+        border-radius: 4px;
+        background: var(--brand);
+    }
+
+    .rr-card-title h5 {
+        margin: 0;
+        font-weight: 650;
+        font-size: 0.98rem;
+        color: var(--ink);
+    }
+
+    .rr-card-title p {
+        margin: 0;
+        font-size: 0.82rem;
+        color: var(--muted);
+    }
+
+    .count-chip {
+        background: var(--brand-soft);
+        color: var(--brand);
+        font-size: 0.72rem;
+        font-weight: 700;
+        border-radius: 999px;
+        padding: 2px 10px;
+    }
+
+    .rr-search {
+        max-width: 260px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 8px 14px;
+        font-size: 0.85rem;
+        background: #fbfcfd;
+    }
+
+    .rr-search:focus {
+        outline: none;
+        border-color: var(--brand);
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(7, 81, 138, 0.12);
+    }
+
+    /* Table */
+    .rr-table {
+        margin: 0;
+        font-size: 0.88rem;
     }
 
     .rr-table thead th {
-        background-color: transparent;
-        color: #64748b;
-        font-size: 0.75rem;
+        color: var(--muted);
+        font-size: 0.71rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 1px;
-        border-bottom: 2px solid #f1f5f9;
+        letter-spacing: 0.08em;
+        border-bottom: 1px solid var(--line);
+        background: #fafbfc;
+        padding: 12px 22px;
         white-space: nowrap;
-        padding: 1.2rem 1.1rem;
-    }
-    .rr-table tbody td {
-        padding: 1.2rem 1.1rem;
-        border-bottom: 1px solid #f1f5f9;
-        vertical-align: middle;
-        font-weight: 500;
-    }
-    .rr-table tbody tr {
-        transition: all 0.2s ease;
-    }
-    .rr-table tbody tr:hover {
-        background-color: #f8fafc;
-        transform: scale(1.01);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.02);
     }
 
-    .pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        border-radius: 12px;
-        padding: 0.4rem 1rem;
-        font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 0.3px;
+    .rr-table tbody td {
+        padding: 14px 22px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+        color: var(--ink);
     }
-    .pill-pending { background: linear-gradient(135deg, #fff0eb, #ffe4d6); color: #d0451c; border: 1px solid rgba(208, 69, 28, 0.2); }
-    .pill-accepted { background: linear-gradient(135deg, #e7f6ec, #dcfce7); color: #16a34a; border: 1px solid rgba(22, 163, 74, 0.2); }
-    .pill-rejected { background: linear-gradient(135deg, #fdeeee, #fee2e2); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.2); }
-    .pill-type {
+
+    .rr-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .rr-table tbody tr {
+        transition: background 0.15s ease;
+    }
+
+    .rr-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .emp-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--brand-soft);
+        color: var(--brand);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .emp-avatar.neutral {
+        background: #eef0f3;
+        color: #475569;
+    }
+
+    .emp-name {
+        font-weight: 600;
+        color: var(--ink);
+    }
+
+    .emp-id {
+        font-size: 0.75rem;
+        color: var(--muted);
+    }
+
+    .asset-id {
+        font-weight: 600;
+        color: var(--ink);
+    }
+
+    .type-chip {
+        display: inline-block;
         background: #f1f5f9;
         color: #475569;
         font-size: 0.7rem;
         font-weight: 600;
-        padding: 0.25rem 0.75rem;
-        border-radius: 8px;
+        padding: 3px 9px;
+        border-radius: 7px;
+        margin-top: 3px;
     }
 
+    .rr-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        border-radius: 999px;
+        padding: 5px 12px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .rr-pill.pending { background: var(--amber-soft); color: var(--amber); border: 1px solid rgba(180, 83, 9, 0.2); }
+    .rr-pill.accepted { background: var(--green-soft); color: var(--green); border: 1px solid rgba(21, 128, 61, 0.2); }
+    .rr-pill.rejected { background: var(--red-soft); color: var(--red); border: 1px solid rgba(185, 28, 28, 0.2); }
+
+    .rr-cell-muted {
+        color: var(--muted);
+        font-size: 0.82rem;
+    }
+
+    .reason-text {
+        color: #4b5563;
+        font-size: 0.85rem;
+        max-width: 280px;
+    }
+
+    /* Buttons */
     .btn-accept {
-        background: linear-gradient(135deg, #10b981, #059669);
-        border: none;
+        background: var(--green);
+        border: 1px solid var(--green);
         color: #fff;
-        border-radius: 12px;
-        padding: 0.5rem 1rem;
+        border-radius: 9px;
+        padding: 8px 14px;
+        font-size: 0.8rem;
         font-weight: 600;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+        transition: background 0.15s ease;
     }
-    .btn-accept:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(16, 185, 129, 0.4); color: #fff; }
-    
-    .btn-reject {
-        border: 2px solid #fecaca;
-        color: #dc2626;
-        background: #fff;
-        border-radius: 12px;
-        padding: 0.4rem 1rem;
-        font-weight: 600;
-        transition: all 0.2s ease;
-    }
-    .btn-reject:hover { background: #fef2f2; border-color: #f87171; color: #b91c1c; transform: translateY(-2px); }
 
-    .section-card {
-        border: 0;
-        border-radius: 20px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
-        background: #ffffff;
-        overflow: hidden;
+    .btn-accept:hover {
+        background: #116b33;
+        color: #fff;
     }
-    
-    .page-wrapper {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
+
+    .btn-reject {
+        background: #fff;
+        border: 1px solid #fecaca;
+        color: var(--red);
+        border-radius: 9px;
+        padding: 8px 14px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .btn-reject:hover {
+        background: #fef2f2;
+        border-color: #f87171;
+        color: #b91c1c;
+    }
+
+    .icon-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--muted);
+        font-size: 0.85rem;
+        transition: all 0.15s ease;
+    }
+
+    .icon-btn-primary:hover {
+        border-color: var(--brand);
+        color: var(--brand);
+        background: var(--brand-soft);
+    }
+
+    .icon-btn-danger:hover {
+        border-color: var(--red);
+        color: var(--red);
+        background: var(--red-soft);
+    }
+
+    .btn-brand {
+        background: var(--brand);
+        color: #fff;
+        border: 1px solid var(--brand);
+        border-radius: 10px;
+        padding: 10px 24px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        transition: background 0.15s ease;
+    }
+
+    .btn-brand:hover {
+        background: var(--brand-hover);
+        color: #fff;
+    }
+
+    .empty-box {
+        padding: 42px 20px;
+        text-align: center;
+    }
+
+    .empty-box .icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: var(--green-soft);
+        color: var(--green);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        margin: 0 auto 12px;
+    }
+
+    .empty-box p:first-of-type {
+        font-weight: 600;
+        color: var(--ink);
+        margin-bottom: 2px;
+    }
+
+    .empty-box p:last-of-type {
+        color: var(--muted);
+        font-size: 0.85rem;
+        margin: 0;
+    }
+
+    /* Offcanvas */
+    .rr-offcanvas .offcanvas-header {
+        border-bottom: 1px solid var(--line);
+    }
+
+    .rr-offcanvas .offcanvas-title {
+        font-weight: 650;
+        color: var(--ink);
+        font-size: 1.05rem;
+    }
+
+    .f-label {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+
+    .rr-offcanvas .form-control,
+    .rr-offcanvas .form-select {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        background: #fbfcfd;
+        color: var(--ink);
+    }
+
+    .rr-offcanvas .form-control:focus,
+    .rr-offcanvas .form-select:focus {
+        outline: none;
+        border-color: var(--brand);
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(7, 81, 138, 0.12);
+    }
+
+    .rr-offcanvas .form-control:disabled {
+        background: #f3f4f6;
+        color: #6b7280;
     }
 </style>
 
-<div class="container-fluid page-wrapper">
+<div class="container-fluid py-4 px-4">
 
-    <!-- Header -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-4">
+    <!-- Breadcrumb -->
+    <nav class="rr-breadcrumb mb-2">
+        <a href="{% url 'view_assets' %}">Assets</a>
+        <span class="sep"><i class="bi bi-chevron-right"></i></span>
+        <span style="color:#374151;">Return Requests</span>
+    </nav>
+
+    <!-- Page heading -->
+    <div class="rr-page-head d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
         <div>
-            <h1 class="display-6 fw-bold mb-1" style="color: var(--primary-blue);">
-                <i class="bi bi-arrow-return-left me-2"></i>Return Requests
-            </h1>
-            <p class="text-muted mb-0">Approve employee returns — accepted assets go back into stock.</p>
+            <h2>Return Requests</h2>
+            <p>Review and process asset return requests. Accepted assets go back into stock.</p>
         </div>
-        <div class="mt-3 mt-md-0">
-            <a href="{% url 'view_assets' %}" class="btn btn-primary-custom btn-action shadow-sm">
-                <i class="bi bi-box-seam me-1"></i>View Assets
-            </a>
-        </div>
+        <a href="{% url 'view_assets' %}" class="btn btn-outline-brand">
+            <i class="bi bi-box-seam me-1"></i>View Assets
+        </a>
     </div>
 
-    <!-- Summary cards -->
-    <div class="row g-3 g-lg-4 mb-4">
+    <!-- Summary tiles -->
+    <div class="row g-3 mb-4">
         <div class="col-6 col-lg-4">
-            <div class="card stat-card h-100">
-                <div class="card-body d-flex gap-3 align-items-center p-3 p-lg-4">
-                    <div class="stat-icon" style="background:#fff0eb;color:#d0451c;">
-                        <i class="bi bi-hourglass-split"></i>
-                    </div>
-                    <div>
-                        <div class="stat-label">Awaiting</div>
-                        <div class="stat-value">{{ pending_count }}</div>
-                    </div>
+            <div class="rr-stat d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:var(--amber-soft);color:var(--amber);">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Awaiting</div>
+                    <div class="stat-value">{{ pending_count }}</div>
                 </div>
             </div>
         </div>
         <div class="col-6 col-lg-4">
-            <div class="card stat-card h-100">
-                <div class="card-body d-flex gap-3 align-items-center p-3 p-lg-4">
-                    <div class="stat-icon" style="background:#e7f6ec;color:#16794a;">
-                        <i class="bi bi-check-circle"></i>
-                    </div>
-                    <div>
-                        <div class="stat-label">Accepted</div>
-                        <div class="stat-value">{{ accepted_count }}</div>
-                    </div>
+            <div class="rr-stat d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:var(--green-soft);color:var(--green);">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Accepted</div>
+                    <div class="stat-value">{{ accepted_count }}</div>
                 </div>
             </div>
         </div>
         <div class="col-6 col-lg-4">
-            <div class="card stat-card h-100">
-                <div class="card-body d-flex gap-3 align-items-center p-3 p-lg-4">
-                    <div class="stat-icon" style="background:#fdeeee;color:#c03636;">
-                        <i class="bi bi-x-circle"></i>
-                    </div>
-                    <div>
-                        <div class="stat-label">Rejected</div>
-                        <div class="stat-value">{{ rejected_count }}</div>
-                    </div>
+            <div class="rr-stat d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:var(--red-soft);color:var(--red);">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Rejected</div>
+                    <div class="stat-value">{{ rejected_count }}</div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Awaiting Approval -->
-    <div class="card section-card mb-4">
-        <div class="card-header bg-white border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 p-4 pb-2">
-            <div>
-                <h5 class="fw-bold mb-1 text-dark d-flex align-items-center">
-                    <span class="me-2" style="width:8px;height:8px;border-radius:50%;background:#e5533d;display:inline-block;"></span>
-                    Awaiting Approval
-                    {% if pending_returns %}<span class="badge bg-danger rounded-pill ms-2">{{ pending_returns|length }}</span>{% endif %}
-                </h5>
-                <p class="text-muted small mb-0">Employees requested to return these assets.</p>
+    <div class="rr-card mb-4">
+        <div class="rr-card-head">
+            <div class="rr-card-title">
+                <span class="bar"></span>
+                <div>
+                    <h5 class="d-flex align-items-center gap-2">
+                        Awaiting Approval
+                        {% if pending_returns %}<span class="count-chip">{{ pending_returns|length }}</span>{% endif %}
+                    </h5>
+                    <p>Employees requested to return these assets.</p>
+                </div>
             </div>
             {% if pending_returns %}
-            <input type="text" id="rr-search" class="form-control form-control-sm" style="max-width:260px;"
-                placeholder="Search employee or asset...">
+            <input type="text" id="rr-search" class="rr-search" placeholder="Search employee or asset...">
             {% endif %}
         </div>
-        <div class="card-body p-4 pt-3">
+        <div class="table-responsive">
             {% if pending_returns %}
-            <div class="table-responsive">
-                <table class="table rr-table align-middle mb-0" id="rr-pending-table">
-                    <thead>
-                        <tr>
-                            <th>Employee</th>
-                            <th>Asset</th>
-                            <th>Reason</th>
-                            <th>Requested</th>
-                            <th class="text-end">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for rq in pending_returns %}
-                        <tr data-row="{{ rq.employee.name|lower }} {{ rq.employee.employee_id|lower }} {{ rq.asset.asset_id|lower }}">
-                            <td>
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="initials-avatar">{{ rq.employee.name|make_list|first|upper }}</div>
-                                    <div>
-                                        <div class="fw-bold text-dark">{{ rq.employee.name }}</div>
-                                        <div class="text-muted small" style="font-size:0.78rem;">{{ rq.employee.employee_id }}</div>
-                                    </div>
+            <table class="table rr-table align-middle" id="rr-pending-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Asset</th>
+                        <th>Reason</th>
+                        <th>Requested</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rq in pending_returns %}
+                    <tr data-row="{{ rq.employee.name|lower }} {{ rq.employee.employee_id|lower }} {{ rq.asset.asset_id|lower }}">
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="emp-avatar">{{ rq.employee.name|make_list|first|upper }}</div>
+                                <div>
+                                    <div class="emp-name">{{ rq.employee.name }}</div>
+                                    <div class="emp-id">{{ rq.employee.employee_id }}</div>
                                 </div>
-                            </td>
-                            <td>
-                                <div class="fw-bold text-dark">{{ rq.asset.asset_id }}</div>
-                                <span class="pill pill-type mt-1 d-inline-block">{{ rq.asset.asset_type }}</span>
-                            </td>
-                            <td class="text-muted small" style="max-width: 280px;">{{ rq.reason }}</td>
-                            <td class="text-muted small">{{ rq.created_at|date:"d M Y" }}<div class="text-muted" style="font-size:0.78rem;">{{ rq.created_at|date:"H:i" }}</div></td>
-                            <td class="text-end">
-                                <form method="POST" action="{% url 'process_return' rq.pk %}"
-                                    class="d-flex justify-content-end gap-2">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="next" value="{% url 'return_requests' %}">
-                                    <button type="submit" name="action" value="reject"
-                                        class="btn btn-reject btn-sm px-3 py-2"
-                                        onclick="return confirm('Decline return of {{ rq.asset.asset_id }} from {{ rq.employee.name }}? The asset stays with them.');">
-                                        <i class="bi bi-x-lg me-1"></i>Reject
-                                    </button>
-                                    <button type="submit" name="action" value="accept"
-                                        class="btn btn-accept btn-sm px-3 py-2"
-                                        onclick="return confirm('{% if request.user.role == 'manager' %}Approve return and forward to admin?{% elif request.user.role == 'admin' %}Approve return and forward to super admin?{% else %}Accept return and make asset available?{% endif %}');">
-                                        <i class="bi bi-check-lg me-1"></i>{% if request.user.role == 'manager' %}Approve (To Admin){% elif request.user.role == 'admin' %}Approve (To Super Admin){% else %}Accept{% endif %}
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="asset-id">{{ rq.asset.asset_id }}</div>
+                            <span class="type-chip">{{ rq.asset.asset_type }}</span>
+                        </td>
+                        <td class="reason-text">{{ rq.reason }}</td>
+                        <td class="rr-cell-muted">{{ rq.created_at|date:"d M Y" }}<div style="font-size:0.75rem;">{{ rq.created_at|date:"H:i" }}</div></td>
+                        <td class="text-end">
+                            <form method="POST" action="{% url 'process_return' rq.pk %}"
+                                class="d-inline-flex justify-content-end gap-2">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{% url 'return_requests' %}">
+                                <button type="submit" name="action" value="reject"
+                                    class="btn btn-reject"
+                                    onclick="return confirm('Decline return of {{ rq.asset.asset_id }} from {{ rq.employee.name }}? The asset stays with them.');">
+                                    <i class="bi bi-x-lg me-1"></i>Reject
+                                </button>
+                                <button type="submit" name="action" value="accept"
+                                    class="btn btn-accept"
+                                    onclick="return confirm('{% if request.user.role == 'manager' %}Approve return and forward to admin?{% elif request.user.role == 'admin' %}Approve return and forward to super admin?{% else %}Accept return and make asset available?{% endif %}');">
+                                    <i class="bi bi-check-lg me-1"></i>{% if request.user.role == 'manager' %}Approve (To Admin){% elif request.user.role == 'admin' %}Approve (To Super Admin){% else %}Accept{% endif %}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
             {% else %}
-            <div class="text-center py-5">
-                <div class="stat-icon mx-auto mb-3" style="background:#e7f6ec;color:#16794a;width:64px;height:64px;font-size:1.7rem;">
-                    <i class="bi bi-check2-circle"></i>
-                </div>
-                <p class="fw-bold text-dark mb-1">All caught up</p>
-                <p class="text-muted small mb-0">No return requests waiting for approval.</p>
+            <div class="empty-box">
+                <div class="icon"><i class="bi bi-check2-circle"></i></div>
+                <p>All caught up</p>
+                <p>No return requests waiting for approval.</p>
             </div>
             {% endif %}
         </div>
     </div>
 
     <!-- Processed history -->
-    <div class="card section-card">
-        <div class="card-header bg-white border-0 p-4 pb-2">
-            <h5 class="fw-bold mb-1 text-dark d-flex align-items-center">
-                <span class="me-2" style="width:8px;height:8px;border-radius:50%;background:#6c757d;display:inline-block;"></span>
-                Processed Requests
-            </h5>
-            <p class="text-muted small mb-0">Recent accepted / rejected requests.</p>
-        </div>
-        <div class="card-body p-4 pt-3">
-            {% if processed_returns %}
-            <div class="table-responsive">
-                <table class="table rr-table align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th>Employee</th>
-                            <th>Asset</th>
-                            <th>Reason</th>
-                            <th>Status</th>
-                            <th>Processed By</th>
-                            <th>Processed At</th>
-                            {% if request.user.role == 'superadmin' or request.user.role == 'admin' %}
-                            <th class="text-end">Action</th>
-                            {% endif %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for rq in processed_returns %}
-                        <tr>
-                            <td>
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="initials-avatar" style="background:linear-gradient(135deg,#7d8597,#9aa3b5);">{{ rq.employee.name|make_list|first|upper }}</div>
-                                    <div>
-                                        <div class="fw-bold text-dark">{{ rq.employee.name }}</div>
-                                        <div class="text-muted small" style="font-size:0.78rem;">{{ rq.employee.employee_id }}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="fw-bold text-dark">{{ rq.asset.asset_id }}</div>
-                                <span class="pill pill-type mt-1 d-inline-block">{{ rq.asset.asset_type }}</span>
-                            </td>
-                            <td class="text-muted small" style="max-width: 240px;">{{ rq.reason|truncatechars:60 }}</td>
-                            <td>
-                                {% if rq.status == 'Accepted' %}
-                                <span class="pill pill-accepted"><i class="bi bi-check-circle-fill" style="font-size:0.7rem;"></i>Accepted</span>
-                                {% elif rq.status == 'Rejected' %}
-                                <span class="pill pill-rejected"><i class="bi bi-x-circle-fill" style="font-size:0.7rem;"></i>Rejected</span>
-                                {% else %}
-                                <span class="pill pill-pending">{{ rq.get_status_display }}</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-muted small">{{ rq.processed_by_name|default:rq.processed_by.username|default:"—" }}</td>
-                            <td class="text-muted small">{{ rq.processed_at|date:"d M Y, H:i"|default:"—" }}</td>
-                            {% if request.user.role == 'superadmin' or request.user.role == 'admin' %}
-                            <td class="text-end">
-                                <div class="d-flex justify-content-end gap-2">
-                                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="offcanvas" data-bs-target="#editReturnOffcanvas{{ rq.pk }}" title="Edit">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <form method="POST" action="{% url 'delete_return_request' rq.pk %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this return request?');">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                            {% endif %}
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <div class="rr-card">
+        <div class="rr-card-head">
+            <div class="rr-card-title">
+                <span class="bar" style="background:#64748b;"></span>
+                <div>
+                    <h5>Processed Requests</h5>
+                    <p>Recent accepted / rejected requests.</p>
+                </div>
             </div>
+        </div>
+        <div class="table-responsive">
+            {% if processed_returns %}
+            <table class="table rr-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Asset</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Processed By</th>
+                        <th>Processed At</th>
+                        {% if request.user.role == 'superadmin' or request.user.role == 'admin' %}
+                        <th class="text-end">Action</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rq in processed_returns %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="emp-avatar neutral">{{ rq.employee.name|make_list|first|upper }}</div>
+                                <div>
+                                    <div class="emp-name">{{ rq.employee.name }}</div>
+                                    <div class="emp-id">{{ rq.employee.employee_id }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="asset-id">{{ rq.asset.asset_id }}</div>
+                            <span class="type-chip">{{ rq.asset.asset_type }}</span>
+                        </td>
+                        <td class="reason-text">{{ rq.reason|truncatechars:60 }}</td>
+                        <td>
+                            {% if rq.status == 'Accepted' %}
+                            <span class="rr-pill accepted"><i class="bi bi-check-circle-fill" style="font-size:0.7rem;"></i>Accepted</span>
+                            {% elif rq.status == 'Rejected' %}
+                            <span class="rr-pill rejected"><i class="bi bi-x-circle-fill" style="font-size:0.7rem;"></i>Rejected</span>
+                            {% else %}
+                            <span class="rr-pill pending">{{ rq.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="rr-cell-muted">{{ rq.processed_by_name|default:rq.processed_by.username|default:"—" }}</td>
+                        <td class="rr-cell-muted">{{ rq.processed_at|date:"d M Y, H:i"|default:"—" }}</td>
+                        {% if request.user.role == 'superadmin' or request.user.role == 'admin' %}
+                        <td class="text-end">
+                            <div class="d-inline-flex gap-2">
+                                <button type="button" class="icon-btn icon-btn-primary" data-bs-toggle="offcanvas" data-bs-target="#editReturnOffcanvas{{ rq.pk }}" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <form method="POST" action="{% url 'delete_return_request' rq.pk %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this return request?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="icon-btn icon-btn-danger" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
             {% else %}
-            <p class="text-muted small mb-0 py-3">No processed requests yet.</p>
+            <p class="rr-cell-muted py-3 px-4 mb-0">No processed requests yet.</p>
             {% endif %}
         </div>
     </div>
 </div>
 
 {% for rq in processed_returns %}
-<div class="offcanvas offcanvas-end" tabindex="-1" id="editReturnOffcanvas{{ rq.pk }}" aria-labelledby="editReturnOffcanvasLabel{{ rq.pk }}">
-  <div class="offcanvas-header border-bottom">
-    <h5 class="offcanvas-title fw-bold" id="editReturnOffcanvasLabel{{ rq.pk }}"><i class="bi bi-pencil-square me-2"></i>Edit Return Request</h5>
+<div class="offcanvas offcanvas-end rr-offcanvas" tabindex="-1" id="editReturnOffcanvas{{ rq.pk }}" aria-labelledby="editReturnOffcanvasLabel{{ rq.pk }}">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="editReturnOffcanvasLabel{{ rq.pk }}"><i class="bi bi-pencil-square me-2" style="color:var(--brand);"></i>Edit Return Request</h5>
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
   <div class="offcanvas-body">
     <p class="text-muted small mb-4">Modify details of return request for {{ rq.asset.asset_id }}</p>
     <form method="POST" action="{% url 'edit_return_request' rq.pk %}">
         {% csrf_token %}
-        
+
         <div class="mb-3">
-            <label class="form-label fw-semibold">Employee</label>
+            <label class="f-label">Employee</label>
             <input type="text" class="form-control" value="{{ rq.employee.name }} ({{ rq.employee.employee_id }})" disabled>
         </div>
-        
+
         <div class="mb-3">
-            <label class="form-label fw-semibold">Asset</label>
+            <label class="f-label">Asset</label>
             <input type="text" class="form-control" value="{{ rq.asset.asset_id }} - {{ rq.asset.asset_type }}" disabled>
         </div>
-        
+
         <div class="mb-3">
-            <label class="form-label fw-semibold">Reason</label>
+            <label class="f-label">Reason</label>
             <textarea name="reason" class="form-control" rows="3" required>{{ rq.reason }}</textarea>
         </div>
-        
+
         <div class="mb-4">
-            <label class="form-label fw-semibold">Status</label>
+            <label class="f-label">Status</label>
             <select name="status" class="form-select" required>
                 <option value="Pending" {% if rq.status == 'Pending' %}selected{% endif %}>Pending</option>
                 <option value="Manager_Approved" {% if rq.status == 'Manager_Approved' %}selected{% endif %}>Manager Approved</option>
@@ -404,7 +699,7 @@
             </select>
         </div>
 
-        <button type="submit" class="btn btn-primary w-100 rounded-pill fw-semibold shadow-sm">
+        <button type="submit" class="btn btn-brand w-100">
             <i class="bi bi-check2-circle me-1"></i> Save Changes
         </button>
     </form>

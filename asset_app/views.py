@@ -1560,7 +1560,17 @@ def view_requests_list(request):
         )
     else:
         requests = AssetRequest.objects.select_related('requested_by').filter(requested_by=request.user)
-    return render(request, 'asset_app/view_requests_list.html', {'requests': requests})
+
+    status_counts = {
+        'total': requests.count(),
+        'pending': requests.filter(status__iexact='Pending').count(),
+        'approved': requests.filter(status__iexact='Approved').count(),
+        'rejected': requests.filter(status__iexact='Rejected').count(),
+    }
+    return render(request, 'asset_app/view_requests_list.html', {
+        'requests': requests,
+        'status_counts': status_counts,
+    })
 
 
 def view_request(request, pk):
@@ -2136,14 +2146,19 @@ def support_reports(request):
     resolved_tickets = Ticket.objects.filter(Q(status__icontains='resolv') | Q(status__icontains='clos'))
     
     # Fetch manual work reports
-    manual_reports = Notification.objects.filter(notification_type='work_report').order_by('-created_at')
+    manual_reports = Notification.objects.filter(notification_type='work_report').filter(
+            Q(recipient__groups__name__icontains='Network') |
+            Q(recipient__username__in=Employee.objects.filter(department__icontains='Network').values_list('employee_id', flat=True))
+        ).order_by('-created_at')
     
-    # Only fetch users who are in the Network department or Network Support group, excluding superadmins
+    # Only fetch users who are in the Network department or Network Support group, excluding superadmins and staff
     team_members = User.objects.filter(
         Q(groups__name__icontains='Network') |
         Q(department__icontains='Network') |
         Q(username__in=Employee.objects.filter(department__icontains='Network').values('employee_id'))
-    ).exclude(role__in=['superadmin', 'admin', 'manager']).distinct().annotate(
+    ).exclude(
+        Q(role__in=['superadmin', 'admin', 'manager']) | Q(is_superuser=True) | Q(is_staff=True)
+    ).distinct().annotate(
         resolved_count=Count('assigned_tickets', filter=Q(assigned_tickets__status__icontains='resolv') | Q(assigned_tickets__status__icontains='clos')),
         manual_report_count=Count('notifications', filter=Q(notifications__notification_type='work_report'))
     ).prefetch_related(
@@ -2332,14 +2347,24 @@ def my_work_reports(request):
     
     # Superadmins can see all reports, others see their own
     if request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin'):
-        reports = Notification.objects.filter(notification_type='work_report').order_by('-created_at')
+        reports = Notification.objects.filter(notification_type='work_report').filter(
+            Q(recipient__groups__name__icontains='Network') |
+            Q(recipient__username__in=Employee.objects.filter(department__icontains='Network').values_list('employee_id', flat=True))
+        ).order_by('-created_at')
     else:
         reports = Notification.objects.filter(
             recipient=request.user,
             notification_type='work_report'
         ).order_by('-created_at')
-    
-    return render(request, 'asset_app/my_work_reports.html', {'reports': reports})
+
+    now = timezone.now()
+    stats = {
+        'total': reports.count(),
+        'this_month': reports.filter(created_at__year=now.year, created_at__month=now.month).count(),
+        'with_files': reports.exclude(link='').exclude(link__isnull=True).count(),
+    }
+
+    return render(request, 'asset_app/my_work_reports.html', {'reports': reports, 'stats': stats})
 
 @login_required
 def download_manual_reports(request):
@@ -2358,7 +2383,10 @@ def download_manual_reports(request):
     writer.writerow(['Date', 'Submitted By', 'Title', 'Description'])
     
     if request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin'):
-        reports = Notification.objects.filter(notification_type='work_report').order_by('-created_at')
+        reports = Notification.objects.filter(notification_type='work_report').filter(
+            Q(recipient__groups__name__icontains='Network') |
+            Q(recipient__username__in=Employee.objects.filter(department__icontains='Network').values_list('employee_id', flat=True))
+        ).order_by('-created_at')
     else:
         reports = Notification.objects.filter(recipient=request.user, notification_type='work_report').order_by('-created_at')
         
@@ -2570,14 +2598,24 @@ def my_work_reports(request):
     
     # Superadmins can see all reports, others see their own
     if request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin'):
-        reports = Notification.objects.filter(notification_type='work_report').order_by('-created_at')
+        reports = Notification.objects.filter(notification_type='work_report').filter(
+            Q(recipient__groups__name__icontains='Network') |
+            Q(recipient__username__in=Employee.objects.filter(department__icontains='Network').values_list('employee_id', flat=True))
+        ).order_by('-created_at')
     else:
         reports = Notification.objects.filter(
             recipient=request.user,
             notification_type='work_report'
         ).order_by('-created_at')
-    
-    return render(request, 'asset_app/my_work_reports.html', {'reports': reports})
+
+    now = timezone.now()
+    stats = {
+        'total': reports.count(),
+        'this_month': reports.filter(created_at__year=now.year, created_at__month=now.month).count(),
+        'with_files': reports.exclude(link='').exclude(link__isnull=True).count(),
+    }
+
+    return render(request, 'asset_app/my_work_reports.html', {'reports': reports, 'stats': stats})
 
 @login_required
 def download_manual_reports(request):
@@ -2596,7 +2634,10 @@ def download_manual_reports(request):
     writer.writerow(['Date', 'Submitted By', 'Title', 'Description'])
     
     if request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin'):
-        reports = Notification.objects.filter(notification_type='work_report').order_by('-created_at')
+        reports = Notification.objects.filter(notification_type='work_report').filter(
+            Q(recipient__groups__name__icontains='Network') |
+            Q(recipient__username__in=Employee.objects.filter(department__icontains='Network').values_list('employee_id', flat=True))
+        ).order_by('-created_at')
     else:
         reports = Notification.objects.filter(recipient=request.user, notification_type='work_report').order_by('-created_at')
         

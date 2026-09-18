@@ -2,89 +2,387 @@
 {% block title %}Request Details{% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<style>
+    :root {
+        --brand: #07518A;
+        --brand-hover: #064a7d;
+        --brand-soft: #eaf2fa;
+        --green: #15803d;
+        --green-soft: #e7f6ec;
+        --red: #b91c1c;
+        --red-soft: #fdeeee;
+        --amber: #b45309;
+        --amber-soft: #fff7ed;
+        --slate: #475569;
+        --slate-soft: #f1f5f9;
+        --ink: #1f2937;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --sha-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+    }
 
-    <!-- PAGE HEADER -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-primary mb-0">
-            <i class="bi bi-file-earmark-text"></i> Request Details
-        </h2>
-        <a href="{% url 'view_requests_list' %}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Back
+    body {
+        background: #f3f6f9;
+    }
+
+    .rq-crumb {
+        font-size: 0.82rem;
+        color: var(--muted);
+        letter-spacing: 0.02em;
+    }
+
+    .rq-crumb a {
+        color: var(--muted);
+        text-decoration: none;
+    }
+
+    .rq-crumb a:hover {
+        color: var(--brand);
+    }
+
+    .rq-crumb .sep {
+        margin: 0 0.4rem;
+        color: #b6bdc7;
+    }
+
+    .rq-page-head h2 {
+        color: var(--ink);
+        font-weight: 650;
+        letter-spacing: -0.01em;
+        margin: 0;
+    }
+
+    .rq-page-head p {
+        color: var(--muted);
+        font-size: 0.92rem;
+        margin: 4px 0 0;
+    }
+
+    .btn-back {
+        background: #ffffff;
+        color: var(--brand);
+        border: 1px solid rgba(7, 81, 138, 0.4);
+        border-radius: 10px;
+        padding: 9px 18px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        transition: background 0.15s ease, color 0.15s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .btn-back:hover {
+        background: var(--brand);
+        color: #fff;
+    }
+
+    .rq-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: var(--sha-card);
+        overflow: hidden;
+    }
+
+    .rq-card-head {
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .rq-card-head .ttl {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .rq-card-head .ttl .bar {
+        width: 4px;
+        height: 22px;
+        border-radius: 4px;
+        background: var(--brand);
+    }
+
+    .rq-card-head h6 {
+        margin: 0;
+        font-weight: 650;
+        font-size: 0.98rem;
+        color: var(--ink);
+    }
+
+    .rq-card-body {
+        padding: 24px;
+    }
+
+    .rq-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        border-radius: 999px;
+        padding: 6px 14px;
+        font-size: 0.74rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .rq-pill.approved { background: var(--green-soft); color: var(--green); border: 1px solid rgba(21, 128, 61, 0.2); }
+    .rq-pill.rejected { background: var(--red-soft); color: var(--red); border: 1px solid rgba(185, 28, 28, 0.2); }
+    .rq-pill.pending { background: var(--amber-soft); color: var(--amber); border: 1px solid rgba(180, 83, 9, 0.2); }
+
+    .info-tile {
+        background: #f8fafc;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px 14px;
+        height: 100%;
+    }
+
+    .info-tile .tile-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin-bottom: 5px;
+    }
+
+    .info-tile .tile-value {
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: var(--ink);
+        word-break: break-word;
+    }
+
+    .f-label {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+
+    .rq-form .form-control,
+    .rq-form .form-select {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        background: #fbfcfd;
+        color: var(--ink);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .rq-form .form-control:focus,
+    .rq-form .form-select:focus {
+        outline: none;
+        border-color: var(--brand);
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(7, 81, 138, 0.12);
+    }
+
+    .btn-brand {
+        background: var(--brand);
+        color: #fff;
+        border: 1px solid var(--brand);
+        border-radius: 10px;
+        padding: 10px 22px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        transition: background 0.15s ease;
+    }
+
+    .btn-brand:hover {
+        background: var(--brand-hover);
+        color: #fff;
+    }
+
+    .divider {
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(14, 107, 79, 0.28), rgba(176, 131, 43, 0.4), transparent);
+    }
+
+    /* ============ PREMIUM ENTERPRISE OVERRIDE ============ */
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap');
+
+    :root {
+        --brand: #0e6b4f;
+        --brand-hover: #0a5940;
+        --brand-soft: #e8f1ec;
+        --gold: #b0832b;
+        --gold-soft: #f7efdf;
+        --green: #2f7d5c;
+        --green-soft: #e8f2eb;
+        --red: #a34a3b;
+        --red-soft: #faebe8;
+        --amber: #b27a28;
+        --amber-soft: #f9f0df;
+        --slate: #5c6e67;
+        --slate-soft: #eef1ee;
+        --ink: #1c2b26;
+        --muted: #728079;
+        --line: #e4dfd1;
+        --paper: #f7f5ef;
+        --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+    }
+
+    body {
+        background-color: var(--paper) !important;
+        background-image: none !important;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: var(--serif) !important;
+        letter-spacing: -0.01em;
+        color: var(--ink);
+        font-weight: 600;
+    }
+
+    .rq-crumb a:hover { color: var(--gold); }
+    .rq-crumb .sep { color: var(--gold); }
+
+    .rq-page-head h2 { font-size: 1.9rem; }
+    .rq-page-head h2 i { color: var(--gold) !important; }
+
+    .btn-back {
+        border-color: rgba(14, 107, 79, 0.45);
+        color: var(--brand);
+    }
+    .btn-back:hover { background: var(--brand); border-color: var(--brand); color: #fff; }
+
+    .rq-card { border-color: var(--line); box-shadow: 0 1px 2px rgba(28, 43, 38, 0.04), 0 1px 3px rgba(28, 43, 38, 0.06); }
+    .rq-card-head { border-bottom-color: var(--line); }
+    .rq-card-head .ttl .bar { background: var(--gold); }
+    .rq-card-head h6 { font-weight: 600; }
+
+    .info-tile {
+        background: #fff;
+        border-color: var(--line);
+        box-shadow: 0 1px 2px rgba(28, 43, 38, 0.04), 0 1px 3px rgba(28, 43, 38, 0.05);
+    }
+    .info-tile .tile-label { color: var(--gold); }
+    .info-tile .tile-value { color: var(--ink); }
+
+    .f-label { color: var(--ink); }
+
+    .btn-brand {
+        background: var(--brand);
+        border-color: var(--brand);
+    }
+    .btn-brand:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
+
+    .rq-form h5 i { color: var(--gold) !important; }
+</style>
+
+<div class="container py-4" style="max-width: 880px;">
+
+    <!-- Breadcrumb -->
+    <nav class="rq-crumb mb-2">
+        <a href="{% url 'view_requests_list' %}">Asset Requests</a>
+        <span class="sep"><i class="bi bi-chevron-right"></i></span>
+        <span style="color:#374151;">Request Details</span>
+    </nav>
+
+    <!-- Page heading -->
+    <div class="rq-page-head d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
+        <div>
+            <h2><i class="bi bi-file-earmark-text me-2" style="color:var(--brand);"></i>Request Details</h2>
+            <p>Details and approval for asset request #{{ asset_request.id }}.</p>
+        </div>
+        <a href="{% url 'view_requests_list' %}" class="btn-back">
+            <i class="bi bi-arrow-left"></i> Back to Requests
         </a>
     </div>
 
-    <!-- MAIN CARD -->
-    <div class="card shadow-lg border-0 rounded-4">
-        <div class="card-body">
+    <!-- Request card -->
+    <div class="rq-card">
+        <div class="rq-card-head">
+            <div class="ttl">
+                <span class="bar"></span>
+                <h6>Asset Information</h6>
+            </div>
+            {% if asset_request.status == "Approved" %}
+            <span class="rq-pill approved"><i class="bi bi-check-circle-fill"></i>Approved</span>
+            {% elif asset_request.status == "Rejected" %}
+            <span class="rq-pill rejected"><i class="bi bi-x-circle-fill"></i>Rejected</span>
+            {% else %}
+            <span class="rq-pill pending"><i class="bi bi-hourglass-split"></i>Pending</span>
+            {% endif %}
+        </div>
 
-            <!-- ASSET INFORMATION -->
-            <div class="mb-4">
-                <h5 class="fw-semibold text-dark mb-3">Asset Information</h5>
-                
-                <div class="p-3 bg-light rounded-3">
-
-                    <div class="row mb-2">
-                        <div class="col-md-6">
-                            <strong>Category:</strong> 
-                            {{ asset_request.asset_category }}
-                        </div>
-                        <div class="col-md-6">
-                            <strong>Type:</strong> 
-                            {{ asset_request.asset_type }}
+        <div class="rq-card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="info-tile">
+                        <div class="tile-label"><i class="bi bi-tag me-1"></i>Category</div>
+                        <div class="tile-value">{{ asset_request.asset_category }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-tile">
+                        <div class="tile-label"><i class="bi bi-type me-1"></i>Type</div>
+                        <div class="tile-value">{{ asset_request.asset_type }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-tile">
+                        <div class="tile-label"><i class="bi bi-123 me-1"></i>Quantity</div>
+                        <div class="tile-value">{{ asset_request.quantity }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-tile">
+                        <div class="tile-label"><i class="bi bi-calendar-event me-1"></i>Required Date</div>
+                        <div class="tile-value">{{ asset_request.required_date|default:"Not specified" }}</div>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <div class="info-tile">
+                        <div class="tile-label"><i class="bi bi-list-task me-1"></i>Reason</div>
+                        <div class="tile-value">{{ asset_request.reason|default:"No reason provided" }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-tile">
+                        <div class="tile-label"><i class="bi bi-person-circle me-1"></i>Requested By</div>
+                        <div class="tile-value">{{ asset_request.requested_by.username }}
+                            {% if asset_request.requested_by.email %}
+                            <span class="d-block" style="font-size:0.78rem; color:var(--muted); font-weight:400;">{{ asset_request.requested_by.email }}</span>
+                            {% endif %}
                         </div>
                     </div>
-
-                    <div class="row mb-2">
-                        <div class="col-md-6">
-                            <strong>Quantity:</strong> 
-                            {{ asset_request.quantity }}
-                        </div>
-                        <div class="col-md-6">
-                            <strong>Required Date:</strong> 
-                            {{ asset_request.required_date|default:"Not specified" }}
-                        </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-tile">
+                        <div class="tile-label"><i class="bi bi-calendar-check me-1"></i>Requested At</div>
+                        <div class="tile-value">{{ asset_request.requested_at|date:"M d, Y H:i" }}</div>
                     </div>
-                    
-                    <div class="mb-3">
-                        <strong>Reason:</strong>
-                        <p class="mb-0 text-muted">{{ asset_request.reason|default:"No reason provided" }}</p>
-                    </div>
-
-                    <p class="mb-2 border-top pt-3">
-                        <strong>Requested By:</strong>
-                        {{ asset_request.requested_by.username }}
-                        <br>
-                        <small class="text-muted">{{ asset_request.requested_by.email }}</small>
-                    </p>
-
-                    <p class="mb-2">
-                        <strong>Status:</strong>
-                        {% if asset_request.status == "Approved" %}
-                            <span class="badge bg-success px-3 py-2">Approved</span>
-                        {% elif asset_request.status == "Rejected" %}
-                            <span class="badge bg-danger px-3 py-2">Rejected</span>
-                        {% else %}
-                            <span class="badge bg-warning text-dark px-3 py-2">Pending</span>
-                        {% endif %}
-                    </p>
-
                 </div>
             </div>
 
-            <!-- UPDATE STATUS FORM -->
             {% if asset_request.status == 'Pending' %}
-            <div class="border-top pt-4">
-                <h5 class="fw-semibold mb-3">
-                    <i class="bi bi-pen"></i> Update Status
-                </h5>
+            <hr class="divider my-5">
 
-                <form method="POST" action="{% url 'update_request_status' asset_request.id %}">
+            <!-- Update Status -->
+            <div>
+                <h5 class="fw-semibold mb-1" style="color:var(--ink);">
+                    <i class="bi bi-pen me-2" style="color:var(--brand);"></i>Update Status
+                </h5>
+                <p class="text-muted mb-3" style="font-size:0.85rem;">Approve, reject, or assign available assets for this request.</p>
+
+                <form method="POST" action="{% url 'update_request_status' asset_request.id %}" class="rq-form mx-auto" style="max-width: 560px;">
                     {% csrf_token %}
-                    
+
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Select Status</label>
-                        <select name="status" id="statusSelect" class="form-select form-select-lg shadow-sm">
+                        <label class="f-label" for="statusSelect">Select Status</label>
+                        <select name="status" id="statusSelect" class="form-select">
                             <option value="Pending" {% if asset_request.status == 'Pending' %}selected{% endif %}>Pending</option>
                             <option value="Approved" {% if asset_request.status == 'Approved' %}selected{% endif %}>Approved</option>
                             <option value="Rejected" {% if asset_request.status == 'Rejected' %}selected{% endif %}>Rejected</option>
@@ -93,49 +391,45 @@
 
                     <!-- Assign Asset Block (Hidden by default) -->
                     <div id="assignAssetBlock" class="mb-4" style="display: none;">
-                        <label class="form-label fw-semibold text-primary">
-                            <i class="bi bi-laptop me-1"></i> Assign Available Asset(s)
+                        <label class="f-label">
+                            <i class="bi bi-laptop me-1" style="color:var(--brand);"></i> Assign Available Asset(s)
                         </label>
-                        <select name="assigned_assets" class="form-select form-select-lg shadow-sm" multiple size="4">
+                        <select name="assigned_assets" class="form-select" multiple size="4">
                             {% for a in available_assets %}
-                                <option value="{{ a.id }}">{{ a.asset_id }} - {{ a.company_name }} {{ a.model }}</option>
+                            <option value="{{ a.id }}">{{ a.asset_id }} - {{ a.company_name }} {{ a.model }}</option>
                             {% empty %}
-                                <option disabled>No available assets in this category.</option>
+                            <option disabled>No available assets in this category.</option>
                             {% endfor %}
                         </select>
-                        <div class="form-text mt-1 text-muted">Hold CTRL (Windows) or CMD (Mac) to select multiple items if Quantity > 1.</div>
+                        <div class="form-text mt-1 text-muted">Hold CTRL (Windows) or CMD (Mac) to select multiple items if Quantity &gt; 1.</div>
                     </div>
 
-                    <button type="submit" class="btn btn-success btn-lg px-4">
-                        <i class="bi bi-check-circle"></i> Save Changes
-                    </button>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-brand px-4">
+                            <i class="bi bi-check-circle me-1"></i> Save Changes
+                        </button>
+                    </div>
                 </form>
             </div>
             {% endif %}
-
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    const statusSelect = document.getElementById('statusSelect');
-                    const assignAssetBlock = document.getElementById('assignAssetBlock');
-                    
-                    if (statusSelect) {
-                        statusSelect.addEventListener('change', function() {
-                            if (this.value === 'Approved') {
-                                assignAssetBlock.style.display = 'block';
-                            } else {
-                                assignAssetBlock.style.display = 'none';
-                            }
-                        });
-                    }
-                });
-            </script>
-
         </div>
     </div>
-
 </div>
 
-<!-- BOOTSTRAP ICONS -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const statusSelect = document.getElementById('statusSelect');
+        const assignAssetBlock = document.getElementById('assignAssetBlock');
 
+        if (statusSelect) {
+            statusSelect.addEventListener('change', function() {
+                if (this.value === 'Approved') {
+                    assignAssetBlock.style.display = 'block';
+                } else {
+                    assignAssetBlock.style.display = 'none';
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

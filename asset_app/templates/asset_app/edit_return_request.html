@@ -4,59 +4,233 @@
 {% block title %}Edit Return Request{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card shadow-sm border-0 rounded-4">
-                <div class="card-header bg-white border-0 pt-4 pb-0">
-                    <div class="d-flex align-items-center">
-                        <div class="me-3 text-primary">
-                            <i class="bi bi-pencil-square fs-3"></i>
-                        </div>
-                        <div>
-                            <h4 class="mb-0 fw-bold text-dark">Edit Return Request</h4>
-                            <p class="text-muted small mb-0">Modify details of return request for {{ return_request.asset.asset_id }}</p>
-                        </div>
+<style>
+    :root {
+        --brand: #07518A;
+        --brand-hover: #064a7d;
+        --brand-soft: #eaf2fa;
+        --ink: #1f2937;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+    }
+
+    body {
+        background: #f3f6f9;
+    }
+
+    /* Breadcrumb */
+    .edit-bcrumb {
+        font-size: 0.82rem;
+        color: var(--muted);
+        letter-spacing: 0.02em;
+    }
+
+    .edit-bcrumb a {
+        color: var(--muted);
+        text-decoration: none;
+    }
+
+    .edit-bcrumb a:hover {
+        color: var(--brand);
+    }
+
+    .edit-bcrumb .sep {
+        margin: 0 0.4rem;
+        color: #b6bdc7;
+    }
+
+    .edit-page-head h2 {
+        color: var(--ink);
+        font-weight: 650;
+        letter-spacing: -0.01em;
+        margin: 0;
+    }
+
+    .edit-page-head p {
+        color: var(--muted);
+        font-size: 0.92rem;
+        margin: 4px 0 0;
+    }
+
+    .edit-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: var(--shadow-card);
+        overflow: hidden;
+    }
+
+    .edit-card-head {
+        padding: 16px 26px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .edit-card-head .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--brand);
+        flex-shrink: 0;
+    }
+
+    .edit-card-head h6 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--ink);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .edit-card-body {
+        padding: 26px;
+    }
+
+    .edit-card-foot {
+        padding: 16px 26px;
+        border-top: 1px solid var(--line);
+        background: #fafbfc;
+        border-radius: 0 0 14px 14px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .f-label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 6px;
+        letter-spacing: 0.01em;
+    }
+
+    .edit-card .form-control,
+    .edit-card .form-select {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        color: var(--ink);
+        background: #fbfcfd;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .edit-card .form-control:focus,
+    .edit-card .form-select:focus {
+        outline: none;
+        border-color: var(--brand);
+        background: #ffffff;
+        box-shadow: 0 0 0 3px rgba(7, 81, 138, 0.12);
+    }
+
+    .edit-card .form-control:disabled {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .btn-brand {
+        background: var(--brand);
+        color: #fff;
+        border: 1px solid var(--brand);
+        border-radius: 10px;
+        padding: 10px 24px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        transition: background 0.15s ease;
+    }
+
+    .btn-brand:hover {
+        background: var(--brand-hover);
+        color: #fff;
+    }
+
+    .btn-ghost {
+        background: #ffffff;
+        color: #374151;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-size: 0.88rem;
+        font-weight: 500;
+        transition: background 0.15s ease, border-color 0.15s ease;
+        text-decoration: none;
+    }
+
+    .btn-ghost:hover {
+        background: #f3f4f6;
+        border-color: #d1d5db;
+        color: #111827;
+    }
+</style>
+
+<div class="container py-4" style="max-width: 720px;">
+
+    <!-- Breadcrumb -->
+    <nav class="edit-bcrumb mb-2">
+        <a href="{% url 'return_requests' %}">Return Requests</a>
+        <span class="sep"><i class="bi bi-chevron-right"></i></span>
+        <span style="color:#374151;">Edit Return Request</span>
+    </nav>
+
+    <!-- Page heading -->
+    <div class="edit-page-head mb-4">
+        <h2>Edit Return Request</h2>
+        <p>Modify details of return request for {{ return_request.asset.asset_id }}</p>
+    </div>
+
+    <!-- Form card -->
+    <div class="edit-card">
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="edit-card-head">
+                <span class="dot"></span>
+                <h6>Request Details</h6>
+            </div>
+
+            <div class="edit-card-body">
+                <div class="row g-4">
+                    <div class="col-12">
+                        <label class="f-label">Employee</label>
+                        <input type="text" class="form-control" value="{{ return_request.employee.name }} ({{ return_request.employee.employee_id }})" disabled>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="f-label">Asset</label>
+                        <input type="text" class="form-control" value="{{ return_request.asset.asset_id }} - {{ return_request.asset.asset_type }}" disabled>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="f-label">Reason</label>
+                        <textarea name="reason" class="form-control" rows="3" required>{{ return_request.reason }}</textarea>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="f-label">Status</label>
+                        <select name="status" class="form-select" required>
+                            <option value="Pending" {% if return_request.status == 'Pending' %}selected{% endif %}>Pending</option>
+                            <option value="Manager_Approved" {% if return_request.status == 'Manager_Approved' %}selected{% endif %}>Manager Approved</option>
+                            <option value="Admin_Approved" {% if return_request.status == 'Admin_Approved' %}selected{% endif %}>Admin Approved</option>
+                            <option value="Accepted" {% if return_request.status == 'Accepted' %}selected{% endif %}>Accepted</option>
+                            <option value="Rejected" {% if return_request.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                        </select>
                     </div>
                 </div>
-                <div class="card-body p-4">
-                    <form method="POST">
-                        {% csrf_token %}
-                        
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Employee</label>
-                            <input type="text" class="form-control" value="{{ return_request.employee.name }} ({{ return_request.employee.employee_id }})" disabled>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Asset</label>
-                            <input type="text" class="form-control" value="{{ return_request.asset.asset_id }} - {{ return_request.asset.asset_type }}" disabled>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Reason</label>
-                            <textarea name="reason" class="form-control" rows="3" required>{{ return_request.reason }}</textarea>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold">Status</label>
-                            <select name="status" class="form-select" required>
-                                <option value="Pending" {% if return_request.status == 'Pending' %}selected{% endif %}>Pending</option>
-                                <option value="Manager_Approved" {% if return_request.status == 'Manager_Approved' %}selected{% endif %}>Manager Approved</option>
-                                <option value="Admin_Approved" {% if return_request.status == 'Admin_Approved' %}selected{% endif %}>Admin Approved</option>
-                                <option value="Accepted" {% if return_request.status == 'Accepted' %}selected{% endif %}>Accepted</option>
-                                <option value="Rejected" {% if return_request.status == 'Rejected' %}selected{% endif %}>Rejected</option>
-                            </select>
-                        </div>
-
-                        <div class="d-flex justify-content-end gap-2 mt-4">
-                            <a href="{% url 'return_requests' %}" class="btn btn-light px-4 py-2 fw-semibold border">Cancel</a>
-                            <button type="submit" class="btn btn-primary px-4 py-2 fw-semibold text-white">Save Changes</button>
-                        </div>
-                    </form>
-                </div>
             </div>
-        </div>
+
+            <div class="edit-card-foot">
+                <a href="{% url 'return_requests' %}" class="btn-ghost">Cancel</a>
+                <button type="submit" class="btn-brand">
+                    <i class="bi bi-check2-circle me-1"></i> Save Changes
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
