@@ -406,9 +406,9 @@
                     </li>
                     <li>
                         <div class="p-2 border-top text-center">
-                            <a href="{% url 'mark_notifications_read' %}?next={{ request.path }}" class="btn btn-sm btn-outline-secondary">
+                            <button type="button" id="mark-all-read-btn" class="btn btn-sm btn-outline-secondary" data-url="{% url 'mark_notifications_read' %}">
                                 <i class="bi bi-check2-all me-1"></i>Mark all as read
-                            </a>
+                            </button>
                         </div>
                     </li>
                 </ul>
@@ -489,7 +489,7 @@
         {% endif %}
         <a href="{% url 'view_tickets' %}"
             class="{% if 'view_tickets' in request.resolver_match.url_name %}active{% endif %}">
-            <i class="bi bi-ticket-perforated"></i><span class="link-text">View Tickets</span>
+            <i class="bi bi-ticket-perforated"></i><span class="link-text">Support Tickets</span>
         </a>
 
         <a href="{% url 'procurement_list' %}"
@@ -574,6 +574,31 @@
             sidebar.classList.remove('expanded');
             overlay.classList.remove('show');
         });
+
+        // AJAX for Mark all as read
+        const markAllReadBtn = document.getElementById('mark-all-read-btn');
+        if (markAllReadBtn) {
+            markAllReadBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const url = this.getAttribute('data-url');
+                
+                fetch(url, {
+                    method: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Remove red badges
+                        document.querySelectorAll('.notification-badge').forEach(b => b.remove());
+                        const dropBadge = document.querySelector('.notification-header .badge.bg-danger');
+                        if (dropBadge) dropBadge.remove();
+                        // Remove unread styling
+                        document.querySelectorAll('.notification-item.unread').forEach(item => item.classList.remove('unread'));
+                    }
+                })
+                .catch(err => console.error(err));
+            });
+        }
     </script>
 
 </body>

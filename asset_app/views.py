@@ -187,6 +187,11 @@ def mark_notifications_read(request):
         Notification.objects.filter(pk__in=[n.pk for n in stale]).delete()
         messages.info(request, f"Removed {len(stale)} notification(s) pointing to deleted items.")
     request.user.notifications.filter(is_read=False).update(is_read=True)
+    
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        from django.http import JsonResponse
+        return JsonResponse({'status': 'ok'})
+        
     nxt = request.GET.get('next', '')
     if nxt and nxt.startswith('/') and not _notification_target_missing(nxt):
         return redirect(nxt)
@@ -1966,7 +1971,7 @@ def ticket_detail(request, pk):
                 messages.success(request, f'✅ You have accepted this ticket!')
             else:
                 messages.error(request, 'You cannot accept this ticket.')
-            return redirect('ticket_detail', pk=ticket.pk)
+            return redirect(request.META.get('HTTP_REFERER', reverse('ticket_detail', args=[ticket.pk])))
 
         # Handle feedback submission
         feedback = request.POST.get('feedback')
@@ -1974,7 +1979,7 @@ def ticket_detail(request, pk):
             ticket.feedback = feedback
             ticket.save()
             messages.success(request, '✅ Thank you! Your feedback has been submitted successfully.')
-            return redirect('ticket_detail', pk=ticket.pk)
+            return redirect(request.META.get('HTTP_REFERER', reverse('ticket_detail', args=[ticket.pk])))
 
         # Handle status update
         is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
@@ -1994,7 +1999,7 @@ def ticket_detail(request, pk):
                 
         if not can_update:
             messages.error(request, "Only the person who accepted the ticket (or an admin) can update its status.")
-            return redirect('ticket_detail', pk=ticket.pk)
+            return redirect(request.META.get('HTTP_REFERER', reverse('ticket_detail', args=[ticket.pk])))
             
         new_status = request.POST.get('status')
         resolution_message = request.POST.get('resolution_message')
@@ -2023,7 +2028,7 @@ def ticket_detail(request, pk):
                 messages.success(request, '✅ Ticket updated successfully!')
             else:
                 messages.info(request, f'No changes made to the ticket.')
-            return redirect('view_tickets')
+            return redirect(request.META.get('HTTP_REFERER', reverse('ticket_detail', args=[ticket.pk])))
 
     from django.contrib.auth import get_user_model
     User = get_user_model()
@@ -2045,11 +2050,15 @@ def ticket_detail(request, pk):
     
     is_network_support = request.user.groups.filter(name='Network Support').exists() or ticket_dept in (request.user.department or '')
     
+    base_template = 'asset_app/ajax_base.html' if request.headers.get('x-requested-with') == 'XMLHttpRequest' else 'asset_app/base.html'
+
     context = {
         'ticket': ticket, 
         'display_name': _employee_display_name(ticket.created_by),
         'admin_users': admin_users,
-        'is_network_support': is_network_support
+        'is_network_support': is_network_support,
+        'base_template': base_template,
+        'is_ajax': request.headers.get('x-requested-with') == 'XMLHttpRequest'
     }
     return render(request, 'asset_app/ticket_detail.html', context)
 

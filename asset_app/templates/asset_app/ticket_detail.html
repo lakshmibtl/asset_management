@@ -1,17 +1,19 @@
-{% extends 'asset_app/base.html' %}
+{% extends base_template|default:'asset_app/base.html' %}
 {% block content %}
-<div class="container mt-5 mb-5">
-    <div class="card ticket-card mx-auto border-0 shadow-lg">
+<div class="container {% if not is_ajax %}mt-5 mb-5{% else %}p-3 mt-2{% endif %}">
+    <div class="card ticket-card mx-auto border-0 {% if not is_ajax %}shadow-lg{% endif %}">
         
+        {% if not is_ajax %}
         <!-- Title -->
         <div class="text-center py-4 border-bottom">
             <h2 class="fw-bold mb-0" style="color: #08010e;">
                 🎟️ Ticket Details
             </h2>
         </div>
+        {% endif %}
 
         <!-- Ticket Info -->
-        <div class="card-body p-5">
+        <div class="card-body {% if not is_ajax %}p-5{% else %}p-3{% endif %}">
             <div class="row g-4">
                 <div class="col-md-6">
                     <label class="text-dark small fw-semibold">Asset</label>
@@ -122,7 +124,7 @@
                 {% else %}
                     {% if request.user == ticket.created_by %}
                     <p class="text-muted mb-3">This ticket has been closed. Please share your feedback regarding the resolution.</p>
-                    <form method="POST" class="mx-auto" style="max-width: 600px;">
+                    <form method="POST" action="{% url 'ticket_detail' ticket.id %}" class="mx-auto" style="max-width: 600px;">
                         {% csrf_token %}
                         <div class="mb-3">
                             <textarea name="feedback" class="form-control rounded-3 shadow-sm border-0 p-3" rows="3" placeholder="Write your feedback here..." required></textarea>
@@ -141,7 +143,7 @@
             {% if not ticket.assigned_to %}
             {% if is_network_support or request.user.is_staff or request.user.role == 'manager' or request.user.role == 'superadmin' or request.user.role == 'asset_admin' %}
             <div class="text-center mb-4">
-                <form method="POST">
+                <form method="POST" action="{% url 'ticket_detail' ticket.id %}">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="accept">
                     <button type="submit" class="btn btn-success rounded-pill px-4 py-2 fw-semibold shadow-sm">
@@ -156,7 +158,7 @@
             <!-- Status Update -->
             <div class="text-center">
                 <h5 class="fw-semibold mb-3 text-dark">Update Ticket Status</h5>
-                <form method="POST" class="mx-auto" style="max-width: 500px;">
+                <form method="POST" action="{% url 'ticket_detail' ticket.id %}" class="mx-auto" style="max-width: 500px;">
                     {% csrf_token %}
                     <input type="hidden" name="assigned_to" value="{{ ticket.assigned_to.id|default:'unassigned' }}">
                     <div class="mb-3 text-start">
@@ -189,12 +191,14 @@
             </div>
             {% endif %}
 
+            {% if not is_ajax %}
             <!-- Back Button -->
             <div class="text-center mt-5">
                 <a href="{% url 'view_tickets' %}" class="btn back-btn rounded-pill px-4 py-2 fw-semibold">
                     <i class="bi bi-arrow-left me-1"></i> Back to Tickets
                 </a>
             </div>
+            {% endif %}
         </div>
     </div>
 </div>
