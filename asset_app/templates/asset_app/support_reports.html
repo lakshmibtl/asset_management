@@ -1,13 +1,13 @@
 {% extends 'asset_app/base.html' %}
 {% block content %}
 <div class="container mt-5 mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <h2 class="fw-bolder text-dark mb-0">
             <i class="bi bi-bar-chart-line-fill text-primary me-2"></i>Network Support Reports
         </h2>
-        <div>
+        <div class="d-flex gap-2 flex-wrap">
             <a href="{% url 'my_work_reports' %}"
-                class="btn btn-outline-secondary rounded-pill px-4 fw-semibold shadow-sm me-2">
+                class="btn btn-outline-secondary rounded-pill px-4 fw-semibold shadow-sm">
                 <i class="bi bi-journal-text me-2"></i>My Manual Reports
             </a>
             <a href="{% url 'download_support_report' %}"

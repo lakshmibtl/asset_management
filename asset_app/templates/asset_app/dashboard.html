@@ -1172,6 +1172,7 @@
         height: 100%;
         display: flex;
         flex-direction: column;
+        min-width: 0;
     }
 
     .panel-header {
@@ -1420,6 +1421,22 @@
         font-size: 0.8rem;
         font-weight: 700;
     }
+
+    @media (max-width: 992px) {
+        .top-cards-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+    @media (max-width: 768px) {
+        .top-cards-grid, .three-col-grid, .sys-grid, .quick-grid {
+            grid-template-columns: 1fr;
+        }
+        .admin-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+    }
 </style>
 
 <div class="admin-layout">
@@ -1501,7 +1518,7 @@
                 <span class="panel-title">Assets Overview</span>
                 <a href="{% url 'view_assets' %}" class="view-btn">View Details</a>
             </div>
-            <div style="position:relative; height: 200px;">
+            <div style="position:relative; height: 200px; width: 100%;">
                 <canvas id="mockupDoughnut"></canvas>
                 <div
                     style="position: absolute; top:50%; left:50%; transform:translate(-50%, -50%); text-align:center; pointer-events: none;">
@@ -1517,7 +1534,7 @@
                 <span class="panel-title">Requests Overview</span>
                 <a href="{% url 'procurement_list' %}" class="view-btn">View Details</a>
             </div>
-            <div style="position:relative; height: 200px;">
+            <div style="position:relative; height: 200px; width: 100%;">
                 <canvas id="mockupLineChart"></canvas>
             </div>
         </div>

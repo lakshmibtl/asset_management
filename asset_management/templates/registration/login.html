@@ -70,6 +70,29 @@
         .modal-message { margin:10px 0; font-size:14px; }
         .modal-message .error { color:#842029; background:#f8d7da; padding:10px; border-radius:6px; }
         .modal-message .success { color:#0f5132; background:#d1e7dd; padding:10px; border-radius:6px; }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column-reverse;
+                width: 90%;
+                height: auto;
+                margin: 20px 0;
+            }
+            .login-box, .right-box {
+                width: 100%;
+                padding: 30px;
+            }
+            .right-box {
+                clip-path: none;
+                border-radius: 12px 12px 0 0;
+            }
+            .login-box {
+                border-radius: 0 0 12px 12px;
+            }
+            .right-box p {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
