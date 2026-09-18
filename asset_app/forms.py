@@ -73,6 +73,16 @@ class AssetForm(forms.ModelForm):
         })
     )
 
+    other_status = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control form-control-lg rounded-3 shadow-sm mt-2',
+            'placeholder': 'Enter custom status...',
+            'style': 'display: none;',
+            'id': 'otherStatusInput'
+        })
+    )
+
     ram = forms.ChoiceField(
         choices=Asset.RAM_CHOICES,
         required=False,
@@ -94,6 +104,16 @@ class AssetForm(forms.ModelForm):
         required=False,
         widget=forms.Select(attrs={
             'class': 'form-select form-select-lg rounded-3 shadow-sm'
+        })
+    )
+
+    other_warranty = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control form-control-lg rounded-3 shadow-sm mt-2',
+            'placeholder': 'Enter custom warranty...',
+            'style': 'display: none;',
+            'id': 'otherWarrantyInput'
         })
     )
 
@@ -136,6 +156,28 @@ class AssetForm(forms.ModelForm):
         self.fields['series_number'].required = True
         self.fields['model'].required = True
 
+        # Handle custom asset type on Edit
+        if self.instance and self.instance.pk:
+            valid_types = [choice[0] for choice in Asset.ASSET_TYPES]
+            if self.instance.asset_type and self.instance.asset_type not in valid_types:
+                # Add the custom type to choices dynamically so it can render, or just set it to 'Other'
+                self.initial['other_asset_type'] = self.instance.asset_type
+                self.initial['asset_type'] = 'Other'
+                
+        # Handle custom status on Edit
+        if self.instance and self.instance.pk:
+            valid_statuses = [choice[0] for choice in Asset.ASSET_STATUS]
+            if self.instance.status and self.instance.status not in valid_statuses:
+                self.initial['other_status'] = self.instance.status
+                self.initial['status'] = 'Other'
+                
+        # Handle custom warranty on Edit
+        if self.instance and self.instance.pk:
+            valid_warranties = [choice[0] for choice in Asset.WARRANTY_CHOICES]
+            if self.instance.warranty and self.instance.warranty not in valid_warranties:
+                self.initial['other_warranty'] = self.instance.warranty
+                self.initial['warranty'] = 'Other'
+
     def clean(self):
         cleaned_data = super().clean()
         asset_type = cleaned_data.get('asset_type')
@@ -145,9 +187,26 @@ class AssetForm(forms.ModelForm):
             if not other:
                 self.add_error('other_asset_type', 'Please specify the asset type.')
             else:
-                # Keep 'Other' as the main type; the custom value becomes the sub-type/name
-                cleaned_data['asset_type'] = 'Other'
-                cleaned_data['name'] = other.strip()
+                # Store the custom type directly in asset_type so it shows up in dashboard stats
+                cleaned_data['asset_type'] = other.strip()
+                
+        status = cleaned_data.get('status')
+        other_status = cleaned_data.get('other_status')
+        
+        if status == 'Other':
+            if not other_status:
+                self.add_error('other_status', 'Please specify the custom status.')
+            else:
+                cleaned_data['status'] = other_status.strip()
+                
+        warranty = cleaned_data.get('warranty')
+        other_warranty = cleaned_data.get('other_warranty')
+        
+        if warranty == 'Other':
+            if not other_warranty:
+                self.add_error('other_warranty', 'Please specify the custom warranty.')
+            else:
+                cleaned_data['warranty'] = other_warranty.strip()
         
         return cleaned_data
 

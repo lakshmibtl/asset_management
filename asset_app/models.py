@@ -44,7 +44,7 @@ class Asset(models.Model):
     ASSET_STATUS = [
         ('Available', 'Available'),
         ('In Use', 'In Use'),
-        ('Temporary', 'Temporary'),
+        ('Other', 'Other'),
     ]
 
     RAM_CHOICES = [
@@ -70,6 +70,7 @@ class Asset(models.Model):
         ('1', '1 Year'),
         ('2', '2 Years'),
         ('3', '3 Years'),
+        ('Other', 'Other'),
     ]
 
     asset_id = models.CharField(max_length=20, unique=True, blank=True)
@@ -132,18 +133,45 @@ class Asset(models.Model):
                 next_number += 1
             self.asset_id = f"{prefix}-{next_number:04d}"
 
-        # Auto-calculate warranty end date = add/purchase date + warranty years
+        # Auto-calculate warranty end date = add/purchase date + warranty years/months/days
+        import re
+        from datetime import timedelta
+        
+        years, months, days = 0, 0, 0
         try:
             years = int(self.warranty) if self.warranty else 0
         except (TypeError, ValueError):
-            years = 0
+            if self.warranty:
+                match = re.match(r'^(\d+)\s*(year|month|day)s?', self.warranty.lower().strip())
+                if match:
+                    num = int(match.group(1))
+                    unit = match.group(2)
+                    if unit == 'year': years = num
+                    elif unit == 'month': months = num
+                    elif unit == 'day': days = num
 
-        if years > 0:
+        if years > 0 or months > 0 or days > 0:
             base_date = self.purchase_date or timezone.localdate()
-            try:
-                self.warranty_end_date = base_date.replace(year=base_date.year + years)
-            except ValueError:  # Feb 29 in a non-leap target year -> leap to Feb 28
-                self.warranty_end_date = base_date.replace(year=base_date.year + years, day=28)
+            if years > 0:
+                try:
+                    base_date = base_date.replace(year=base_date.year + years)
+                except ValueError:  # Feb 29 in a non-leap target year -> leap to Feb 28
+                    base_date = base_date.replace(year=base_date.year + years, day=28)
+            
+            if months > 0:
+                new_month = base_date.month + months
+                add_years = (new_month - 1) // 12
+                new_month = (new_month - 1) % 12 + 1
+                try:
+                    base_date = base_date.replace(year=base_date.year + add_years, month=new_month)
+                except ValueError:
+                    # E.g. Jan 31 + 1 month -> Feb 31 (ValueError) -> Feb 28
+                    base_date = base_date.replace(year=base_date.year + add_years, month=new_month, day=28)
+                    
+            if days > 0:
+                base_date = base_date + timedelta(days=days)
+                
+            self.warranty_end_date = base_date
         else:
             self.warranty_end_date = None
 

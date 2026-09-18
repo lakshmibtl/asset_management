@@ -186,9 +186,10 @@
 
                             <div class="col-md-6 animate__animated animate__fadeInRight">
                                 <div class="form-floating">
-                                    {{ form.status|add_class:"form-select form-select-lg shadow-sm border-0"|attr:"required" }}
+                                    {{ form.status|add_class:"form-select form-select-lg shadow-sm border-0"|attr:"required"|attr:"id:id_status" }}
                                     <label> Status</label>
                                 </div>
+                                {{ form.other_status }}
                             </div>
 
                             <div class="col-md-6 animate__animated animate__fadeInLeft" id="ramContainer">
@@ -224,6 +225,7 @@
                                     {{ form.warranty|add_class:"form-select form-select-lg shadow-sm border-0"|attr:"id:id_warranty" }}
                                     <label>Warranty</label>
                                 </div>
+                                {{ form.other_warranty }}
                             </div>
 
                             <div class="col-md-6 animate__animated animate__fadeInRight">
@@ -298,6 +300,10 @@
     document.addEventListener('DOMContentLoaded', function () {
         const assetTypeSelect = document.getElementById('id_asset_type');
         const otherAssetTypeInput = document.getElementById('otherAssetTypeInput');
+        const statusSelect = document.getElementById('id_status');
+        const otherStatusInput = document.getElementById('otherStatusInput');
+        const warrantySelect = document.getElementById('id_warranty');
+        const otherWarrantyInput = document.getElementById('otherWarrantyInput');
 
         if (assetTypeSelect && otherAssetTypeInput) {
             assetTypeSelect.addEventListener('change', function () {
@@ -316,6 +322,42 @@
                 otherAssetTypeInput.style.display = 'block';
             }
         }
+        
+        if (statusSelect && otherStatusInput) {
+            statusSelect.addEventListener('change', function () {
+                if (this.value === 'Other') {
+                    otherStatusInput.style.display = 'block';
+                    otherStatusInput.required = true;
+                } else {
+                    otherStatusInput.style.display = 'none';
+                    otherStatusInput.required = false;
+                    otherStatusInput.value = ''; // clear out
+                }
+            });
+
+            // Trigger on load in case of re-render with errors
+            if (statusSelect.value === 'Other') {
+                otherStatusInput.style.display = 'block';
+            }
+        }
+        
+        if (warrantySelect && otherWarrantyInput) {
+            warrantySelect.addEventListener('change', function () {
+                if (this.value === 'Other') {
+                    otherWarrantyInput.style.display = 'block';
+                    otherWarrantyInput.required = true;
+                } else {
+                    otherWarrantyInput.style.display = 'none';
+                    otherWarrantyInput.required = false;
+                    otherWarrantyInput.value = ''; // clear out
+                }
+            });
+
+            // Trigger on load in case of re-render with errors
+            if (warrantySelect.value === 'Other') {
+                otherWarrantyInput.style.display = 'block';
+            }
+        }
     });
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -327,17 +369,39 @@
 
         function calculateWarrantyEndDate() {
             const baseDate = purchaseDateInput.value || today;
-            const years = parseInt(warrantySelect.value, 10);
-            if (!years || isNaN(years)) {
-                warrantyEndDate.value = '';
-                return;
+            let years = 0, months = 0, days = 0;
+            
+            if (warrantySelect && warrantySelect.value === 'Other') {
+                const otherInput = document.getElementById('otherWarrantyInput');
+                const customVal = (otherInput ? otherInput.value : '').toLowerCase().trim();
+                const numMatch = customVal.match(/^(\d+)\s*(year|month|day)s?/);
+                if (numMatch) {
+                    const num = parseInt(numMatch[1], 10);
+                    const unit = numMatch[2];
+                    if (unit === 'year') years = num;
+                    if (unit === 'month') months = num;
+                    if (unit === 'day') days = num;
+                } else {
+                    warrantyEndDate.value = '';
+                    return;
+                }
+            } else if (warrantySelect) {
+                years = parseInt(warrantySelect.value, 10);
+                if (isNaN(years)) {
+                    warrantyEndDate.value = '';
+                    return;
+                }
             }
+            
             const d = new Date(baseDate + 'T00:00:00');
             if (isNaN(d.getTime())) {
                 warrantyEndDate.value = '';
                 return;
             }
             d.setFullYear(d.getFullYear() + years);
+            d.setMonth(d.getMonth() + months);
+            d.setDate(d.getDate() + days);
+            
             const mm = String(d.getMonth() + 1).padStart(2, '0');
             const dd = String(d.getDate()).padStart(2, '0');
             warrantyEndDate.value = d.getFullYear() + '-' + mm + '-' + dd;
@@ -346,6 +410,11 @@
         if (warrantySelect) {
             warrantySelect.addEventListener('change', calculateWarrantyEndDate);
             warrantySelect.addEventListener('click', calculateWarrantyEndDate);
+        }
+        const otherWarrantyInput = document.getElementById('otherWarrantyInput');
+        if (otherWarrantyInput) {
+            otherWarrantyInput.addEventListener('input', calculateWarrantyEndDate);
+            otherWarrantyInput.addEventListener('change', calculateWarrantyEndDate);
         }
         if (purchaseDateInput) {
             purchaseDateInput.addEventListener('change', calculateWarrantyEndDate);

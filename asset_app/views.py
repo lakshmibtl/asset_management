@@ -216,8 +216,9 @@ def view_users(request):
 
 @login_required(login_url='/login/')
 def delete_user(request, pk):
-    if getattr(request.user, 'role', None) != 'superadmin':
-        messages.error(request, "Only Super Admin can delete users.")
+    is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
+    if not is_admin:
+        messages.error(request, "Only Admins can delete users.")
         return redirect('view_users')
         
     user_to_delete = get_object_or_404(User, pk=pk)
@@ -508,14 +509,15 @@ def dashboard(request):
     for t in ASSET_TYPES:
         av = assets_q.filter(asset_type__iexact=t, status__iexact='Available').count()
         ass = assets_q.filter(asset_type__iexact=t, status__in=['Assigned', 'In Use']).count()
+        tot = assets_q.filter(asset_type__iexact=t).count()
         available_by_type.append(av)
         assigned_by_type.append(ass)
-        if av > 0 or ass > 0:
+        if tot > 0:
             category_stats.append({
                 'type': t,
                 'available': av,
                 'assigned': ass,
-                'total': av + ass
+                'total': tot
             })
 
     requests_list = reqs_q_base.order_by('-request_date')[:30]
@@ -572,6 +574,13 @@ def dashboard(request):
     assets_maintenance = assets_q.filter(status__iexact='Maintenance').count()
     assets_in_use = assets_q.filter(status__in=['Assigned', 'In Use']).count()
     
+    status_counts_q = assets_q.values('status').annotate(c=Count('id'))
+    status_labels = []
+    status_data = []
+    for row in status_counts_q:
+        status_labels.append(row['status'] or 'Unknown')
+        status_data.append(row['c'])
+    
     # Real line chart data for the "Requests Overview" (Last 6 Months)
     import calendar
     from datetime import date
@@ -627,6 +636,8 @@ def dashboard(request):
         'checked_out_assets': checked_out_assets,
         'assets_in_use': assets_in_use,
         'assets_maintenance': assets_maintenance,
+        'status_labels_json': json.dumps(status_labels),
+        'status_data_json': json.dumps(status_data),
         
         'added_this_month': added_this_month,
         'assigned_this_month': assigned_this_month,
@@ -1595,9 +1606,9 @@ def update_request_status(request, pk):
 # ------------------- DELETE / PUBLIC -------------------
 @login_required
 def delete_asset(request, pk):
-    is_superadmin = getattr(request.user, 'role', '') == 'superadmin'
-    if not is_superadmin:
-        messages.error(request, "Only Super Admin can delete assets.")
+    is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
+    if not is_admin:
+        messages.error(request, "Only Admins can delete assets.")
         return redirect('view_assets')
         
     asset = get_object_or_404(Asset, pk=pk)
@@ -2099,21 +2110,29 @@ def support_reports(request):
         return redirect('asset_dashboard')
         
     from django.db.models import Count, Q, Prefetch
-    from django.contrib.auth.models import Group
-    from .models import Ticket
+    from django.contrib.auth import get_user_model
+    from .models import Ticket, Employee, Notification
     
-    group = Group.objects.filter(name='Network Support').first()
-    if group:
-        # Fetch tickets that are resolved or closed
-        resolved_tickets = Ticket.objects.filter(Q(status__icontains='resolv') | Q(status__icontains='clos'))
-        
-        team_members = group.user_set.annotate(
-            resolved_count=Count('assigned_tickets', filter=Q(assigned_tickets__status__icontains='resolv') | Q(assigned_tickets__status__icontains='clos'))
-        ).prefetch_related(
-            Prefetch('assigned_tickets', queryset=resolved_tickets, to_attr='resolved_ticket_list')
-        )
-    else:
-        team_members = []
+    User = get_user_model()
+    
+    # Fetch tickets that are resolved or closed
+    resolved_tickets = Ticket.objects.filter(Q(status__icontains='resolv') | Q(status__icontains='clos'))
+    
+    # Fetch manual work reports
+    manual_reports = Notification.objects.filter(notification_type='work_report').order_by('-created_at')
+    
+    # Only fetch users who are in the Network department or Network Support group
+    team_members = User.objects.filter(
+        Q(groups__name__icontains='Network') |
+        Q(department__icontains='Network') |
+        Q(username__in=Employee.objects.filter(department__icontains='Network').values('employee_id'))
+    ).distinct().annotate(
+        resolved_count=Count('assigned_tickets', filter=Q(assigned_tickets__status__icontains='resolv') | Q(assigned_tickets__status__icontains='clos')),
+        manual_report_count=Count('notifications', filter=Q(notifications__notification_type='work_report'))
+    ).prefetch_related(
+        Prefetch('assigned_tickets', queryset=resolved_tickets, to_attr='resolved_ticket_list'),
+        Prefetch('notifications', queryset=manual_reports, to_attr='manual_report_list')
+    )
         
     return render(request, 'asset_app/support_reports.html', {'team_members': team_members})
 
@@ -2528,11 +2547,12 @@ def download_manual_reports(request):
         
     return response
 
+
 @login_required
 def edit_return_request(request, pk):
-    is_superadmin = getattr(request.user, 'role', '') == 'superadmin'
-    if not is_superadmin:
-        messages.error(request, "Only Super Admin can edit return requests.")
+    is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin')
+    if not is_admin:
+        messages.error(request, "Only Admins and Super Admins can edit return requests.")
         return redirect('return_requests')
         
     from .models import ReturnRequest
@@ -2555,9 +2575,9 @@ def edit_return_request(request, pk):
 
 @login_required
 def delete_return_request(request, pk):
-    is_superadmin = getattr(request.user, 'role', '') == 'superadmin'
-    if not is_superadmin:
-        messages.error(request, "Only Super Admin can delete return requests.")
+    is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
+    if not is_admin:
+        messages.error(request, "Only Admins can delete return requests.")
         return redirect('return_requests')
         
     from .models import ReturnRequest

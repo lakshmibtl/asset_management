@@ -1676,10 +1676,10 @@
             new Chart(dCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['In Use', 'Available'],
+                    labels: {{ status_labels_json|safe|default:"[]" }},
                     datasets: [{
-                        data: [{{ assets_in_use|default:0 }}, {{ available_assets|default:0 }}],
-        backgroundColor: ['#3b82f6', '#22c55e'],
+                        data: {{ status_data_json|safe|default:"[]" }},
+        backgroundColor: ['#3b82f6', '#22c55e', '#ef4444', '#f59e0b', '#8b5cf6', '#06b6d4'],
         borderWidth: 0,
         hoverOffset: 4
                 }]

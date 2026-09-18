@@ -307,7 +307,7 @@
                             <th>Status</th>
                             <th>Processed By</th>
                             <th>Processed At</th>
-                            {% if request.user.role == 'superadmin' %}
+                            {% if request.user.role == 'superadmin' or request.user.role == 'admin' %}
                             <th class="text-end">Action</th>
                             {% endif %}
                         </tr>
@@ -340,7 +340,7 @@
                             </td>
                             <td class="text-muted small">{{ rq.processed_by_name|default:rq.processed_by.username|default:"—" }}</td>
                             <td class="text-muted small">{{ rq.processed_at|date:"d M Y, H:i"|default:"—" }}</td>
-                            {% if request.user.role == 'superadmin' %}
+                            {% if request.user.role == 'superadmin' or request.user.role == 'admin' %}
                             <td class="text-end">
                                 <div class="d-flex justify-content-end gap-2">
                                     <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="offcanvas" data-bs-target="#editReturnOffcanvas{{ rq.pk }}" title="Edit">
