@@ -69,33 +69,37 @@
         </div>
 
         <!-- Edit Report Offcanvas -->
-        <div class="offcanvas offcanvas-end" tabindex="-1" id="editReportOffcanvas{{ report.id }}" aria-labelledby="editReportOffcanvasLabel{{ report.id }}">
-            <div class="offcanvas-header border-bottom">
-                <h5 class="offcanvas-title fw-bold" id="editReportOffcanvasLabel{{ report.id }}"><i class="bi bi-pencil-square me-2"></i>Edit Work Report</h5>
+        <div class="offcanvas offcanvas-end shadow-lg" tabindex="-1" id="editReportOffcanvas{{ report.id }}" aria-labelledby="editReportOffcanvasLabel{{ report.id }}" style="width: 500px; border-left: 0;">
+            <div class="offcanvas-header bg-white border-bottom shadow-sm pb-3">
+                <h5 class="offcanvas-title fw-bold text-dark" id="editReportOffcanvasLabel{{ report.id }}"><i class="bi bi-pencil-square me-2 text-primary"></i>Edit Work Report</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
-            <div class="offcanvas-body">
-                <form method="POST" action="{% url 'edit_work_report' report.id %}" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold text-dark">Report Title / Date</label>
-                        <input type="text" class="form-control bg-light border-0" name="title" value="{{ report.title }}" required>
+            <div class="offcanvas-body" style="background-color: #f4f5fb;">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <form method="POST" action="{% url 'edit_work_report' report.id %}" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold text-dark">Report Title / Date</label>
+                                <input type="text" class="form-control bg-light border-0 py-2" name="title" value="{{ report.title }}" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold text-dark">Work Activities</label>
+                                <textarea class="form-control bg-light border-0 py-2" name="description" rows="6">{{ report.message }}</textarea>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold text-dark">Upload New Excel Report (Optional)</label>
+                                <input type="file" class="form-control bg-light border-0 py-2" name="excel_file" accept=".xls,.xlsx,.csv">
+                                {% if report.link %}
+                                <small class="text-muted d-block mt-2"><i class="bi bi-info-circle me-1"></i>Uploading a new file will replace the existing one.</small>
+                                {% endif %}
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 rounded-pill fw-semibold shadow-sm py-2 mt-2">
+                                <i class="bi bi-save me-2"></i>Save Changes
+                            </button>
+                        </form>
                     </div>
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold text-dark">Work Activities</label>
-                        <textarea class="form-control bg-light border-0" name="description" rows="6">{{ report.message }}</textarea>
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold text-dark">Upload New Excel Report (Optional)</label>
-                        <input type="file" class="form-control bg-light border-0" name="excel_file" accept=".xls,.xlsx,.csv">
-                        {% if report.link %}
-                        <small class="text-muted d-block mt-2"><i class="bi bi-info-circle me-1"></i>Uploading a new file will replace the existing one.</small>
-                        {% endif %}
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100 rounded-pill fw-semibold shadow-sm">
-                        <i class="bi bi-save me-2"></i>Save Changes
-                    </button>
-                </form>
+                </div>
             </div>
         </div>
         {% endfor %}
@@ -110,35 +114,39 @@
 </div>
 
 <!-- Offcanvas Panel for New Report -->
-<div class="offcanvas offcanvas-end" tabindex="-1" id="newReportOffcanvas" aria-labelledby="newReportOffcanvasLabel">
-  <div class="offcanvas-header border-bottom">
-    <h5 class="offcanvas-title fw-bold" id="newReportOffcanvasLabel"><i class="bi bi-journal-text me-2"></i>Submit Work Report</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+<div class="offcanvas offcanvas-end shadow-lg" tabindex="-1" id="newReportOffcanvas" aria-labelledby="newReportOffcanvasLabel" style="width: 500px; border-left: 0;">
+  <div class="offcanvas-header bg-white border-bottom shadow-sm pb-3">
+    <h5 class="offcanvas-title fw-bold text-dark" id="newReportOffcanvasLabel"><i class="bi bi-journal-text me-2 text-primary"></i>Submit Work Report</h5>
+    <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
-  <div class="offcanvas-body">
-    <p class="text-muted mb-4">Manually enter your daily or weekly work activities.</p>
-    <form method="POST" action="{% url 'submit_work_report' %}" enctype="multipart/form-data">
-        {% csrf_token %}
-        
-        <div class="mb-4">
-            <label for="title" class="form-label fw-semibold text-dark">Report Title / Date</label>
-            <input type="text" class="form-control bg-light border-0" id="title" name="title" placeholder="e.g. Daily Report - 17 Sep" required>
-        </div>
-        
-        <div class="mb-4">
-            <label for="description" class="form-label fw-semibold text-dark">Work Activities</label>
-            <textarea class="form-control bg-light border-0" id="description" name="description" rows="6" placeholder="Describe tasks completed..."></textarea>
-        </div>
+  <div class="offcanvas-body" style="background-color: #f4f5fb;">
+    <div class="card border-0 shadow-sm rounded-4">
+      <div class="card-body p-4">
+        <p class="text-muted mb-4">Manually enter your daily or weekly work activities.</p>
+        <form method="POST" action="{% url 'submit_work_report' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="mb-4">
+                <label for="title" class="form-label fw-semibold text-dark">Report Title / Date</label>
+                <input type="text" class="form-control bg-light border-0 py-2" id="title" name="title" placeholder="e.g. Daily Report - 17 Sep" required>
+            </div>
+            
+            <div class="mb-4">
+                <label for="description" class="form-label fw-semibold text-dark">Work Activities</label>
+                <textarea class="form-control bg-light border-0 py-2" id="description" name="description" rows="6" placeholder="Describe tasks completed..."></textarea>
+            </div>
 
-        <div class="mb-4">
-            <label for="excel_file" class="form-label fw-semibold text-dark">Upload Excel Report (Optional)</label>
-            <input type="file" class="form-control bg-light border-0" id="excel_file" name="excel_file" accept=".xls,.xlsx,.csv">
-        </div>
-        
-        <button type="submit" class="btn btn-primary w-100 rounded-pill fw-semibold shadow-sm">
-            <i class="bi bi-send me-2"></i>Submit Report
-        </button>
-    </form>
+            <div class="mb-4">
+                <label for="excel_file" class="form-label fw-semibold text-dark">Upload Excel Report (Optional)</label>
+                <input type="file" class="form-control bg-light border-0 py-2" id="excel_file" name="excel_file" accept=".xls,.xlsx,.csv">
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100 rounded-pill fw-semibold shadow-sm py-2 mt-2">
+                <i class="bi bi-send me-2"></i>Submit Report
+            </button>
+        </form>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

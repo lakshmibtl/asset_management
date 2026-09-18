@@ -1692,11 +1692,18 @@ def view_tickets(request):
     for t in tickets:
         t.display_name = _employee_display_name(t.created_by)
 
+    status_counts = {'total': len(tickets), 'open': 0, 'pending': 0, 'resolved': 0, 'closed': 0}
+    for t in tickets:
+        key = (t.status or '').strip().lower()
+        if key in status_counts:
+            status_counts[key] += 1
+
     return render(request, 'asset_app/view_tickets.html', {
         'tickets': tickets,
         'form': form,
         'is_network_support': is_network_support,
         'is_admin': is_admin,
+        'status_counts': status_counts,
     })
 
 @login_required

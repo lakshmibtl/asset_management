@@ -19,44 +19,7 @@
     }
 
     /* ============ HERO ============ */
-    .form-hero {
-        background: var(--grad-primary);
-        border-radius: var(--radius);
-        padding: 2rem 2.4rem;
-        color: #fff;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 20px 45px rgba(7, 81, 138, 0.28);
-    }
-
-    .form-hero::after {
-        content: "";
-        position: absolute;
-        right: -40px;
-        top: -70px;
-        width: 240px;
-        height: 240px;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.22), transparent 70%);
-    }
-
-    .form-hero .hero-badge {
-        display: inline-flex;
-        width: 64px;
-        height: 64px;
-        border-radius: 18px;
-        align-items: center;
-        justify-content: center;
-        background: rgba(255, 255, 255, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.35);
-        font-size: 1.6rem;
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
-    }
-
-    .form-hero h1 {
-        font-weight: 800;
-        letter-spacing: -0.5px;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
-    }
+    /* Removed .form-hero styles to match the rest of the app */
 
     .form-hero p {
         opacity: 0.9;
@@ -209,20 +172,18 @@
     <div class="row justify-content-center">
         <div class="col-12 col-lg-10 col-xl-8">
 
-            <!-- HERO -->
-            <div class="form-hero d-flex align-items-center gap-4 mb-4 animate__animated animate__fadeInDown">
-                <div class="hero-badge d-none d-sm-inline-flex">
-                    <i class="bi bi-plus-lg"></i>
-                </div>
-                <div style="flex:1;">
-                    <nav aria-label="breadcrumb" class="mb-1">
-                        <ol class="breadcrumb mb-0 small">
-                            <li class="breadcrumb-item"><a href="{% url 'asset_dashboard' %}" class="text-decoration-none">Dashboard</a></li>
-                            <li class="breadcrumb-item text-white fw-semibold">Add Asset</li>
-                        </ol>
-                    </nav>
-                    <h1 class="mb-1 mt-1"><i class="bi bi-box-seam me-2"></i>Add New Asset</h1>
-                    <p class="mb-0">Enter the details below to register a new asset.</p>
+            <!-- Standard Header -->
+            <div class="row mb-4 align-items-center">
+                <div class="col-12 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <a href="{% url 'asset_dashboard' %}" class="btn btn-outline-secondary rounded-circle me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-arrow-left"></i>
+                        </a>
+                        <div>
+                            <h4 class="fw-bold text-dark mb-1">Add New Asset</h4>
+                            <p class="text-muted mb-0">Enter the details below to register a new asset.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
