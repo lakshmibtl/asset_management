@@ -993,7 +993,7 @@ def process_return(request, pk):
         messages.error(request, "Only an admin or manager can process return requests.")
         return redirect('return_requests')
 
-    if rq.status not in ['Pending', 'Manager_Approved']:
+    if rq.status not in ['Pending', 'Manager_Approved', 'Admin_Approved']:
         messages.error(request, f"Return request for {rq.asset.asset_id} was already processed.")
         return redirect('return_requests')
 
@@ -1009,15 +1009,7 @@ def process_return(request, pk):
         is_admin = getattr(request.user, 'role', '') == 'admin' or (request.user.is_staff and getattr(request.user, 'role', '') != 'superadmin')
         is_superadmin = getattr(request.user, 'role', '') == 'superadmin'
 
-        if is_manager and rq.status == 'Pending':
-            rq.status = 'Manager_Approved'
-            rq.save()
-            messages.success(request, f"Return request for {rq.asset.asset_id} approved. Forwarded to Admin.")
-        elif is_admin and rq.status == 'Manager_Approved':
-            rq.status = 'Admin_Approved'
-            rq.save()
-            messages.success(request, f"Return request for {rq.asset.asset_id} approved. Forwarded to Super Admin for final processing.")
-        elif is_superadmin and rq.status == 'Admin_Approved':
+        if is_superadmin:
             assign = rq.assignment
             if assign.status == 'In Use':
                 assign.status = 'Returned'
@@ -1032,6 +1024,20 @@ def process_return(request, pk):
             rq.processed_at = timezone.now()
             rq.save()
             messages.success(request, f"Return request for {rq.asset.asset_id} accepted. Asset is now available.")
+        elif is_admin:
+            if rq.status in ['Pending', 'Manager_Approved']:
+                rq.status = 'Admin_Approved'
+                rq.save()
+                messages.success(request, f"Return request for {rq.asset.asset_id} approved. Forwarded to Super Admin for final processing.")
+            else:
+                messages.error(request, "Invalid action or permission denied.")
+        elif is_manager:
+            if rq.status == 'Pending':
+                rq.status = 'Manager_Approved'
+                rq.save()
+                messages.success(request, f"Return request for {rq.asset.asset_id} approved. Forwarded to Admin.")
+            else:
+                messages.error(request, "Invalid action or permission denied.")
         else:
             messages.error(request, "Invalid action or permission denied.")
 

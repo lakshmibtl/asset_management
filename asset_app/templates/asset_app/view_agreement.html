@@ -1,6 +1,6 @@
 {% extends 'asset_app/base.html' %}
 {% load static %}
-{% block title %}View Agreement Letter{% endblock %}
+{% block title %}{% if assignment.status == 'Returned' %}View Return Letter{% else %}View Agreement Letter{% endif %}{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -10,7 +10,7 @@
             <i class="bi bi-arrow-left"></i> Back
         </a>
         <button class="btn btn-primary" onclick="window.print()">
-            <i class="bi bi-printer"></i> Print Agreement
+            <i class="bi bi-printer"></i> {% if assignment.status == 'Returned' %}Print Return Letter{% else %}Print Agreement{% endif %}
         </button>
     </div>
 
@@ -25,17 +25,27 @@
                         style="width: 100%; height: auto; display: block;">
                 </div>
 
-                <div class="card-body p-0 bg-white"
-                    style="font-family: 'Times New Roman', Times, serif; color: #000; font-size: 15px; line-height: 1.5;">
+                <div class="card-body p-0 bg-white position-relative"
+                    style="font-family: 'Times New Roman', Times, serif; color: #000; font-size: 15px; line-height: 1.5; z-index: 1;">
 
-                    <div class="px-5 pt-5 pb-4">
+                    {% if assignment.status == 'Returned' %}
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 140px; color: rgba(255, 0, 0, 0.08); font-weight: bold; white-space: nowrap; pointer-events: none; z-index: 0; user-select: none; letter-spacing: 10px;">
+                        RETURNED
+                    </div>
+                    {% endif %}
+
+                    <div class="px-5 pt-5 pb-4 position-relative" style="z-index: 2;">
                         <div class="text-end mb-3 fw-bold">
                             Date: {{ assignment.agreement_date|date:"d/m/Y"|default:"Not Signed" }}
                         </div>
 
                         <h3 class="text-center fw-bold mb-4"
-                            style="text-decoration: underline; text-underline-offset: 4px; font-size: 18px;">
+                            style="text-decoration: underline; text-underline-offset: 4px; font-size: {% if assignment.status == 'Returned' %}24px{% else %}18px{% endif %};">
+                            {% if assignment.status == 'Returned' %}
+                            RETURN ASSET
+                            {% else %}
                             Issue of {{ assignment.asset.asset_type|title }}
+                            {% endif %}
                         </h3>
 
                         <div class="mb-4">
@@ -46,22 +56,37 @@
                         </div>
 
                         <p class="mb-4 text-justify">
+                            {% if assignment.status == 'Returned' %}
+                            This is to acknowledge that the {{ assignment.asset.asset_type|lower }} with
+                            accessories provided to you for official use has been successfully returned to the organization.
+                            {% else %}
                             Management wishes to inform you that a {{ assignment.asset.asset_type|lower }} with
                             accessories will be provided to you for official use with the following terms and
                             conditions.
+                            {% endif %}
                         </p>
 
                         <div class="mb-4">
+                            {% if assignment.status == 'Returned' %}
+                            <div>1. The {{ assignment.asset.asset_type|lower }} was previously in your custody.</div>
+                            <div>2. The asset has been inspected upon return.</div>
+                            <div>3. We acknowledge the safe receipt of the asset and its accessories.</div>
+                            {% else %}
                             <div>1. This {{ assignment.asset.asset_type|lower }} is worth of Rs {{ assignment.asset.cost|default:"50,000" }}/- and it is entirely in your custody.</div>
                             <div>2. Any loss of {{ assignment.asset.asset_type|lower }} or damage / breakage will be
                                 recovered from your salary.</div>
                             <div>3. This {{ assignment.asset.asset_type|lower }} shall be surrendered when you leave the
                                 organization.</div>
                             <div>4. Kindly ensure the {{ assignment.asset.asset_type|lower }} is in good condition.</div>
+                            {% endif %}
                         </div>
 
                         <p class="mb-4 text-justify">
+                            {% if assignment.status == 'Returned' %}
+                            Please acknowledge your signature for having returned the {{ assignment.asset.asset_type|lower }} with accessories.
+                            {% else %}
                             Please acknowledge your signature for having received the {{ assignment.asset.asset_type|lower }} with accessories and agreeing for the above.
+                            {% endif %}
                         </p>
 
                         <div class="mb-5">
@@ -142,6 +167,12 @@
         .sidebar-overlay,
         .btn {
             display: none !important;
+        }
+
+        /* Ensure watermark prints correctly */
+        .card-body {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
 
         .main-content {

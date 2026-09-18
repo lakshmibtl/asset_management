@@ -25,6 +25,9 @@ def login_user(request):
             user = form.get_user()
             login(request, user)
 
+            next_url = request.POST.get("next") or request.GET.get("next")
+            if next_url:
+                return redirect(next_url)
             return redirect("/asset/dashboard/")
 
     else:

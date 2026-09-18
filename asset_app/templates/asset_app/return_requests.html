@@ -634,7 +634,15 @@
                             <span class="rr-pill pending">{{ rq.get_status_display }}</span>
                             {% endif %}
                         </td>
-                        <td class="rr-cell-muted">{{ rq.processed_by_name|default:rq.processed_by.username|default:"—" }}</td>
+                        <td class="rr-cell-muted">
+                            {% if rq.processed_by_name %}
+                                {{ rq.processed_by_name }}
+                            {% elif rq.processed_by %}
+                                {{ rq.processed_by.username }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
                         <td class="rr-cell-muted">{{ rq.processed_at|date:"d M Y, H:i"|default:"—" }}</td>
                         {% if request.user.role == 'superadmin' or request.user.role == 'admin' %}
                         <td class="text-end">
