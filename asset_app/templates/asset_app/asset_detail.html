@@ -2,18 +2,251 @@
 {% block title %}Asset Details2{% endblock %}
 
 {% block content %}
+<style>
+    :root {
+        --primary: #07518A;
+        --primary-2: #0d6efd;
+        --grad-primary: linear-gradient(135deg, #07518A 0%, #0d6efd 100%);
+        --grad-green: linear-gradient(135deg, #15803d 0%, #22c55e 100%);
+        --grad-amber: linear-gradient(135deg, #b45309 0%, #f59e0b 100%);
+        --grad-red: linear-gradient(135deg, #b91c1c 0%, #ef4444 100%);
+        --glass-bg: rgba(255, 255, 255, 0.85);
+        --shadow-soft: 0 12px 32px rgba(7, 81, 138, 0.1);
+        --shadow-lift: 0 22px 46px rgba(7, 81, 138, 0.16);
+        --radius: 22px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+        background-color: #f4f7fb;
+    }
+
+    /* ============ HERO ============ */
+    .detail-hero {
+        background: var(--grad-primary);
+        border-radius: var(--radius);
+        padding: 2.2rem 2.4rem;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-lift);
+    }
+
+    .detail-hero::after {
+        content: "";
+        position: absolute;
+        right: -50px;
+        top: -70px;
+        width: 260px;
+        height: 260px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.22), transparent 70%);
+    }
+
+    .detail-hero h1 {
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    }
+
+    .hero-chip {
+        background: rgba(255, 255, 255, 0.16);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        border-radius: 999px;
+        padding: 0.4rem 1rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .hero-outline-btn {
+        background: rgba(255, 255, 255, 0.16);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        color: #fff;
+        border-radius: 14px;
+        font-weight: 600;
+        backdrop-filter: blur(6px);
+        transition: var(--transition);
+    }
+
+    .hero-outline-btn:hover {
+        background: #fff;
+        color: var(--primary);
+        transform: translateY(-2px);
+    }
+
+    /* ============ CARDS ============ */
+    .glass-card {
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: var(--radius);
+        background: var(--glass-bg);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        box-shadow: var(--shadow-soft);
+        overflow: hidden;
+        transition: var(--transition);
+    }
+
+    .glass-card:hover {
+        box-shadow: var(--shadow-lift);
+    }
+
+    .card-grad-top {
+        height: 8px;
+    }
+
+    .card-title-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, rgba(7, 81, 138, 0.1), rgba(13, 110, 253, 0.16));
+        color: var(--primary);
+        padding: 7px 16px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+    }
+
+    /* ============ INFO TILES ============ */
+    .info-tile {
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        border-radius: 14px;
+        padding: 0.8rem 1rem;
+        transition: var(--transition);
+        height: 100%;
+    }
+
+    .info-tile:hover {
+        background: linear-gradient(135deg, rgba(7, 81, 138, 0.06), rgba(13, 110, 253, 0.1));
+        transform: translateY(-2px);
+    }
+
+    .info-tile .tile-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: #64748b;
+        margin-bottom: 4px;
+    }
+
+    .info-tile .tile-value {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f172a;
+        word-break: break-word;
+    }
+
+    /* ============ STATUS / WARRANTY BADGES ============ */
+    .badge-status {
+        font-weight: 700;
+        border-radius: 999px;
+        padding: 0.45rem 1rem;
+        color: #fff;
+        font-size: 0.78rem;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.14);
+    }
+
+    .badge-warranty {
+        border-radius: 999px;
+        padding: 0.35rem 0.8rem;
+        font-weight: 600;
+        font-size: 0.75rem;
+    }
+
+    /* ============ QR FRAME ============ */
+    .qr-frame {
+        background: linear-gradient(135deg, #f8fafc, #ffffff);
+        border-radius: 20px;
+        padding: 18px;
+        box-shadow: inset 0 0 0 2px rgba(7, 81, 138, 0.08);
+        position: relative;
+    }
+
+    .qr-frame::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 20%;
+        right: 20%;
+        height: 5px;
+        background: var(--grad-primary);
+        border-radius: 0 0 999px 999px;
+    }
+
+    /* ============ TIMELINE ============ */
+    .timeline {
+        border-left: 2.5px solid rgba(7, 81, 138, 0.15);
+    }
+
+    .tl-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        box-shadow: 0 0 0 2px rgba(7, 81, 138, 0.2);
+    }
+
+    .tl-dot.grad-blue {
+        background: var(--grad-primary);
+    }
+
+    .tl-dot.grad-amber {
+        background: var(--grad-amber);
+    }
+
+    .tl-entry {
+        background: #fff;
+        border: 1px solid #eef2f7;
+        border-radius: 16px;
+        box-shadow: 0 8px 22px rgba(7, 81, 138, 0.07);
+        transition: var(--transition);
+    }
+
+    .tl-entry:hover {
+        box-shadow: var(--shadow-soft);
+        transform: translateY(-2px);
+    }
+
+    /* ============ MODAL ============ */
+    .modal-grad-header {
+        background: var(--grad-primary);
+        color: #fff;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
 <div class="container py-4">
 
     <!-- ============================
-         PAGE HEADER
+         PAGE HERO
     ============================ -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="fw-bold text-primary m-0">
-            <i class="bi bi-laptop me-2"></i>Asset Details
-        </h1>
-        <div class="d-flex gap-2">
+    <div class="detail-hero d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+        <div class="position-relative" style="z-index:1;">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="hero-chip"><i class="bi bi-qr-code me-1"></i> {{ asset.asset_id }}</span>
+                <span class="hero-chip">{{ asset.asset_type }}</span>
+            </div>
+            <h1 class="display-6 mb-1">
+                <i class="bi bi-laptop me-2"></i>Asset Details
+            </h1>
+        </div>
+        <div class="d-flex gap-2 mt-3 mt-md-0 position-relative" style="z-index:1;">
             {% if request.user.is_staff or request.user.role == 'superadmin' or request.user.role == 'admin' or request.user.role == 'asset_admin' %}
-            <button class="btn btn-outline-info rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#editHistoryModal">
+            <button class="btn hero-outline-btn px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#editHistoryModal">
                 <i class="bi bi-pencil-square me-2"></i> View Edit History
             </button>
             {% endif %}
@@ -26,14 +259,27 @@
              LEFT CARD – ALL ASSET DETAILS
         ============================ -->
         <div class="col-md-8">
-            <div class="card border-0 shadow-lg rounded-4">
+            <div class="glass-card">
+                <div class="card-grad-top" style="background: var(--grad-primary);"></div>
                 <div class="card-body p-4">
 
-                    <h4 class="fw-bold text-secondary mb-3">
-                        <i class="bi bi-info-circle me-2"></i>Asset Information
-                    </h4>
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <span class="card-title-chip">
+                            <i class="bi bi-info-circle me-1"></i>Asset Information
+                        </span>
+                        <span class="badge badge-status ms-auto
+                            {% if asset.status == 'Available' %} d-none {% endif %}"
+                            style="display:inline-block;
+                            {% if asset.status == 'In Use' %} background: var(--grad-primary);
+                            {% elif asset.status == 'Under Repair' or asset.status == 'Repair' %} background: var(--grad-amber);
+                            {% elif asset.status == 'Available' %} background: var(--grad-green);
+                            {% else %} background: linear-gradient(135deg,#64748b,#94a3b8); {% endif %}">
+                            <i class="bi bi-circle-fill me-1" style="font-size:0.5rem; vertical-align:middle;"></i>
+                            {{ asset.status }}
+                        </span>
+                    </div>
 
-                    <div class="p-3 rounded-3 mb-3" style="background:#f9fafc;">
+                    <div class="p-3 rounded-4 mb-3" style="background: linear-gradient(135deg,#f8fafc,#f1f5f9);">
                         {% if asset.image %}
                         <div class="mb-3 text-center">
                             <img src="{{ asset.image.url }}" alt="{{ asset.asset_id }}"
@@ -41,86 +287,100 @@
                                 style="max-height: 250px; object-fit: contain;">
                         </div>
                         {% endif %}
-                        <div class="row">
-                            <div class="col-md-6 mb-2">
-                                <strong>Asset ID:</strong>
-                                <div>{{ asset.asset_id }}</div>
-                            </div>
-                            <div class="col-md-6 mb-2">
-                                <strong>Type:</strong>
-                                <div>{{ asset.asset_type }}{% if asset.name %} <span class="text-muted">— {{ asset.name }}</span>{% endif %}</div>
-                            </div>
 
-                            <div class="col-md-6 mb-2">
-                                <strong>Company:</strong>
-                                <div>{{ asset.company_name }}</div>
-                            </div>
-
-                            {% if asset.series_number %}
-                            <div class="col-md-6 mb-2">
-                                <strong>Series Number:</strong>
-                                <div>{{ asset.series_number }}</div>
-                            </div>
-                            {% endif %}
-
-                            <div class="col-md-6 mb-2">
-                                <strong>Model:</strong>
-                                <div>{{ asset.model }}</div>
-                            </div>
-
-                            {% if asset.ram %}
-                            <div class="col-md-6 mb-2">
-                                <strong>RAM:</strong>
-                                <div>{{ asset.ram }}</div>
-                            </div>
-                            {% endif %}
-
-                            {% if asset.storage %}
-                            <div class="col-md-6 mb-2">
-                                <strong>Storage:</strong>
-                                <div>{{ asset.storage }}</div>
-                            </div>
-                            {% endif %}
-
-                            <div class="col-md-6 mb-2">
-                                <strong>Cost:</strong>
-                                <div>{% if asset.cost %}Rs {{ asset.cost|floatformat:2 }}{% else %}-{% endif %}</div>
-                            </div>
-
-                            <div class="col-md-6 mb-2">
-                                <strong>Warranty:</strong>
-                                <div>{{ asset.warranty_label }}</div>
-                            </div>
-
-                            <div class="col-md-6 mb-2">
-                                <strong>Warranty Ends:</strong>
-                                <div>
-                                    {{ asset.warranty_end_date|default:"-" }}
-                                    {% if asset.warranty_status == 'Expired' %}
-                                        <span class="badge bg-danger ms-2">Expired</span>
-                                    {% elif asset.warranty_status == 'Expiring Soon' %}
-                                        <span class="badge bg-warning text-dark ms-2">Expiring Soon</span>
-                                    {% elif asset.warranty_status == 'Active' %}
-                                        <span class="badge bg-success ms-2">{{ asset.days_until_warranty_end }} days left</span>
-                                    {% endif %}
+                        <div class="row g-3">
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <div class="info-tile">
+                                    <div class="tile-label"><i class="bi bi-upc-scan me-1"></i>Asset ID</div>
+                                    <div class="tile-value">{{ asset.asset_id }}</div>
                                 </div>
                             </div>
-
-                            <div class="col-md-6 mb-2">
-                                <strong>Status:</strong>
-                                <span class="badge 
-                                    {% if asset.status == 'Available' %} bg-success 
-                                    {% elif asset.status == 'In Use' %} bg-primary 
-                                    {% elif asset.status == 'Under Repair' %} bg-warning text-dark 
-                                    {% else %} bg-secondary 
-                                    {% endif %}
-                                    px-3 py-2">
-                                    {{ asset.status }}
-                                </span>
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <div class="info-tile">
+                                    <div class="tile-label"><i class="bi bi-grid me-1"></i>Type</div>
+                                    <div class="tile-value">{{ asset.asset_type }}{% if asset.name %}<br><span class="text-muted fw-normal small">{{ asset.name }}</span>{% endif %}</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <div class="info-tile">
+                                    <div class="tile-label"><i class="bi bi-buildings me-1"></i>Company</div>
+                                    <div class="tile-value">{{ asset.company_name }}</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <div class="info-tile">
+                                    <div class="tile-label"><i class="bi bi-123 me-1"></i>Series No.</div>
+                                    <div class="tile-value">{{ asset.series_number }}</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <div class="info-tile">
+                                    <div class="tile-label"><i class="bi bi-cpu me-1"></i>Model</div>
+                                    <div class="tile-value">{{ asset.model }}</div>
+                                </div>
+                            </div>
+                            {% if asset.ram %}
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <div class="info-tile">
+                                    <div class="tile-label"><i class="bi bi-memory me-1"></i>RAM</div>
+                                    <div class="tile-value">{{ asset.ram }}</div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if asset.storage %}
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <div class="info-tile">
+                                    <div class="tile-label"><i class="bi bi-hdd me-1"></i>Storage</div>
+                                    <div class="tile-value">{{ asset.storage }}</div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <div class="info-tile">
+                                    <div class="tile-label"><i class="bi bi-cash-coin me-1"></i>Cost</div>
+                                    <div class="tile-value">{% if asset.cost %}Rs {{ asset.cost|floatformat:2 }}{% else %}-{% endif %}</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <div class="info-tile">
+                                    <div class="tile-label"><i class="bi bi-shield-check me-1"></i>Warranty</div>
+                                    <div class="tile-value">{{ asset.warranty_label }}</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <div class="info-tile">
+                                    <div class="tile-label"><i class="bi bi-calendar-event me-1"></i>Warranty Ends</div>
+                                    <div class="tile-value">
+                                        {{ asset.warranty_end_date|default:"-" }}
+                                        {% if asset.warranty_status == 'Expired' %}
+                                        <div><span class="badge-warranty bg-danger text-white">Expired</span></div>
+                                        {% elif asset.warranty_status == 'Expiring Soon' %}
+                                        <div><span class="badge-warranty bg-warning text-dark">Expiring Soon</span></div>
+                                        {% elif asset.warranty_status == 'Active' %}
+                                        <div><span class="badge-warranty bg-success text-white">{{ asset.days_until_warranty_end }} days left</span></div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <div class="info-tile">
+                                    <div class="tile-label">Status</div>
+                                    <div class="tile-value">
+                                        <span class="badge badge-status
+                                            {% if asset.status == 'Available' %} d-none {% endif %}"
+                                            style="display:inline-block;
+                                            {% if asset.status == 'In Use' %} background: var(--grad-primary);
+                                            {% elif asset.status == 'Under Repair' or asset.status == 'Repair' %} background: var(--grad-amber);
+                                            {% elif asset.status == 'Available' %} background: var(--grad-green);
+                                            {% else %} background: linear-gradient(135deg,#64748b,#94a3b8); {% endif %}">
+                                            {{ asset.status }}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
+
                 </div>
             </div>
         </div>
@@ -129,23 +389,29 @@
              RIGHT CARD – QR CODE
         ============================ -->
         <div class="col-md-4">
-            <div class="card border-0 shadow-lg rounded-4 text-center">
-                <div class="card-body p-4">
+            <div class="glass-card h-100">
+                <div class="card-grad-top" style="background: var(--grad-amber);"></div>
+                <div class="card-body p-4 text-center">
 
-                    <h4 class="fw-bold text-secondary mb-3">
-                        <i class="bi bi-qr-code me-2"></i>QR Code
-                    </h4>
+                    <div class="d-flex justify-content-center mb-3">
+                        <span class="card-title-chip">
+                            <i class="bi bi-qr-code me-1"></i>QR Code
+                        </span>
+                    </div>
 
                     {% if qr_base64 %}
+                    <div class="qr-frame d-inline-block">
                         <img src="data:image/png;base64,{{ qr_base64 }}"
-                             class="img-fluid shadow rounded-4"
-                             style="width:260px; height:260px; object-fit:cover;">
+                            class="img-fluid rounded-3"
+                            style="width:230px; height:230px; object-fit:cover;">
 
-                        <p class="mt-3 text-muted small">
-                            Contains all assigned asset information
-                        </p>
+                    </div>
+                    <p class="mt-3 text-muted small mb-0">
+                        <i class="bi bi-upc-scan me-1"></i>
+                        Contains all assigned asset information
+                    </p>
                     {% else %}
-                        <p class="text-muted">No QR code available.</p>
+                    <p class="text-muted">No QR code available.</p>
                     {% endif %}
                 </div>
             </div>
@@ -155,27 +421,31 @@
     <!-- ============================
          ASSET TRACKING HISTORY
     ============================ -->
-    <div class="card border-0 shadow-lg rounded-4 mt-4">
-    <div class="card-body p-4">
+    <div class="glass-card mt-4">
+        <div class="card-grad-top" style="background: var(--grad-primary);"></div>
+        <div class="card-body p-4">
 
-        <h4 class="fw-bold text-primary mb-4">
-            <i class="bi bi-clock-history me-2"></i>Asset Tracking History
-        </h4>
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <span class="card-title-chip">
+                    <i class="bi bi-clock-history me-1"></i>Asset Tracking History
+                </span>
+            </div>
 
-        {% if asset_history %}
-            <div class="timeline position-relative ps-4" style="border-left: 2px solid #e9ecef;">
+            {% if asset_history %}
+            <div class="timeline position-relative ps-4" style="border-left: 2.5px solid rgba(7, 81, 138, 0.15);">
                 {% for record in asset_history %}
                 <div class="mb-4 position-relative">
-                    <span class="position-absolute top-0 start-0 translate-middle p-2 rounded-circle 
-                        {% if record.status == 'In Use' %}bg-primary{% else %}bg-secondary{% endif %}" 
-                        style="width: 12px; height: 12px; margin-left: -24px; margin-top: 6px;">
+                    <span class="tl-dot position-absolute top-0 start-0 translate-middle
+                        {% if record.status == 'In Use' %} grad-blue {% else %} grad-amber {% endif %}"
+                        style="margin-left: -24px; margin-top: 10px;">
                     </span>
-                    <div class="p-3 rounded-3 shadow-sm border" style="background:#fff;">
+                    <div class="tl-entry p-3">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <h5 class="fw-bold m-0 text-dark">
-                                <i class="bi bi-person-circle me-1"></i> {{ record.employee.name }}
+                                <i class="bi bi-person-circle me-1" style="color: var(--primary);"></i> {{ record.employee.name }}
                             </h5>
-                            <span class="badge {% if record.status == 'In Use' %}bg-primary{% else %}bg-warning text-dark{% endif %} rounded-pill px-3 py-1">
+                            <span class="badge rounded-pill px-3 py-1 text-white
+                                {% if record.status == 'In Use' %}" style="background: var(--grad-primary);{% else %}" style="background: var(--grad-amber);{% endif %}">
                                 {{ record.status }}
                             </span>
                         </div>
@@ -189,7 +459,7 @@
                             <div class="col-sm-6 mt-1">
                                 <i class="bi bi-person-badge me-1"></i> ID: {{ record.employee.employee_id }}
                             </div>
-                            <div class="col-sm-6 mt-1 text-primary fw-medium">
+                            <div class="col-sm-6 mt-1 fw-medium" style="color: var(--primary);">
                                 <i class="bi bi-calendar-event me-1"></i> Date: {% if record.assigned_date %}{{ record.assigned_date }}{% else %}{{ record.assigned_at|date:"d M Y, h:i A" }}{% endif %}
                             </div>
                             {% if record.assigned_by %}
@@ -198,7 +468,7 @@
                             </div>
                             {% endif %}
                         </div>
-                        
+
                         {% if record.is_signed %}
                         <div class="mt-3 pt-2 border-top">
                             <a href="{% url 'view_agreement' record.pk %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
@@ -210,14 +480,14 @@
                 </div>
                 {% endfor %}
             </div>
-        {% else %}
+            {% else %}
             <div class="text-center py-4">
                 <i class="bi bi-inbox text-muted" style="font-size: 2rem;"></i>
                 <p class="text-muted mt-2">This asset has no assignment history yet.</p>
             </div>
-        {% endif %}
+            {% endif %}
 
-    </div>
+        </div>
     </div>
 </div>
 
@@ -225,53 +495,53 @@
 <!-- Edit History Modal -->
 <div class="modal fade" id="editHistoryModal" tabindex="-1" aria-labelledby="editHistoryModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title fw-bold text-info" id="editHistoryModalLabel">
+        <div class="modal-content rounded-4 border-0 overflow-hidden">
+            <div class="modal-header modal-grad-header">
+                <h5 class="modal-title fw-bold" id="editHistoryModalLabel">
                     <i class="bi bi-pencil-square me-2"></i>Edit Tracking History
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4 bg-light">
                 {% if edit_history %}
-                    <div class="timeline position-relative ps-4" style="border-left: 2px solid #e9ecef;">
-                        {% for record in edit_history %}
-                        <div class="mb-4 position-relative">
-                            <span class="position-absolute top-0 start-0 translate-middle p-2 rounded-circle bg-info" 
-                                style="width: 12px; height: 12px; margin-left: -24px; margin-top: 6px;">
-                            </span>
-                            <div class="p-3 rounded-3 shadow-sm border border-info bg-white">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="fw-bold m-0 text-info">
-                                        <i class="bi bi-pencil-square me-1"></i> Asset Edited
-                                    </h6>
-                                    <span class="badge bg-info text-white rounded-pill px-3 py-1">
-                                        Update
-                                    </span>
+                <div class="timeline position-relative ps-4" style="border-left: 2.5px solid rgba(13,110,253,0.2);">
+                    {% for record in edit_history %}
+                    <div class="mb-4 position-relative">
+                        <span class="tl-dot position-absolute top-0 start-0 translate-middle grad-blue"
+                            style="margin-left: -24px; margin-top: 10px;">
+                        </span>
+                        <div class="tl-entry p-3" style="border: 1px solid rgba(13,110,253,0.15);">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="fw-bold m-0" style="color: var(--primary);">
+                                    <i class="bi bi-pencil-square me-1"></i> Asset Edited
+                                </h6>
+                                <span class="badge rounded-pill px-3 py-1 text-white" style="background: var(--grad-primary);">
+                                    Update
+                                </span>
+                            </div>
+                            <div class="text-muted small mt-2">
+                                <div class="mb-1 text-dark fw-medium">
+                                    <i class="bi bi-calendar-event me-1"></i> Date: {{ record.edited_at|date:"d M Y, h:i A" }}
                                 </div>
-                                <div class="text-muted small mt-2">
-                                    <div class="mb-1 text-dark fw-medium">
-                                        <i class="bi bi-calendar-event me-1"></i> Date: {{ record.edited_at|date:"d M Y, h:i A" }}
-                                    </div>
-                                    <div class="mb-1">
-                                        <i class="bi bi-person-gear me-1"></i> Edited by: <strong>{{ record.edited_by.username|default:"Unknown Admin" }}</strong>
-                                    </div>
-                                    {% if record.changes %}
-                                    <div class="mt-2 pt-2 border-top border-info-subtle bg-light p-2 rounded">
-                                        <i class="bi bi-list-check me-1 text-info"></i> <strong class="text-dark">Changes:</strong>
-                                        <p class="mb-0 mt-1" style="white-space: pre-wrap; font-family: monospace;">{{ record.changes }}</p>
-                                    </div>
-                                    {% endif %}
+                                <div class="mb-1">
+                                    <i class="bi bi-person-gear me-1"></i> Edited by: <strong>{{ record.edited_by.username|default:"Unknown Admin" }}</strong>
                                 </div>
+                                {% if record.changes %}
+                                <div class="mt-2 pt-2 border-top bg-light p-2 rounded">
+                                    <i class="bi bi-list-check me-1" style="color: var(--primary);"></i> <strong class="text-dark">Changes:</strong>
+                                    <p class="mb-0 mt-1" style="white-space: pre-wrap; font-family: monospace;">{{ record.changes }}</p>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
-                        {% endfor %}
                     </div>
+                    {% endfor %}
+                </div>
                 {% else %}
-                    <div class="text-center py-4">
-                        <i class="bi bi-info-circle text-muted" style="font-size: 2rem;"></i>
-                        <p class="text-muted mt-2">No edits have been recorded for this asset yet.</p>
-                    </div>
+                <div class="text-center py-4">
+                    <i class="bi bi-info-circle text-muted" style="font-size: 2rem;"></i>
+                    <p class="text-muted mt-2">No edits have been recorded for this asset yet.</p>
+                </div>
                 {% endif %}
             </div>
         </div>

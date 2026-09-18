@@ -5,93 +5,326 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Public Asset Detail</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #07518A;
+      --primary-2: #0d6efd;
+      --grad-primary: linear-gradient(135deg, #07518A 0%, #0d6efd 100%);
+      --grad-green: linear-gradient(135deg, #15803d 0%, #22c55e 100%);
+      --grad-amber: linear-gradient(135deg, #b45309 0%, #f59e0b 100%);
+      --grad-red: linear-gradient(135deg, #b91c1c 0%, #ef4444 100%);
+      --radius: 22px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+
+    body {
+      background: linear-gradient(160deg, #f4f7fb 0%, #e9eff9 100%);
+      min-height: 100vh;
+      background-attachment: fixed;
+    }
+
+    .public-hero {
+      background: var(--grad-primary);
+      border-radius: var(--radius);
+      padding: 2rem 2.2rem;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 45px rgba(7, 81, 138, 0.25);
+    }
+
+    .public-hero::after {
+      content: "";
+      position: absolute;
+      right: -50px;
+      top: -70px;
+      width: 240px;
+      height: 240px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.22), transparent 70%);
+    }
+
+    .public-hero .hero-badge {
+      display: inline-flex;
+      width: 60px;
+      height: 60px;
+      border-radius: 18px;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      font-size: 1.6rem;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .public-hero h1 {
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    }
+
+    .hero-chip {
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 999px;
+      padding: 0.4rem 1rem;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .glass-card {
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 12px 32px rgba(7, 81, 138, 0.1);
+      overflow: hidden;
+    }
+
+    .card-title-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, rgba(7, 81, 138, 0.1), rgba(13, 110, 253, 0.16));
+      color: var(--primary);
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .info-tile {
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+      border-radius: 14px;
+      padding: 0.8rem 1rem;
+      transition: var(--transition);
+      height: 100%;
+    }
+
+    .info-tile:hover {
+      background: linear-gradient(135deg, rgba(7, 81, 138, 0.06), rgba(13, 110, 253, 0.1));
+      transform: translateY(-2px);
+    }
+
+    .info-tile .tile-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
+
+    .info-tile .tile-value {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #0f172a;
+      word-break: break-word;
+    }
+
+    .badge-status {
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 0.45rem 1.1rem;
+      color: #fff;
+      font-size: 0.8rem;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.14);
+    }
+
+    .assign-item {
+      background: #fff;
+      border: 1px solid #eef2f7;
+      border-radius: 16px;
+      padding: 14px 18px;
+      transition: var(--transition);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      box-shadow: 0 8px 22px rgba(7, 81, 138, 0.07);
+    }
+
+    .assign-item:hover {
+      box-shadow: 0 12px 30px rgba(7, 81, 138, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .initials-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      background: var(--grad-primary);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+      box-shadow: 0 6px 14px rgba(7, 81, 138, 0.28);
+    }
+  </style>
 </head>
-<body class="bg-light">
-<div class="container mt-4">
+<body>
+<div class="container mt-4 pb-5">
+
+    <!-- HERO -->
+    <div class="public-hero d-flex align-items-center gap-4 mb-4">
+        <div class="hero-badge d-none d-sm-inline-flex">
+            <i class="bi bi-laptop"></i>
+        </div>
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                <span class="hero-chip"><i class="bi bi-upc-scan me-1"></i> {{ asset.asset_id }}</span>
+                <span class="hero-chip">{{ asset.asset_type }}</span>
+                <span class="badge-status" style="background: 
+                  {% if asset.status == 'Available' %} var(--grad-green);
+                  {% elif asset.status == 'In Use' %} var(--grad-primary);
+                  {% elif asset.status == 'Repair' or asset.status == 'Under Repair' %} var(--grad-red);
+                  {% else %} linear-gradient(135deg,#64748b,#94a3b8); {% endif %}">
+                  {{ asset.status }}
+                </span>
+            </div>
+            <h1 class="mb-0"><i class="bi bi-info-circle me-2"></i>Asset Details</h1>
+        </div>
+    </div>
 
     <!-- Asset Info Card -->
-  <div class="card shadow-lg p-4 rounded-4 border-0 mb-4">
-    <h1 class="text-center mb-4 fw-bold text-primary">🖥️ Asset Details</h1>
-
-    <div class="row align-items-center">
-      <!-- Left Side - Asset Image & Info -->
-      <div class="col-md-6">
-        {% if asset.image %}
+    <div class="glass-card mb-4">
+      <div class="p-4">
         <div class="text-center mb-4">
-          <img src="{{ asset.image.url }}" alt="{{ asset.asset_id }}"
-               class="img-fluid rounded-4 shadow-sm"
-               style="max-height:280px; object-fit:contain;">
+          <h5 class="d-inline-flex align-items-center gap-2 card-title-chip mb-3">
+            <i class="bi bi-box-seam"></i> Asset Information
+          </h5>
         </div>
-        {% else %}
-        <div class="text-center mb-4">
-          <div class="bg-secondary bg-opacity-10 rounded-4 d-inline-flex align-items-center justify-content-center"
-               style="width:200px; height:200px;">
-            <i class="bi bi-display text-muted" style="font-size:4rem;"></i>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="h-100 d-flex align-items-center">
+              {% if asset.image %}
+              <img src="{{ asset.image.url }}" alt="{{ asset.asset_id }}"
+                   class="img-fluid rounded-4 shadow-sm mx-auto"
+                   style="max-height:280px; object-fit:contain;">
+              {% else %}
+              <div class="mx-auto">
+                <div class="bg-secondary bg-opacity-10 rounded-4 d-inline-flex align-items-center justify-content-center"
+                     style="width:200px; height:200px;">
+                  <i class="bi bi-display text-muted" style="font-size:4rem;"></i>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="row g-3">
+              <div class="col-6 col-lg-4">
+                <div class="info-tile">
+                  <div class="tile-label"><i class="bi bi-upc-scan me-1"></i>Asset ID</div>
+                  <div class="tile-value">{{ asset.asset_id }}</div>
+                </div>
+              </div>
+              <div class="col-6 col-lg-4">
+                <div class="info-tile">
+                  <div class="tile-label"><i class="bi bi-grid me-1"></i>Type</div>
+                  <div class="tile-value">{{ asset.asset_type }}{% if asset.name %}<br><span class="text-muted fw-normal small">{{ asset.name }}</span>{% endif %}</div>
+                </div>
+              </div>
+              <div class="col-6 col-lg-4">
+                <div class="info-tile">
+                  <div class="tile-label"><i class="bi bi-buildings me-1"></i>Company</div>
+                  <div class="tile-value">{{ asset.company_name }}</div>
+                </div>
+              </div>
+              <div class="col-6 col-lg-4">
+                <div class="info-tile">
+                  <div class="tile-label"><i class="bi bi-123 me-1"></i>Series No.</div>
+                  <div class="tile-value">{{ asset.series_number }}</div>
+                </div>
+              </div>
+              <div class="col-6 col-lg-4">
+                <div class="info-tile">
+                  <div class="tile-label"><i class="bi bi-cpu me-1"></i>Model</div>
+                  <div class="tile-value">{{ asset.model }}</div>
+                </div>
+              </div>
+              <div class="col-6 col-lg-4">
+                <div class="info-tile">
+                  <div class="tile-label"><i class="bi bi-memory me-1"></i>RAM</div>
+                  <div class="tile-value">{{ asset.ram|default:"—" }}</div>
+                </div>
+              </div>
+              <div class="col-6 col-lg-4">
+                <div class="info-tile">
+                  <div class="tile-label"><i class="bi bi-hdd me-1"></i>Storage</div>
+                  <div class="tile-value">{{ asset.storage|default:"—" }}</div>
+                </div>
+              </div>
+              <div class="col-6 col-lg-4">
+                <div class="info-tile">
+                  <div class="tile-label"><i class="bi bi-cash-coin me-1"></i>Cost</div>
+                  <div class="tile-value">{% if asset.cost %}Rs {{ asset.cost|floatformat:2 }}{% else %}—{% endif %}</div>
+                </div>
+              </div>
+              <div class="col-6 col-lg-4">
+                <div class="info-tile">
+                  <div class="tile-label"><i class="bi bi-shield-check me-1"></i>Warranty</div>
+                  <div class="tile-value">{{ asset.warranty_label }}</div>
+                </div>
+              </div>
+              <div class="col-6 col-lg-4">
+                <div class="info-tile">
+                  <div class="tile-label"><i class="bi bi-calendar-event me-1"></i>Warranty Ends</div>
+                  <div class="tile-value">{{ asset.warranty_end_date|default:"—" }}</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        {% endif %}
-        <p><strong>Asset ID:</strong> {{ asset.asset_id }}</p>
-        <p><strong>Type:</strong> {{ asset.asset_type }}{% if asset.name %} <span class="text-muted">— {{ asset.name }}</span>{% endif %}</p>
-        <p><strong>Company:</strong> {{ asset.company_name }}</p>
-        <p><strong>Series Number:</strong> {{ asset.series_number }}</p>
-        <p><strong>Model:</strong> {{ asset.model }}</p>
-        <p><strong>RAM:</strong> {{ asset.ram|default:"—" }}</p>
-        <p><strong>Storage:</strong> {{ asset.storage|default:"—" }}</p>
-        <p><strong>Cost:</strong> {% if asset.cost %}Rs {{ asset.cost|floatformat:2 }}{% else %}—{% endif %}</p>
-        <p><strong>Warranty:</strong> {{ asset.warranty_label }}</p>
-        <p><strong>Warranty Ends:</strong> {{ asset.warranty_end_date|default:"—" }}</p>
-        <p><strong>Status:</strong>
-          <span class="badge 
-            {% if asset.status == 'Available' %} bg-success
-            {% elif asset.status == 'In Use' %} bg-warning text-dark
-            {% elif asset.status == 'Repair' %} bg-danger
-            {% else %} bg-secondary
-            {% endif %}">{{ asset.status }}</span>
-        </p>
-      </div>
-
-       <!--Right Side - QR Code -->
-      <!--<div class="col-md-6 text-center">
-        {% if qr_base64 %}
-          <h5 class="fw-semibold mb-2 text-dark">Scan to View Details</h5>
-          <img src="data:image/png;base64,{{ qr_base64 }}" 
-               alt="QR Code"
-               style="width:280px; height:280px; border:3px solid #000; border-radius:20px;
-                      box-shadow:0 6px 15px rgba(0,0,0,0.25);">
-          <p class="mt-2 text-muted small">Scan this QR to open asset details</p>
-        {% else %}
-          <p class="text-muted">No QR code available.</p>
-        {% endif %}
       </div>
     </div>
-  </div>-->
 
   <!-- Assignment Info Card -->
-  <div class="card shadow-lg p-4 rounded-4 border-0">
-    <h2 class="mb-3 fw-bold text-primary">🧾 Assignment Details</h2>
+  <div class="glass-card">
+    <div class="p-4">
+      <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+        <span class="card-title-chip"><i class="bi bi-person-check-fill"></i> Assignment Details</span>
+      </div>
 
-    {% if asset.assignment_set.all %}
-      <ul class="list-group list-group-flush">
+      {% if asset.assignment_set.all %}
         {% for a in asset.assignment_set.all %}
-          <li class="list-group-item d-flex justify-content-between align-items-center rounded-3 mb-2 shadow-sm">
-            <div>
-              <strong class="text-dark">{{ a.employee.name }}</strong><br>
-              <small class="text-muted">{{ a.employee.department }}</small>
+          <div class="assign-item">
+            <div class="d-flex align-items-center gap-3">
+              <div class="initials-avatar">{{ a.employee.name|make_list|first|upper }}</div>
+              <div>
+                <strong class="text-dark fs-6">{{ a.employee.name }}</strong><br>
+                <small class="text-muted">{{ a.employee.department }}</small>
+              </div>
             </div>
-            <span class="badge 
-              {% if a.status == 'In Use' %} bg-info text-dark
-              {% elif a.status == 'Repair' %} bg-warning text-dark
-              {% else %} bg-secondary
-              {% endif %}">{{ a.status }}</span>
-          </li>
+            <span class="badge-status" style="background: 
+              {% if a.status == 'In Use' %} var(--grad-primary);
+              {% elif a.status == 'Repair' or a.status == 'Under Repair' %} var(--grad-amber);
+              {% else %} linear-gradient(135deg,#64748b,#94a3b8); {% endif %}">
+              {{ a.status }}
+            </span>
+          </div>
         {% endfor %}
-      </ul>
-    {% else %}
-      <p class="text-muted">This asset has not been assigned yet.</p>
-    {% endif %}
+      {% else %}
+        <div class="text-center py-4">
+          <i class="bi bi-inbox text-muted" style="font-size:2.4rem;"></i>
+          <p class="text-muted mt-2 mb-0">This asset has not been assigned yet.</p>
+        </div>
+      {% endif %}
+    </div>
   </div>
 
 </div>
 </body>
 </html>
-

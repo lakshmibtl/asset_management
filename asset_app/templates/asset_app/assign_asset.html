@@ -9,32 +9,105 @@
 
 <style>
     :root {
-        --primary-blue: #07518A;
-        --glass-bg: rgba(255, 255, 255, 0.95);
+        --primary: #07518A;
+        --primary-2: #0d6efd;
+        --grad-primary: linear-gradient(135deg, #07518A 0%, #0d6efd 100%);
+        --glass-bg: rgba(255, 255, 255, 0.88);
         --input-border: #e2e8f0;
+        --radius: 22px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
+    /* ============ HERO ============ */
+    .assign-hero {
+        background: var(--grad-primary);
+        border-radius: var(--radius);
+        padding: 2.2rem 2.4rem;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 45px rgba(7, 81, 138, 0.28);
+    }
+
+    .assign-hero::after {
+        content: "";
+        position: absolute;
+        right: -50px;
+        top: -70px;
+        width: 260px;
+        height: 260px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.22), transparent 70%);
+    }
+
+    .assign-hero .hero-badge {
+        display: inline-flex;
+        width: 64px;
+        height: 64px;
+        border-radius: 18px;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        font-size: 1.6rem;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .assign-hero h1 {
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    }
+
+    .assign-hero p {
+        opacity: 0.9;
+    }
+
+    /* ============ CARDS ============ */
     .card-modern {
-        border: 1px solid rgba(0,0,0,0.05);
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(7, 81, 138, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        border-radius: var(--radius);
+        box-shadow: 0 24px 50px rgba(7, 81, 138, 0.1);
         background: var(--glass-bg);
-        backdrop-filter: blur(10px);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        overflow: hidden;
+    }
+
+    .card-top {
+        height: 8px;
+        background: var(--grad-primary);
     }
 
     .section-indicator {
         display: inline-flex;
         align-items: center;
-        background: rgba(7, 81, 138, 0.1);
-        color: var(--primary-blue);
+        gap: 10px;
+        color: var(--primary);
         padding: 6px 16px;
-        border-radius: 50px;
-        font-size: 0.75rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
         font-weight: 700;
         text-transform: uppercase;
+        letter-spacing: 0.8px;
         margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, rgba(7, 81, 138, 0.1), rgba(13, 110, 253, 0.16));
     }
 
+    .step-num {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--grad-primary);
+        color: #fff;
+        font-weight: 800;
+        font-size: 0.8rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 10px rgba(7, 81, 138, 0.3);
+    }
+
+    /* ============ INPUTS ============ */
     .form-control, .form-select, .select2-container--default .select2-selection--single {
         border: 1.5px solid var(--input-border) !important;
         border-radius: 12px !important;
@@ -42,22 +115,34 @@
         height: auto !important;
     }
 
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 0.25rem rgba(7, 81, 138, 0.12) !important;
+    }
+
     .readonly-box {
         background-color: #f8fafc !important;
         border-style: dashed !important;
-        color: var(--primary-blue);
+        color: var(--primary);
         font-weight: 600;
         transition: all 0.3s ease;
     }
 
+    /* ============ SUBMIT ============ */
     .btn-assign {
-        background: linear-gradient(135deg, #07518A 0%, #0d6efd 100%);
+        background: var(--grad-primary);
         color: white; border: none; border-radius: 14px;
         padding: 16px; font-weight: 700;
         transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 14px 30px rgba(7, 81, 138, 0.35);
     }
 
-    .btn-assign:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(7, 81, 138, 0.2); color: white; }
+    .btn-assign:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 40px rgba(7, 81, 138, 0.42);
+        color: white;
+        filter: brightness(1.07);
+    }
 
     /* Visual pulse for data updates */
     .data-update-flash { animation: pulse 0.5s ease-in-out; }
@@ -68,10 +153,17 @@
     }
 </style>
 
-<div class="container py-5">
-    <div class="text-center mb-5 animate__animated animate__fadeInDown">
-        <h2 class="fw-bold text-dark">Asset Assignment</h2>
-        <p class="text-muted">Quickly allocate company hardware to verified staff.</p>
+<div class="container py-4">
+
+    <!-- HERO -->
+    <div class="assign-hero d-flex align-items-center gap-4 mb-4 animate__animated animate__fadeInDown">
+        <div class="hero-badge d-none d-sm-inline-flex">
+            <i class="bi bi-person-plus-fill"></i>
+        </div>
+        <div>
+            <h1 class="mb-1"><i class="bi bi-broadcast-pin me-2"></i>Asset Assignment</h1>
+            <p class="mb-0">Quickly allocate company hardware to verified staff.</p>
+        </div>
     </div>
 
     <form method="POST" id="assignForm">
@@ -80,12 +172,14 @@
         <div class="row g-4">
             <div class="col-lg-5 animate__animated animate__fadeInLeft">
                 <div class="card card-modern p-4 h-100">
-                    <span class="section-indicator">
-                        <i class="bi bi-person-check-fill me-2"></i> 1. Recipient
+                    <div class="card-top"></div>
+                    <span class="section-indicator mt-3">
+                        <span class="step-num"><i class="bi bi-person-fill" style="font-size:0.75rem;"></i></span>
+                        Step 1 — Recipient
                     </span>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold small text-muted">EMPLOYEE SEARCH</label>
+                        <label class="form-label fw-bold small text-muted"><i class="bi bi-person-search me-1" style="color: var(--primary);"></i> EMPLOYEE SEARCH</label>
                         <select id="empSelect" name="employee" class="form-control select2-modern" required>
                             <option value="">Search by ID or Name...</option>
                             {% for emp in employees %}
@@ -110,7 +204,7 @@
                     </div>
 
                     <div class="mt-4">
-                        <label class="form-label fw-bold small text-muted">ASSIGNMENT DATE</label>
+                        <label class="form-label fw-bold small text-muted"><i class="bi bi-calendar-event me-1" style="color: var(--primary);"></i> ASSIGNMENT DATE</label>
                         <input type="date" name="assigned_date" class="form-control" value="{{ today_date }}" max="{{ today_date }}">
                     </div>
                 </div>
@@ -118,12 +212,14 @@
 
             <div class="col-lg-7 animate__animated animate__fadeInRight">
                 <div class="card card-modern p-4 h-100">
-                    <span class="section-indicator">
-                        <i class="bi bi-cpu-fill me-2"></i> 2. Allocation
+                    <div class="card-top" style="background: linear-gradient(135deg,#15803d,#22c55e);"></div>
+                    <span class="section-indicator mt-3" style="background: linear-gradient(135deg, rgba(34,197,94,.1), rgba(34,197,94,.18)); color:#15803d;">
+                        <span class="step-num" style="background: linear-gradient(135deg,#15803d,#22c55e);"><i class="bi bi-cpu-fill" style="font-size:0.75rem;"></i></span>
+                        Step 2 — Allocation
                     </span>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold small text-muted">SELECT EQUIPMENT</label>
+                        <label class="form-label fw-bold small text-muted"><i class="bi bi-box-seam me-1" style="color: var(--primary);"></i> SELECT EQUIPMENT</label>
                         <select name="asset" class="form-control select2-modern" required>
                             <option value="">Choose an available asset...</option>
                             {% for a in assets %}
@@ -133,7 +229,7 @@
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold small text-muted">DEPLOYMENT STATUS</label>
+                        <label class="form-label fw-bold small text-muted"><i class="bi bi-broadcast me-1" style="color: var(--primary);"></i> DEPLOYMENT STATUS</label>
                         <select name="status" class="form-select">
                             <option value="In Use">In Use</option>
                             <option value="Temporary">Temporary Use</option>

@@ -1759,7 +1759,7 @@ def _send_whatsapp_notification(ticket):
     
     # User requested a specific phone number to be provided later.
     # For now, we will use a dummy number or can read from settings if available.
-    contact_number = "918297297247" # Placeholder
+    contact_numbers = ["919666516314", "917396758875"]
     
     template_id = "1802469"
     
@@ -1782,10 +1782,11 @@ def _send_whatsapp_notification(ticket):
         "Open"
     ]
     
-    try:
-        send_whatsapp_message(contact_number, template_id, template_params)
-    except Exception as e:
-        print(f"Failed to send WhatsApp message: {e}")
+    for number in contact_numbers:
+        try:
+            send_whatsapp_message(number, template_id, template_params)
+        except Exception as e:
+            print(f"Failed to send WhatsApp message to {number}: {e}")
 
 def raise_ticket(request):
     # Determine which assets user can see

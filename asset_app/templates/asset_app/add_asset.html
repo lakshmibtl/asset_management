@@ -8,127 +8,233 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
 
 <style>
-    /* modern Variables */
     :root {
-        --primary-blue: #07518A;
-        --glass-bg: rgba(255, 255, 255, 0.9);
-        --input-focus-shadow: 0 0 0 0.25rem rgba(7, 81, 138, 0.1);
+        --primary: #07518A;
+        --primary-2: #0d6efd;
+        --grad-primary: linear-gradient(135deg, #07518A 0%, #0d6efd 100%);
+        --glass-bg: rgba(255, 255, 255, 0.88);
+        --input-focus-shadow: 0 0 0 0.25rem rgba(7, 81, 138, 0.12);
+        --radius: 22px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Page Entrance Animation */
+    /* ============ HERO ============ */
+    .form-hero {
+        background: var(--grad-primary);
+        border-radius: var(--radius);
+        padding: 2rem 2.4rem;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 45px rgba(7, 81, 138, 0.28);
+    }
+
+    .form-hero::after {
+        content: "";
+        position: absolute;
+        right: -40px;
+        top: -70px;
+        width: 240px;
+        height: 240px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.22), transparent 70%);
+    }
+
+    .form-hero .hero-badge {
+        display: inline-flex;
+        width: 64px;
+        height: 64px;
+        border-radius: 18px;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        font-size: 1.6rem;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .form-hero h1 {
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    }
+
+    .form-hero p {
+        opacity: 0.9;
+    }
+
+    .form-hero .breadcrumb,
+    .form-hero .breadcrumb a {
+        background: transparent;
+        color: rgba(255, 255, 255, 0.85);
+    }
+
+    .form-hero .breadcrumb-item + .breadcrumb-item::before {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .form-hero .breadcrumb-item.active {
+        color: #fff;
+    }
+
+    /* ============ FORM CARD ============ */
     .form-card {
-        animation: fadeInUp 0.6s ease-out;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 20px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        border-radius: var(--radius);
+        box-shadow: 0 24px 50px rgba(7, 81, 138, 0.12);
         background: var(--glass-bg);
-        backdrop-filter: blur(10px);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        overflow: hidden;
+        animation: fadeInUp 0.6s ease-out;
     }
 
-    /* Refined Form Controls */
+    .form-card-top {
+        height: 8px;
+        background: var(--grad-primary);
+    }
+
+    .section-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, rgba(7, 81, 138, 0.1), rgba(13, 110, 253, 0.16));
+        color: var(--primary);
+        padding: 7px 16px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 1.4rem;
+    }
+
+    .section-divider {
+        border: none;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(7, 81, 138, 0.25), transparent);
+        margin: 2rem 0;
+    }
+
+    /* ============ INPUTS ============ */
     .form-control,
     .form-select {
-        border: 1px solid #e0e6ed;
-        transition: all 0.2s ease-in-out;
-        background-color: #fcfdfe;
+        border: 1.5px solid #e0e6ed;
+        transition: var(--transition);
+        background-color: #fff;
+        border-radius: 14px;
     }
 
     .form-control:focus,
     .form-select:focus {
-        border-color: var(--primary-blue);
+        border-color: var(--primary);
         box-shadow: var(--input-focus-shadow);
         background-color: #fff;
     }
 
-    /* Custom Floating Label Styling */
-    .form-floating>label {
-        padding-left: 1.25rem;
-        opacity: 0.7;
+    .form-floating > label {
+        padding-left: 1.1rem;
+        opacity: 0.72;
         font-weight: 500;
         color: #4a5568;
     }
 
-    .form-floating>.form-control:focus~label,
-    .form-floating>.form-control:not(:placeholder-shown)~label,
-    .form-floating>.form-select~label {
-        color: var(--primary-blue) !important;
+    .form-floating > .form-control:focus ~ label,
+    .form-floating > .form-control:not(:placeholder-shown) ~ label,
+    .form-floating > .form-select ~ label {
+        color: var(--primary) !important;
         opacity: 1;
         font-weight: 700;
     }
 
-    /* Step-like Icon accents */
     .input-group-icon {
         position: absolute;
-        right: 1.25rem;
+        right: 1.1rem;
         top: 50%;
         transform: translateY(-50%);
-        color: var(--primary-blue);
+        color: var(--primary);
         opacity: 0.4;
         z-index: 5;
     }
 
-    /* Button Styling */
+    /* ============ SUBMIT ============ */
     .btn-submit {
-        background: var(--primary-blue);
+        background: var(--grad-primary);
         border: none;
-        padding: 1rem;
+        padding: 1.05rem;
+        font-weight: 700;
         transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 14px 30px rgba(7, 81, 138, 0.35);
     }
 
     .btn-submit:hover {
-        background: #053a63;
-        transform: scale(1.02);
-        box-shadow: 0 10px 20px rgba(7, 81, 138, 0.2);
+        filter: brightness(1.08);
+        transform: translateY(-3px);
+        box-shadow: 0 20px 40px rgba(7, 81, 138, 0.42);
     }
 
     .btn-submit:active {
-        transform: scale(0.98);
+        transform: translateY(-1px) scale(0.99);
     }
 
-    /* File Upload Styling */
+    /* ============ FILE UPLOAD ============ */
     .custom-file-upload {
-        border: 2px dashed #cbd5e0;
-        border-radius: 12px;
-        padding: 20px;
+        border: 2px dashed rgba(7, 81, 138, 0.35);
+        border-radius: 16px;
+        padding: 24px;
         text-align: center;
         cursor: pointer;
-        transition: border-color 0.3s;
+        background: linear-gradient(135deg, rgba(7, 81, 138, 0.03), rgba(13, 110, 253, 0.06));
+        transition: border-color 0.3s, background 0.3s;
     }
 
     .custom-file-upload:hover {
-        border-color: var(--primary-blue);
-        background: rgba(7, 81, 138, 0.02);
+        border-color: var(--primary);
+        background: rgba(7, 81, 138, 0.05);
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 </style>
 
-<div class="container py-5">
+<div class="container py-4">
     <div class="row justify-content-center">
         <div class="col-12 col-lg-10 col-xl-8">
 
-            <nav aria-label="breadcrumb" class="mb-4 animate__animated animate__fadeIn">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'asset_dashboard' %}"
-                            class="text-decoration-none">Dashboard</a></li>
-
-                </ol>
-            </nav>
+            <!-- HERO -->
+            <div class="form-hero d-flex align-items-center gap-4 mb-4 animate__animated animate__fadeInDown">
+                <div class="hero-badge d-none d-sm-inline-flex">
+                    <i class="bi bi-plus-lg"></i>
+                </div>
+                <div style="flex:1;">
+                    <nav aria-label="breadcrumb" class="mb-1">
+                        <ol class="breadcrumb mb-0 small">
+                            <li class="breadcrumb-item"><a href="{% url 'asset_dashboard' %}" class="text-decoration-none">Dashboard</a></li>
+                            <li class="breadcrumb-item text-white fw-semibold">Add Asset</li>
+                        </ol>
+                    </nav>
+                    <h1 class="mb-1 mt-1"><i class="bi bi-box-seam me-2"></i>Add New Asset</h1>
+                    <p class="mb-0">Enter the details below to register a new asset.</p>
+                </div>
+            </div>
 
             <div class="card form-card border-0">
-                <div class="card-header bg-transparent border-0 pt-5 pb-0 text-center">
-                    <div class="icon-box mb-3 mx-auto d-flex align-items-center justify-content-center"
-                        style="width: 60px; height: 60px; background: rgba(7, 81, 138, 0.1); border-radius: 15px;">
-                        <i class="bi bi-plus-lg fs-3 text-primary"></i>
-                    </div>
-                    <h2 class="fw-bold text-dark">ADD New Asset</h2>
-                    <p class="text-muted">Enter the details below to add a new asset </p>
-                </div>
+                <div class="form-card-top"></div>
 
                 <div class="card-body p-4 p-md-5">
                     <form id="assetForm" method="POST" enctype="multipart/form-data" novalidate>
                         {% csrf_token %}
 
                         {% if form.non_field_errors or form.errors %}
-                        <div class="alert alert-danger border-0 rounded-3 shadow-sm py-3" role="alert"
+                        <div class="alert alert-danger border-0 rounded-4 shadow-sm py-3" role="alert"
                             id="assetFormErrors">
                             <div class="d-flex align-items-center mb-2">
                                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
@@ -144,11 +250,15 @@
                         </div>
                         {% endif %}
 
+                        <!-- SECTION: IDENTIFICATION -->
+                        <span class="section-chip"><i class="bi bi-tags-fill"></i> Asset Identification</span>
+
                         <div class="row g-4">
                             <div class="col-md-6 animate__animated animate__fadeInLeft">
                                 <div class="form-floating position-relative">
-                                    <input type="text" class="form-control form-control-lg border-0 shadow-sm bg-light"
-                                        placeholder="Auto" value="SYSTEM-GENERATED" readonly>
+                                    <input type="text" class="form-control form-control-lg shadow-sm"
+                                        placeholder="Auto" value="SYSTEM-GENERATED" readonly
+                                        style="background: linear-gradient(135deg,#f6f9fd,#eef3fa); color: var(--primary); font-weight:600;">
                                     <label>Asset ID</label>
                                     <i class="bi bi-lock-fill input-group-icon"></i>
                                 </div>
@@ -156,73 +266,79 @@
 
                             <div class="col-md-6 animate__animated animate__fadeInRight">
                                 <div class="form-floating" id="assetTypeContainer">
-                                    {{ form.asset_type|add_class:"form-select form-select-lg shadow-sm border-0"|attr:"required"|attr:"id:id_asset_type" }}
+                                    {{ form.asset_type|add_class:"form-select form-select-lg shadow-sm"|attr:"required"|attr:"id:id_asset_type" }}
                                     <label>Asset Type</label>
                                 </div>
                                 {{ form.other_asset_type }}
                             </div>
 
-
                             <div class="col-md-6 animate__animated animate__fadeInLeft">
                                 <div class="form-floating">
-                                    {{ form.company_name|add_class:"form-control form-control-lg shadow-sm border-0"|attr:"required"|attr:"placeholder:Company" }}
+                                    {{ form.company_name|add_class:"form-control form-control-lg shadow-sm"|attr:"required"|attr:"placeholder:Company" }}
                                     <label>Manufacturer/Company</label>
                                 </div>
                             </div>
 
                             <div class="col-md-6 animate__animated animate__fadeInRight">
                                 <div class="form-floating">
-                                    {{ form.series_number|add_class:"form-control form-control-lg shadow-sm border-0"|attr:"required"|attr:"placeholder:Series" }}
+                                    {{ form.series_number|add_class:"form-control form-control-lg shadow-sm"|attr:"required"|attr:"placeholder:Series" }}
                                     <label>Serial / Series Number</label>
                                 </div>
                             </div>
 
                             <div class="col-md-6 animate__animated animate__fadeInLeft">
                                 <div class="form-floating">
-                                    {{ form.model|add_class:"form-control form-control-lg shadow-sm border-0"|attr:"required"|attr:"placeholder:Model" }}
+                                    {{ form.model|add_class:"form-control form-control-lg shadow-sm"|attr:"required"|attr:"placeholder:Model" }}
                                     <label>Model Name</label>
                                 </div>
                             </div>
 
                             <div class="col-md-6 animate__animated animate__fadeInRight">
                                 <div class="form-floating">
-                                    {{ form.status|add_class:"form-select form-select-lg shadow-sm border-0"|attr:"required"|attr:"id:id_status" }}
+                                    {{ form.status|add_class:"form-select form-select-lg shadow-sm"|attr:"required"|attr:"id:id_status" }}
                                     <label> Status</label>
                                 </div>
                                 {{ form.other_status }}
                             </div>
+                        </div>
 
+                        <hr class="section-divider">
+
+                        <!-- SECTION: SPECIFICATIONS & WARRANTY -->
+                        <span class="section-chip"><i class="bi bi-sliders"></i> Specifications & Warranty</span>
+
+                        <div class="row g-4">
                             <div class="col-md-6 animate__animated animate__fadeInLeft" id="ramContainer">
                                 <div class="form-floating">
-                                    {{ form.ram|add_class:"form-select form-select-lg shadow-sm border-0" }}
+                                    {{ form.ram|add_class:"form-select form-select-lg shadow-sm" }}
                                     <label>RAM</label>
                                 </div>
                             </div>
 
                             <div class="col-md-6 animate__animated animate__fadeInRight" id="storageContainer">
                                 <div class="form-floating">
-                                    {{ form.storage|add_class:"form-select form-select-lg shadow-sm border-0" }}
+                                    {{ form.storage|add_class:"form-select form-select-lg shadow-sm" }}
                                     <label>Storage</label>
                                 </div>
                             </div>
 
                             <div class="col-md-6 animate__animated animate__fadeInLeft">
                                 <div class="form-floating">
-                                    {{ form.purchase_date|add_class:"form-control form-control-lg shadow-sm border-0"|attr:"placeholder:Purchase Date" }}
+                                    {{ form.purchase_date|add_class:"form-control form-control-lg shadow-sm"|attr:"placeholder:Purchase Date" }}
                                     <label>Purchase / Add Date</label>
                                 </div>
                             </div>
 
                             <div class="col-md-6 animate__animated animate__fadeInRight">
                                 <div class="form-floating">
-                                    {{ form.cost|add_class:"form-control form-control-lg shadow-sm border-0"|attr:"placeholder:Cost" }}
+                                    {{ form.cost|add_class:"form-control form-control-lg shadow-sm"|attr:"placeholder:Cost" }}
                                     <label>Cost</label>
                                 </div>
                             </div>
 
                             <div class="col-md-6 animate__animated animate__fadeInLeft">
                                 <div class="form-floating">
-                                    {{ form.warranty|add_class:"form-select form-select-lg shadow-sm border-0"|attr:"id:id_warranty" }}
+                                    {{ form.warranty|add_class:"form-select form-select-lg shadow-sm"|attr:"id:id_warranty" }}
                                     <label>Warranty</label>
                                 </div>
                                 {{ form.other_warranty }}
@@ -231,7 +347,8 @@
                             <div class="col-md-6 animate__animated animate__fadeInRight">
                                 <div class="form-floating">
                                     <input type="date" id="warrantyEndDate"
-                                        class="form-control form-control-lg shadow-sm border-0" readonly>
+                                        class="form-control form-control-lg shadow-sm" readonly
+                                        style="background: linear-gradient(135deg,#f6f9fd,#eef3fa);">
                                     <label>Warranty End Date (Auto)</label>
                                 </div>
                             </div>
@@ -239,8 +356,8 @@
                             {% if form.image %}
                             <div class="col-12 animate__animated animate__fadeInUp">
                                 <div class="custom-file-upload">
-                                    <i class="bi bi-cloud-arrow-up fs-2 text-primary mb-2"></i>
-                                    <p class="mb-2 fw-medium">Upload Asset Image</p>
+                                    <i class="bi bi-cloud-arrow-up fs-2 text-primary mb-2" style="color: var(--primary) !important;"></i>
+                                    <p class="mb-2 fw-semibold">Upload Asset Image</p>
                                     {{ form.image|add_class:"form-control" }}
                                     <div class="form-text mt-2">Maximum file size: 5MB (JPG, PNG)</div>
                                 </div>
@@ -255,7 +372,6 @@
                                     <i class="bi bi-check2-circle me-2"></i> Save Asset
                                 </span>
                             </button>
-
                         </div>
                     </form>
                 </div>
