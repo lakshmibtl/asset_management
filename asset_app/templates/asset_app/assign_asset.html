@@ -223,7 +223,7 @@
                         <select name="asset" class="form-control select2-modern" required>
                             <option value="">Choose an available asset...</option>
                             {% for a in assets %}
-                                <option value="{{ a.pk }}">{{ a.asset_type }} [{{ a.asset_id }}]</option>
+                                <option value="{{ a.pk }}" {% if pre_selected_asset|stringformat:"s" == a.pk|stringformat:"s" %}selected{% endif %}>{{ a.asset_type }} [{{ a.asset_id }}]</option>
                             {% endfor %}
                         </select>
                     </div>

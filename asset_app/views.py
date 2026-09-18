@@ -700,7 +700,7 @@ def add_asset(request):
                 asset = form.save()
                 if asset.status.lower() == "in use":
                     messages.info(request, "Asset added and marked as 'In Use'. Please assign it now.")
-                    return redirect('assign_asset')
+                    return redirect(f"{reverse('assign_asset')}?asset={asset.pk}")
                 else:
                     messages.success(request, "Asset added successfully!")
                     return redirect('view_assets')
@@ -862,15 +862,24 @@ def assign_asset(request):
             next_url = request.POST.get('next')
             if next_url:
                 return redirect(next_url)
-            return redirect(reverse('assign_asset'))
+            messages.success(request, "Asset assigned successfully!")
+            return redirect('view_assets')
     else:
         from .sync_employees import sync_employees_from_api
         sync_employees_from_api()
         form = AssignmentForm()
 
+    pre_selected_asset_id = request.GET.get('asset', '')
+    from django.db.models import Q
+    if pre_selected_asset_id:
+        assets_query = Asset.objects.filter(Q(status__iexact="Available") | Q(pk=pre_selected_asset_id)).order_by('asset_id')
+    else:
+        assets_query = Asset.objects.filter(status__iexact="Available").order_by('asset_id')
+
     context = {
         "employees": Employee.objects.all().order_by('name'),
-        "assets": Asset.objects.filter(status__iexact="Available").order_by('asset_id'),
+        "assets": assets_query,
+        "pre_selected_asset": pre_selected_asset_id,
         "today_date": timezone.now().date().isoformat(),
         "form": form,
     }
