@@ -2130,12 +2130,12 @@ def support_reports(request):
     # Fetch manual work reports
     manual_reports = Notification.objects.filter(notification_type='work_report').order_by('-created_at')
     
-    # Only fetch users who are in the Network department or Network Support group
+    # Only fetch users who are in the Network department or Network Support group, excluding superadmins
     team_members = User.objects.filter(
         Q(groups__name__icontains='Network') |
         Q(department__icontains='Network') |
         Q(username__in=Employee.objects.filter(department__icontains='Network').values('employee_id'))
-    ).distinct().annotate(
+    ).exclude(role__in=['superadmin', 'admin', 'manager']).distinct().annotate(
         resolved_count=Count('assigned_tickets', filter=Q(assigned_tickets__status__icontains='resolv') | Q(assigned_tickets__status__icontains='clos')),
         manual_report_count=Count('notifications', filter=Q(notifications__notification_type='work_report'))
     ).prefetch_related(
@@ -2143,7 +2143,10 @@ def support_reports(request):
         Prefetch('notifications', queryset=manual_reports, to_attr='manual_report_list')
     )
         
-    return render(request, 'asset_app/support_reports.html', {'team_members': team_members})
+    if not is_admin:
+        team_members = team_members.filter(id=request.user.id)
+        
+    return render(request, 'asset_app/support_reports.html', {'team_members': team_members, 'is_admin': is_admin})
 
 @login_required
 def download_support_report(request):
