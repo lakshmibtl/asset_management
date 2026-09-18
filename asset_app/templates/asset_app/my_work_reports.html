@@ -460,10 +460,12 @@
                     {% endif %}
 
                     <div class="wr-card-foot">
-                        <button type="button" class="btn-edt" data-bs-toggle="offcanvas" data-bs-target="#editReportOffcanvas{{ report.id }}">
+                        <button type="button" class="btn-edt" data-bs-toggle="offcanvas"
+                            data-bs-target="#editReportOffcanvas{{ report.id }}">
                             <i class="bi bi-pencil-fill me-1"></i> Edit
                         </button>
-                        <form method="POST" action="{% url 'delete_work_report' report.id %}" class="m-0" onsubmit="return confirm('Are you sure you want to delete this report?');">
+                        <form method="POST" action="{% url 'delete_work_report' report.id %}" class="m-0"
+                            onsubmit="return confirm('Are you sure you want to delete this report?');">
                             {% csrf_token %}
                             <button type="submit" class="btn-del">
                                 <i class="bi bi-trash-fill me-1"></i> Delete
@@ -475,13 +477,16 @@
         </div>
 
         <!-- Edit Report Offcanvas -->
-        <div class="offcanvas offcanvas-end wr-offcanvas" tabindex="-1" id="editReportOffcanvas{{ report.id }}" aria-labelledby="editReportOffcanvasLabel{{ report.id }}" style="width: 480px;">
+        <div class="offcanvas offcanvas-end wr-offcanvas" tabindex="-1" id="editReportOffcanvas{{ report.id }}"
+            aria-labelledby="editReportOffcanvasLabel{{ report.id }}" style="width: 480px;">
             <div class="offcanvas-header">
-                <h5 class="offcanvas-title" id="editReportOffcanvasLabel{{ report.id }}"><i class="bi bi-pencil-square me-2" style="color:var(--brand);"></i>Edit Work Report</h5>
+                <h5 class="offcanvas-title" id="editReportOffcanvasLabel{{ report.id }}"><i
+                        class="bi bi-pencil-square me-2" style="color:var(--brand);"></i>Edit Work Report</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body">
-                <form method="POST" action="{% url 'edit_work_report' report.id %}" enctype="multipart/form-data" class="wr-form">
+                <form method="POST" action="{% url 'edit_work_report' report.id %}" enctype="multipart/form-data"
+                    class="wr-form">
                     {% csrf_token %}
                     <div class="mb-4">
                         <label class="form-label">Report Title / Date</label>
@@ -495,7 +500,8 @@
                         <label class="form-label">Upload New Excel Report (Optional)</label>
                         <input type="file" class="form-control" name="excel_file" accept=".xls,.xlsx,.csv">
                         {% if report.link %}
-                        <small class="text-muted d-block mt-2"><i class="bi bi-info-circle me-1"></i>Uploading a new file will replace the existing one.</small>
+                        <small class="text-muted d-block mt-2"><i class="bi bi-info-circle me-1"></i>Uploading a new
+                            file will replace the existing one.</small>
                         {% endif %}
                     </div>
                     <button type="submit" class="btn-brand-block mt-2">
@@ -511,7 +517,8 @@
                 <div class="icon"><i class="bi bi-journal-x"></i></div>
                 <p>No Reports Yet</p>
                 <p>You haven't submitted any manual work reports.</p>
-                <button type="button" class="btn btn-outline-brand" data-bs-toggle="offcanvas" data-bs-target="#newReportOffcanvas">
+                <button type="button" class="btn btn-outline-brand" data-bs-toggle="offcanvas"
+                    data-bs-target="#newReportOffcanvas">
                     Submit Your First Report
                 </button>
             </div>
@@ -521,35 +528,39 @@
 </div>
 
 <!-- New Report Offcanvas -->
-<div class="offcanvas offcanvas-end wr-offcanvas" tabindex="-1" id="newReportOffcanvas" aria-labelledby="newReportOffcanvasLabel" style="width: 480px;">
-  <div class="offcanvas-header">
-    <h5 class="offcanvas-title" id="newReportOffcanvasLabel"><i class="bi bi-journal-text me-2" style="color:var(--brand);"></i>Submit Work Report</h5>
-    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-  </div>
-  <div class="offcanvas-body">
-    <p class="text-muted mb-4" style="font-size:0.9rem;">Manually enter your daily or weekly work activities.</p>
-    <form method="POST" action="{% url 'submit_work_report' %}" enctype="multipart/form-data" class="wr-form">
-        {% csrf_token %}
+<div class="offcanvas offcanvas-end wr-offcanvas" tabindex="-1" id="newReportOffcanvas"
+    aria-labelledby="newReportOffcanvasLabel" style="width: 480px;">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="newReportOffcanvasLabel"><i class="bi bi-journal-text me-2"
+                style="color:var(--brand);"></i>Submit Work Report</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <p class="text-muted mb-4" style="font-size:0.9rem;">Manually enter your daily or weekly work activities.</p>
+        <form method="POST" action="{% url 'submit_work_report' %}" enctype="multipart/form-data" class="wr-form">
+            {% csrf_token %}
 
-        <div class="mb-4">
-            <label for="title" class="form-label">Report Title / Date</label>
-            <input type="text" class="form-control" id="title" name="title" placeholder="e.g. Daily Report - 17 Sep" required>
-        </div>
+            <div class="mb-4">
+                <label for="title" class="form-label">Report Title / Date</label>
+                <input type="text" class="form-control" id="title" name="title" placeholder="e.g. Daily Report - 17 Sep"
+                    required>
+            </div>
 
-        <div class="mb-4">
-            <label for="description" class="form-label">Work Activities</label>
-            <textarea class="form-control" id="description" name="description" rows="6" placeholder="Describe tasks completed..."></textarea>
-        </div>
+            <div class="mb-4">
+                <label for="description" class="form-label">Work Activities</label>
+                <textarea class="form-control" id="description" name="description" rows="6"
+                    placeholder="Describe tasks completed..."></textarea>
+            </div>
 
-        <div class="mb-4">
-            <label for="excel_file" class="form-label">Upload Excel Report (Optional)</label>
-            <input type="file" class="form-control" id="excel_file" name="excel_file" accept=".xls,.xlsx,.csv">
-        </div>
+            <div class="mb-4">
+                <label for="excel_file" class="form-label">Upload Excel Report (Optional)</label>
+                <input type="file" class="form-control" id="excel_file" name="excel_file" accept=".xls,.xlsx,.csv">
+            </div>
 
-        <button type="submit" class="btn-brand-block mt-2">
-            <i class="bi bi-send me-2"></i>Submit Report
-        </button>
-    </form>
-  </div>
+            <button type="submit" class="btn-brand-block mt-2">
+                <i class="bi bi-send me-2"></i>Submit Report
+            </button>
+        </form>
+    </div>
 </div>
 {% endblock %}

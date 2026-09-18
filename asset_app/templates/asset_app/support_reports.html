@@ -6,10 +6,12 @@
             <i class="bi bi-bar-chart-line-fill text-primary me-2"></i>Network Support Reports
         </h2>
         <div>
-            <a href="{% url 'my_work_reports' %}" class="btn btn-outline-secondary rounded-pill px-4 fw-semibold shadow-sm me-2">
+            <a href="{% url 'my_work_reports' %}"
+                class="btn btn-outline-secondary rounded-pill px-4 fw-semibold shadow-sm me-2">
                 <i class="bi bi-journal-text me-2"></i>My Manual Reports
             </a>
-            <a href="{% url 'download_support_report' %}" class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm">
+            <a href="{% url 'download_support_report' %}"
+                class="btn btn-primary rounded-pill px-4 fw-semibold shadow-sm">
                 <i class="bi bi-download me-2"></i>Download Team CSV
             </a>
         </div>
@@ -17,8 +19,9 @@
 
     <div class="card border-0 shadow-sm" style="border-radius: 20px;">
         <div class="card-body p-4">
-            <p class="text-muted mb-4">Tracking the number of tickets successfully resolved or closed by members of the Network Support team.</p>
-            
+            <p class="text-muted mb-4">Tracking the number of tickets successfully resolved or closed by members of the
+                Network Support team.</p>
+
             {% if team_members %}
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
@@ -33,7 +36,8 @@
                         <tr>
                             <td class="py-3">
                                 <div class="d-flex align-items-center">
-                                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3"
+                                        style="width: 40px; height: 40px;">
                                         <i class="bi bi-person-fill fs-5"></i>
                                     </div>
                                     <div>
@@ -43,10 +47,14 @@
                                 </div>
                             </td>
                             <td class="py-3 text-center">
-                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold me-2" type="button" data-bs-toggle="collapse" data-bs-target="#tickets-{{ member.id }}" aria-expanded="false" aria-controls="tickets-{{ member.id }}">
+                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold me-2"
+                                    type="button" data-bs-toggle="collapse" data-bs-target="#tickets-{{ member.id }}"
+                                    aria-expanded="false" aria-controls="tickets-{{ member.id }}">
                                     Tickets <span class="badge bg-success rounded-pill ms-1">{{ member.resolved_count }}</span>
                                 </button>
-                                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#manual-{{ member.id }}" aria-expanded="false" aria-controls="manual-{{ member.id }}">
+                                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-semibold"
+                                    type="button" data-bs-toggle="collapse" data-bs-target="#manual-{{ member.id }}"
+                                    aria-expanded="false" aria-controls="manual-{{ member.id }}">
                                     Manual Reports <span class="badge bg-info rounded-pill ms-1">{{ member.manual_report_count }}</span>
                                 </button>
                             </td>
@@ -54,21 +62,27 @@
                         <tr class="collapse" id="tickets-{{ member.id }}">
                             <td colspan="2" class="p-0 border-0">
                                 <div class="bg-light p-3 rounded-bottom border border-top-0 mb-3 mx-2">
-                                    <h6 class="text-primary fw-bold mb-3"><i class="bi bi-ticket-perforated me-2"></i>Resolved Tickets</h6>
+                                    <h6 class="text-primary fw-bold mb-3"><i
+                                            class="bi bi-ticket-perforated me-2"></i>Resolved Tickets</h6>
                                     {% if member.resolved_ticket_list %}
                                     <ul class="list-group list-group-flush bg-transparent">
                                         {% for t in member.resolved_ticket_list %}
-                                        <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+                                        <li
+                                            class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
                                             <div>
-                                                <a href="{% url 'ticket_detail' t.id %}" class="fw-bold text-decoration-none">#{{ t.id }} - {{ t.subject }}</a>
-                                                <br><small class="text-muted">Reported on {{ t.created_at|date:"M d, Y" }}</small>
+                                                <a href="{% url 'ticket_detail' t.id %}"
+                                                    class="fw-bold text-decoration-none">#{{ t.id }} - {{ t.subject
+                                                    }}</a>
+                                                <br><small class="text-muted">Reported on {{ t.created_at|date:"M d, Y"
+                                                    }}</small>
                                             </div>
                                             <span class="badge bg-secondary rounded-pill">{{ t.status }}</span>
                                         </li>
                                         {% endfor %}
                                     </ul>
                                     {% else %}
-                                    <p class="text-muted fst-italic mb-0 text-center py-3">This member hasn't resolved any tickets yet.</p>
+                                    <p class="text-muted fst-italic mb-0 text-center py-3">This member hasn't resolved
+                                        any tickets yet.</p>
                                     {% endif %}
                                 </div>
                             </td>
@@ -76,19 +90,24 @@
                         <tr class="collapse" id="manual-{{ member.id }}">
                             <td colspan="2" class="p-0 border-0">
                                 <div class="bg-light p-3 rounded-bottom border border-top-0 mb-3 mx-2">
-                                    <h6 class="text-secondary fw-bold mb-3"><i class="bi bi-journal-text me-2"></i>Manual Work Reports</h6>
+                                    <h6 class="text-secondary fw-bold mb-3"><i
+                                            class="bi bi-journal-text me-2"></i>Manual Work Reports</h6>
                                     {% if member.manual_report_list %}
                                     <ul class="list-group list-group-flush bg-transparent">
                                         {% for r in member.manual_report_list %}
-                                        <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
+                                        <li
+                                            class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
                                             <div>
                                                 <span class="fw-bold text-dark">{{ r.title }}</span>
-                                                <br><small class="text-muted">{{ r.message|default:"No description" }}</small>
+                                                <br><small class="text-muted">{{ r.message|default:"No description"
+                                                    }}</small>
                                             </div>
                                             <div class="text-end">
-                                                <small class="text-muted d-block mb-1">{{ r.created_at|date:"M d, Y" }}</small>
+                                                <small class="text-muted d-block mb-1">{{ r.created_at|date:"M d, Y"
+                                                    }}</small>
                                                 {% if r.link %}
-                                                <a href="{{ r.link }}" class="btn btn-sm btn-light border rounded-pill" target="_blank" download>
+                                                <a href="{{ r.link }}" class="btn btn-sm btn-light border rounded-pill"
+                                                    target="_blank" download>
                                                     <i class="bi bi-download me-1"></i> File
                                                 </a>
                                                 {% endif %}
@@ -97,7 +116,8 @@
                                         {% endfor %}
                                     </ul>
                                     {% else %}
-                                    <p class="text-muted fst-italic mb-0 text-center py-3">This member hasn't submitted any manual reports yet.</p>
+                                    <p class="text-muted fst-italic mb-0 text-center py-3">This member hasn't submitted
+                                        any manual reports yet.</p>
                                     {% endif %}
                                 </div>
                             </td>
@@ -110,7 +130,8 @@
             <div class="text-center py-5">
                 <i class="bi bi-inbox fs-1 text-muted opacity-50 mb-3 d-block"></i>
                 <h5 class="text-muted">No Network Support team members found.</h5>
-                <p class="text-muted">Add members in the <a href="{% url 'network_support_team' %}">Team Management</a> page.</p>
+                <p class="text-muted">Add members in the <a href="{% url 'network_support_team' %}">Team Management</a>
+                    page.</p>
             </div>
             {% endif %}
         </div>
