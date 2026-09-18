@@ -2508,6 +2508,49 @@ def submit_work_report(request):
         
     return redirect('my_work_reports')
 
+@login_required
+def edit_work_report(request, pk):
+    if not is_network_member(request.user):
+        messages.error(request, "Access Denied.")
+        return redirect('asset_dashboard')
+        
+    from .models import Notification
+    report = get_object_or_404(Notification, pk=pk, recipient=request.user, notification_type='work_report')
+    
+    if request.method == 'POST':
+        title = request.POST.get('title', '')
+        description = request.POST.get('description', '')
+        
+        if title:
+            report.title = title
+            report.message = description
+            
+            if 'excel_file' in request.FILES:
+                from django.core.files.storage import default_storage
+                excel_file = request.FILES['excel_file']
+                file_name = default_storage.save(f"work_reports/{excel_file.name}", excel_file)
+                report.link = default_storage.url(file_name)
+                
+            report.save()
+            messages.success(request, 'Work report updated successfully!')
+            
+    return redirect('my_work_reports')
+
+@login_required
+def delete_work_report(request, pk):
+    from .models import Notification
+    report = get_object_or_404(Notification, pk=pk, notification_type='work_report')
+    
+    is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'manager')
+    
+    if report.recipient == request.user or is_admin:
+        report.delete()
+        messages.success(request, 'Work report deleted successfully!')
+    else:
+        messages.error(request, 'You do not have permission to delete this report.')
+        
+    return redirect(request.META.get('HTTP_REFERER', 'my_work_reports'))
+
 
 @login_required
 def my_work_reports(request):

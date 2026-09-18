@@ -118,6 +118,8 @@ path('procurement/superadmin-reject/<int:pk>/', views.superadmin_reject, name='s
     path('activity-log/', views.activity_log, name='activity_log'),
     path('submit-work-report/', views.submit_work_report, name='submit_work_report'),
     path('my-work-reports/', views.my_work_reports, name='my_work_reports'),
+    path('work-reports/edit/<int:pk>/', views.edit_work_report, name='edit_work_report'),
+    path('work-reports/delete/<int:pk>/', views.delete_work_report, name='delete_work_report'),
     path('my-work-reports/download/', views.download_manual_reports, name='download_manual_reports'),
 ]
 
