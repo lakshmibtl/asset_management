@@ -369,12 +369,20 @@
                     <span class="tab-count">{{ active|length }}</span>
                 </button>
             </li>
+            <li class="nav-item" role="presentation" style="list-style:none;">
+                <button class="wt-tab" id="complete-tab" data-bs-toggle="pill" data-bs-target="#complete-pane"
+                    type="button" role="tab" aria-controls="complete-pane" aria-selected="false">
+                    <span class="dot" style="background:var(--brand);"></span>
+                    Complete
+                    <span class="tab-count">{{ complete|length }}</span>
+                </button>
+            </li>
         </ul>
     </div>
 
     <!-- Summary tiles -->
     <div class="row g-3 mb-4">
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-3">
             <div class="wt-stat d-flex align-items-center gap-3">
                 <div class="stat-icon" style="background:var(--red-soft);color:var(--red);">
                     <i class="bi bi-exclamation-circle"></i>
@@ -385,7 +393,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-3">
             <div class="wt-stat d-flex align-items-center gap-3">
                 <div class="stat-icon" style="background:var(--amber-soft);color:var(--amber);">
                     <i class="bi bi-clock-history"></i>
@@ -396,7 +404,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-12 col-md-3">
             <div class="wt-stat d-flex align-items-center gap-3">
                 <div class="stat-icon" style="background:var(--green-soft);color:var(--green);">
                     <i class="bi bi-check-circle"></i>
@@ -404,6 +412,17 @@
                 <div>
                     <div class="stat-label">Active</div>
                     <div class="stat-value">{{ active|length }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-3">
+            <div class="wt-stat d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:var(--brand-soft);color:var(--brand);">
+                    <i class="bi bi-shield-lock"></i>
+                </div>
+                <div>
+                    <div class="stat-label">Complete</div>
+                    <div class="stat-value">{{ complete|length }}</div>
                 </div>
             </div>
         </div>
@@ -557,6 +576,56 @@
                 <div class="icon"><i class="bi bi-box-seam"></i></div>
                 <p>No active warranties</p>
                 <p>No assets with active warranties found.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Complete Warranty -->
+        <div class="tab-pane fade" id="complete-pane" role="tabpanel" aria-labelledby="complete-tab" tabindex="0">
+            {% if complete %}
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for a in complete %}
+                <div class="col">
+                    <div class="wt-card">
+                        <div class="accent" style="background:var(--brand);"></div>
+                        <div class="wt-card-body">
+                            <div class="wt-card-head">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="t-icon" style="background:var(--brand-soft);color:var(--brand);"><i class="bi bi-pc-display"></i></div>
+                                    <div>
+                                        <a href="{% url 'asset_detail' a.pk %}" class="wt-asset-link">{{ a.asset_id }}</a>
+                                        {% if a.name %}<div class="wt-asset-name">{{ a.name }}</div>{% endif %}
+                                    </div>
+                                </div>
+                                <span class="wt-pill" style="background:var(--brand-soft);color:var(--brand);border:1px solid rgba(7, 81, 138, 0.2);"><i class="bi bi-shield-lock"></i>Complete</span>
+                            </div>
+
+                            <div class="wt-rows">
+                                <div class="wt-row"><span class="k">Type</span><span class="v">{{ a.asset_type }}</span></div>
+                                <div class="wt-row"><span class="k">Ends</span><span class="v" style="color:var(--brand);">Complete</span></div>
+                                <div class="wt-row"><span class="k">Time Left</span><span class="v" style="color:var(--brand);">Complete</span></div>
+                            </div>
+
+                            <div class="wt-card-foot">
+                                {% with a.assignment_set.all|dictsortreversed:"assigned_at"|first as cur %}
+                                {% if cur and cur.status == 'In Use' %}
+                                <i class="bi bi-person-circle" style="color:var(--muted);"></i>
+                                <span class="text-truncate">{{ cur.employee.name }}</span>
+                                {% else %}
+                                <span class="fst-italic" style="color:var(--muted);">Unassigned</span>
+                                {% endif %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="wt-empty">
+                <div class="icon"><i class="bi bi-shield-lock"></i></div>
+                <p>No complete warranties</p>
+                <p>No assets with complete warranties found.</p>
             </div>
             {% endif %}
         </div>

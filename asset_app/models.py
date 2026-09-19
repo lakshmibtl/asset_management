@@ -70,6 +70,7 @@ class Asset(models.Model):
         ('1', '1 Year'),
         ('2', '2 Years'),
         ('3', '3 Years'),
+        ('Complete', 'Complete Warranty'),
         ('Other', 'Other'),
     ]
 
@@ -110,6 +111,8 @@ class Asset(models.Model):
 
     @property
     def warranty_status(self):
+        if self.warranty == 'Complete':
+            return 'Complete Warranty'
         if not self.warranty_end_date:
             return 'No Warranty'
         days = self.days_until_warranty_end

@@ -463,8 +463,14 @@
                     return;
                 }
             } else if (warrantySelect) {
+                if (warrantySelect.value === 'Complete') {
+                    warrantyEndDate.type = 'text';
+                    warrantyEndDate.value = 'Complete';
+                    return;
+                }
                 years = parseInt(warrantySelect.value, 10);
                 if (isNaN(years)) {
+                    warrantyEndDate.type = 'date';
                     warrantyEndDate.value = '';
                     return;
                 }
@@ -481,6 +487,7 @@
             
             const mm = String(d.getMonth() + 1).padStart(2, '0');
             const dd = String(d.getDate()).padStart(2, '0');
+            warrantyEndDate.type = 'date';
             warrantyEndDate.value = d.getFullYear() + '-' + mm + '-' + dd;
         }
 

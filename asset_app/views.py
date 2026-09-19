@@ -808,11 +808,13 @@ def warranty_tracking(request):
     expired = [a for a in assets if a.warranty_end_date and a.warranty_end_date < now]
     expiring = [a for a in assets if a.warranty_end_date and now <= a.warranty_end_date <= ref_date]
     active = [a for a in assets if a.warranty_end_date and a.warranty_end_date > ref_date]
+    complete = [a for a in assets if a.warranty == 'Complete']
 
     context = {
         'expired': expired,
         'expiring': expiring,
         'active': active,
+        'complete': complete,
         'today': now,
     }
     return render(request, 'asset_app/warranty_tracking.html', context)
