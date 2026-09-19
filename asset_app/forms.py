@@ -141,7 +141,7 @@ class AssetForm(forms.ModelForm):
 
     class Meta:
         model = Asset
-        fields = ['asset_type', 'company_name', 'series_number', 'model', 'status', 'ram', 'storage', 'purchase_date', 'cost', 'warranty', 'image']
+        fields = ['asset_type', 'company_name', 'series_number', 'model', 'status', 'ram', 'storage', 'purchase_date', 'cost', 'warranty', 'warranty_end_date', 'image']
 
         widgets = {
             'company_name': forms.TextInput(attrs={
@@ -168,6 +168,10 @@ class AssetForm(forms.ModelForm):
                 'class': 'form-control form-control-lg rounded-3 shadow-sm',
                 'placeholder': 'Enter Cost',
                 'required': 'required'
+            }),
+            'warranty_end_date': forms.DateInput(attrs={
+                'class': 'form-control form-control-lg rounded-3 shadow-sm',
+                'type': 'date'
             }),
         }
 

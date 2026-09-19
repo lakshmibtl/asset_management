@@ -403,7 +403,7 @@ def dashboard(request):
     now_dt = now()
     this_start, this_end = _month_start_end(now_dt)
 
-    is_staff = request.user.is_staff or getattr(request.user, 'role', '') == 'superadmin'
+    is_staff = request.user.is_staff or getattr(request.user, 'role', '') in ('superadmin', 'admin', 'asset_admin')
     is_manager = getattr(request.user, 'role', '') == 'manager'
     is_employee = not (is_staff or is_manager)
 
@@ -925,7 +925,7 @@ def return_asset(request, pk):
             messages.error(request, f"No active assignment found for {asset.asset_id}.")
             return redirect('view_assets')
 
-        is_staff = request.user.is_staff or getattr(request.user, 'role', '') in ('superadmin', 'admin')
+        is_staff = request.user.is_staff or getattr(request.user, 'role', '') in ('superadmin', 'admin', 'asset_admin')
         is_manager = getattr(request.user, 'role', '') == 'manager'
         is_owner = (
             str(assign.employee.employee_id) == str(request.user.username)
@@ -959,7 +959,7 @@ def request_return_asset(request, pk):
             messages.error(request, f"No active assignment found for {asset.asset_id}.")
             return redirect('view_assets')
 
-        is_staff = request.user.is_staff or getattr(request.user, 'role', '') in ('superadmin', 'admin')
+        is_staff = request.user.is_staff or getattr(request.user, 'role', '') in ('superadmin', 'admin', 'asset_admin')
         is_manager = getattr(request.user, 'role', '') == 'manager'
         is_owner = (
             str(assign.employee.employee_id) == str(request.user.username)
@@ -998,7 +998,7 @@ def request_return_asset(request, pk):
 @login_required
 def process_return(request, pk):
     rq = get_object_or_404(ReturnRequest, pk=pk)
-    is_staff = request.user.is_staff or getattr(request.user, 'role', '') in ('superadmin', 'admin')
+    is_staff = request.user.is_staff or getattr(request.user, 'role', '') in ('superadmin', 'admin', 'asset_admin')
     is_manager = getattr(request.user, 'role', '') == 'manager'
     if not (is_staff or is_manager):
         messages.error(request, "Only an admin or manager can process return requests.")
@@ -1107,7 +1107,7 @@ def get_employee_details(request):
 # ------------------- RETURN REQUESTS (dedicated admin page) -------------------
 @login_required
 def return_requests(request):
-    is_staff = request.user.is_staff or getattr(request.user, 'role', '') in ('superadmin', 'admin')
+    is_staff = request.user.is_staff or getattr(request.user, 'role', '') in ('superadmin', 'admin', 'asset_admin')
     is_manager = getattr(request.user, 'role', '') == 'manager'
     if not (is_staff or is_manager):
         return redirect('asset_dashboard')
@@ -1175,7 +1175,7 @@ def return_requests(request):
 # ------------------- VIEW ASSETS (fixed) -------------------
 @login_required
 def view_assets(request):
-    is_staff = request.user.is_staff or getattr(request.user, 'role', '') == 'superadmin'
+    is_staff = request.user.is_staff or getattr(request.user, 'role', '') in ('superadmin', 'admin', 'asset_admin')
     is_manager = getattr(request.user, 'role', '') == 'manager'
         
     if is_staff:
@@ -1192,11 +1192,14 @@ def view_assets(request):
             status__iexact='In Use'
         )
 
-    # Unassigned assets
-    unassigned_assets = Asset.objects.filter(status__iexact='Available')
+    # Unassigned assets (includes Available, Under Repair, and custom statuses)
+    if is_staff:
+        unassigned_assets = Asset.objects.exclude(status__iexact='In Use')
+    else:
+        unassigned_assets = []
 
     # Calculate asset stats
-    if is_staff or is_manager:
+    if is_staff:
         asset_stats = Asset.objects.values('asset_type').annotate(
             total=Count('id'),
             in_use=Count('id', filter=Q(status__iexact='In Use')),
@@ -1253,7 +1256,7 @@ def view_assets(request):
 # ------------------- ASSIGNED EMPLOYEES -------------------
 @login_required
 def assigned_employees(request):
-    is_staff = request.user.is_staff or getattr(request.user, 'role', '') == 'superadmin'
+    is_staff = request.user.is_staff or getattr(request.user, 'role', '') in ('superadmin', 'admin', 'asset_admin')
     is_manager = getattr(request.user, 'role', '') == 'manager'
     
     if not (is_staff or is_manager):

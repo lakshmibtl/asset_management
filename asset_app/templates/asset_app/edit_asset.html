@@ -358,10 +358,8 @@
 
                             <div class="col-md-6 animate__animated animate__fadeInRight">
                                 <div class="form-floating">
-                                    <input type="date" id="warrantyEndDate"
-                                        class="form-control form-control-lg shadow-sm" readonly
-                                        style="background: linear-gradient(135deg,#f6f9fd,#eef3fa);">
-                                    <label>Warranty End Date (Auto)</label>
+                                    {{ form.warranty_end_date|add_class:"form-control form-control-lg shadow-sm"|attr:"placeholder:Warranty End Date" }}
+                                    <label>Warranty End Date</label>
                                 </div>
                             </div>
 

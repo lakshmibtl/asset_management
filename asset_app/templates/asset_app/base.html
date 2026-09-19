@@ -464,10 +464,14 @@
         </a>
         {% endif %}-->
 
-        {% if request.user.is_staff or request.user.role == 'manager' or request.user.role == 'superadmin' %}
+        {% if request.user.is_staff or request.user.role == 'manager' or request.user.role == 'superadmin' or request.user.role == 'admin' or request.user.role == 'asset_admin' %}
         <a href="{% url 'view_assets' %}"
             class="{% if 'view_assets' in request.resolver_match.url_name %}active{% endif %}">
             <i class="bi bi-box-seam"></i><span class="link-text">View Assets</span>
+        </a>
+        <a href="{% url 'assigned_employees' %}"
+            class="{% if 'assigned_employees' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="bi bi-people-fill"></i><span class="link-text">Assigned Employees</span>
         </a>
         {% if request.user.role != 'manager' %}
         <a href="{% url 'warranty_tracking' %}"

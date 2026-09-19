@@ -111,7 +111,7 @@ class Asset(models.Model):
 
     @property
     def warranty_status(self):
-        if self.warranty == 'Complete':
+        if self.warranty and self.warranty.lower() in ['complete', 'complete warranty']:
             return 'Complete Warranty'
         if not self.warranty_end_date:
             return 'No Warranty'

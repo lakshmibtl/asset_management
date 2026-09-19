@@ -253,8 +253,7 @@
                         <span class="card-title-chip">
                             <i class="bi bi-info-circle me-1"></i>Asset Information
                         </span>
-                        <span class="badge badge-status ms-auto"
-                            style="display:inline-block;
+                        <span class="badge badge-status ms-auto" style="display:inline-block;
                             {% if asset.status == 'In Use' %} background: var(--grad-primary);
                             {% elif asset.status == 'Under Repair' or asset.status == 'Repair' %} background: var(--grad-amber);
                             {% elif asset.status == 'Available' %} background: var(--grad-green);
@@ -268,8 +267,7 @@
                         {% if asset.image %}
                         <div class="mb-3 text-center">
                             <img src="{{ asset.image.url }}" alt="{{ asset.asset_id }}"
-                                class="img-fluid rounded-4 shadow-sm"
-                                style="max-height: 250px; object-fit: contain;">
+                                class="img-fluid rounded-4 shadow-sm" style="max-height: 250px; object-fit: contain;">
                         </div>
                         {% endif %}
 
@@ -283,7 +281,8 @@
                             <div class="col-6 col-md-4 col-lg-3">
                                 <div class="info-tile">
                                     <div class="tile-label"><i class="bi bi-grid me-1"></i>Type</div>
-                                    <div class="tile-value">{{ asset.asset_type }}{% if asset.name %}<br><span class="text-muted fw-normal small">{{ asset.name }}</span>{% endif %}</div>
+                                    <div class="tile-value">{{ asset.asset_type }}{% if asset.name %}<br><span
+                                            class="text-muted fw-normal small">{{ asset.name }}</span>{% endif %}</div>
                                 </div>
                             </div>
                             <div class="col-6 col-md-4 col-lg-3">
@@ -346,9 +345,12 @@
                                         {% if asset.warranty_status == 'Expired' %}
                                         <div><span class="badge-warranty bg-danger text-white">Expired</span></div>
                                         {% elif asset.warranty_status == 'Expiring Soon' %}
-                                        <div><span class="badge-warranty bg-warning text-dark">Expiring Soon</span></div>
+                                        <div><span class="badge-warranty bg-warning text-dark">Expiring Soon</span>
+                                        </div>
                                         {% elif asset.warranty_status == 'Active' %}
                                         <div><span class="badge-warranty bg-success text-white">{{ asset.days_until_warranty_end }} days left</span></div>
+                                        {% elif asset.warranty_status == 'Complete Warranty' %}
+                                        <div><span class="badge-warranty bg-info text-dark">Complete</span></div>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -391,8 +393,7 @@
 
                     {% if qr_base64 %}
                     <div class="qr-frame d-inline-block">
-                        <img src="data:image/png;base64,{{ qr_base64 }}"
-                            class="img-fluid rounded-3"
+                        <img src="data:image/png;base64,{{ qr_base64 }}" class="img-fluid rounded-3"
                             style="width:230px; height:230px; object-fit:cover;">
 
                     </div>
@@ -434,7 +435,8 @@
                             <h5 class="fw-bold m-0 text-dark">
                                 <i class="bi bi-person-circle me-1" style="color: var(--primary);"></i> {{ record.employee.name }}
                             </h5>
-                            <span class="badge rounded-pill px-3 py-1 text-white" style="background: var(--grad-primary);">
+                            <span class="badge rounded-pill px-3 py-1 text-white"
+                                style="background: var(--grad-primary);">
                                 {{ record.status }}
                             </span>
                         </div>
@@ -458,14 +460,16 @@
                             {% endif %}
                             {% if record.status == 'Returned' and record.return_reason %}
                             <div class="col-sm-12 mt-2 pt-1 border-top">
-                                <small class="text-muted"><i class="bi bi-arrow-return-left me-1"></i> Return Reason: <strong>{{ record.return_reason }}</strong></small>
+                                <small class="text-muted"><i class="bi bi-arrow-return-left me-1"></i> Return Reason:
+                                    <strong>{{ record.return_reason }}</strong></small>
                             </div>
                             {% endif %}
                         </div>
 
                         {% if record.is_signed %}
                         <div class="mt-3 pt-2 border-top">
-                            <a href="{% url 'view_agreement' record.pk %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                            <a href="{% url 'view_agreement' record.pk %}"
+                                class="btn btn-sm btn-outline-primary rounded-pill px-3">
                                 {% if record.status == 'Returned' %}
                                 <i class="bi bi-file-earmark-text me-1"></i> View Return Letter
                                 {% else %}
@@ -498,7 +502,8 @@
                 <h5 class="modal-title fw-bold" id="editHistoryModalLabel">
                     <i class="bi bi-pencil-square me-2"></i>Edit Tracking History
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
             </div>
             <div class="modal-body p-4 bg-light">
                 {% if edit_history %}
@@ -513,7 +518,8 @@
                                 <h6 class="fw-bold m-0" style="color: var(--primary);">
                                     <i class="bi bi-pencil-square me-1"></i> Asset Edited
                                 </h6>
-                                <span class="badge rounded-pill px-3 py-1 text-white" style="background: var(--grad-primary);">
+                                <span class="badge rounded-pill px-3 py-1 text-white"
+                                    style="background: var(--grad-primary);">
                                     Update
                                 </span>
                             </div>

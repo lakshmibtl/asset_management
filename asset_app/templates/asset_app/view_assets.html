@@ -723,7 +723,7 @@
             </div>
             <div>
                 <h4 class="fw-bold mb-0 text-secondary">
-                    Available Stock
+                    Available & Other Stock
                 </h4>
                 <p class="text-muted small mb-0">Warehouse stock ready to be assigned.</p>
             </div>
@@ -739,8 +739,11 @@
                     <div class="card-body p-4 d-flex flex-column">
 
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="badge badge-avail status-badge">
-                                <i class="bi bi-check-circle-fill me-1"></i> Available
+                            <span class="badge status-badge" style="
+                                {% if a.status == 'Available' %} background: linear-gradient(135deg, rgba(22, 163, 74, 0.1), rgba(34, 197, 94, 0.18)); color: #15803d;
+                                {% elif a.status == 'Under Repair' %} background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 191, 36, 0.18)); color: #b45309;
+                                {% else %} background: linear-gradient(135deg, rgba(100, 116, 139, 0.1), rgba(148, 163, 184, 0.18)); color: #334155; {% endif %}">
+                                <i class="bi bi-info-circle-fill me-1"></i> {{ a.status|default:"Available" }}
                             </span>
                             <span class="text-muted small fw-semibold">ID: {{ a.asset_id }}</span>
                         </div>
