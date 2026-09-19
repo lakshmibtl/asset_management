@@ -453,7 +453,7 @@
                             <div class="wt-rows">
                                 <div class="wt-row"><span class="k">Type</span><span class="v">{{ a.asset_type }}</span></div>
                                 <div class="wt-row"><span class="k">Warranty</span><span class="v">{{ a.warranty_label }}</span></div>
-                                <div class="wt-row"><span class="k">Ends</span><span class="v v-danger">{{ a.warranty_end_date|date:"d M, Y" }}</span></div>
+                                <div class="wt-row"><span class="k">Ends</span><span class="v v-danger">{{ a.warranty_end_date|date:"d/m/Y" }}</span></div>
                             </div>
 
                             <div class="wt-card-foot">
@@ -502,7 +502,7 @@
 
                             <div class="wt-rows">
                                 <div class="wt-row"><span class="k">Type</span><span class="v">{{ a.asset_type }}</span></div>
-                                <div class="wt-row"><span class="k">Ends</span><span class="v v-warning">{{ a.warranty_end_date|date:"d M, Y" }}</span></div>
+                                <div class="wt-row"><span class="k">Ends</span><span class="v v-warning">{{ a.warranty_end_date|date:"d/m/Y" }}</span></div>
                                 <div class="wt-row"><span class="k">Time Left</span><span class="v v-warning">{{ a.days_until_warranty_end }} days</span></div>
                             </div>
 
@@ -552,7 +552,7 @@
 
                             <div class="wt-rows">
                                 <div class="wt-row"><span class="k">Type</span><span class="v">{{ a.asset_type }}</span></div>
-                                <div class="wt-row"><span class="k">Ends</span><span class="v v-success">{{ a.warranty_end_date|date:"d M, Y" }}</span></div>
+                                <div class="wt-row"><span class="k">Ends</span><span class="v v-success">{% if a.warranty == 'Complete' %}Complete{% else %}{{ a.warranty_end_date|date:"d/m/Y" }}{% endif %}</span></div>
                                 <div class="wt-row"><span class="k">Time Left</span><span class="v v-success">{{ a.days_until_warranty_end }} days</span></div>
                             </div>
 

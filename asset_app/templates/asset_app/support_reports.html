@@ -73,7 +73,7 @@
                                                 <a href="{% url 'ticket_detail' t.id %}"
                                                     class="fw-bold text-decoration-none">#{{ t.id }} - {{ t.subject
                                                     }}</a>
-                                                <br><small class="text-muted">Reported on {{ t.created_at|date:"M d, Y"
+                                                <br><small class="text-muted">Reported on {{ t.created_at|date:"d/m/Y"
                                                     }}</small>
                                             </div>
                                             <span class="badge bg-secondary rounded-pill">{{ t.status }}</span>
@@ -103,7 +103,7 @@
                                                     }}</small>
                                             </div>
                                             <div class="text-end">
-                                                <small class="text-muted d-block mb-1">{{ r.created_at|date:"M d, Y"
+                                                <small class="text-muted d-block mb-1">{{ r.created_at|date:"d/m/Y"
                                                     }}</small>
                                                 {% if r.link %}
                                                 <a href="{{ r.link }}" class="btn btn-sm btn-light border rounded-pill"

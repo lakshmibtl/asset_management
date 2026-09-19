@@ -629,7 +629,7 @@
                                         <span class="text-muted">System</span>
                                         {% endif %}
                                     </td>
-                                    <td class="text-muted small">{{ ticket.created_at|date:"M d, Y" }}</td>
+                                    <td class="text-muted small">{{ ticket.created_at|date:"d/m/Y" }}</td>
                                     <td>
                                         {% if ticket.assigned_to %}
                                         <div class="d-flex align-items-center">
@@ -735,7 +735,7 @@
                             <div class="d-flex flex-column ms-3 text-truncate">
                                 <span class="fw-semibold text-dark text-truncate" style="font-size:0.85rem;" title="{{ ticket.display_name }}">{{ ticket.display_name }}</span>
                                 <span class="text-muted" style="font-size:0.75rem;">
-                                    <i class="bi bi-clock me-1"></i>{{ ticket.created_at|date:"M d, Y" }}
+                                    <i class="bi bi-clock me-1"></i>{{ ticket.created_at|date:"d/m/Y" }}
                                 </span>
                             </div>
                         </div>

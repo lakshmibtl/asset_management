@@ -532,7 +532,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="fw-bold" style="color: #334155;">{{ assignment.assigned_date|default:assignment.assigned_at|date:"d M, Y" }}</span>
+                                    <span class="fw-bold" style="color: #334155;">{{ assignment.assigned_date|default:assignment.assigned_at|date:"d/m/Y" }}</span>
                                 </td>
                             </tr>
                             {% empty %}
@@ -576,7 +576,7 @@
                             <span class="emp-status-badge" style="background: #e2e8f0; color: #475569;">{{ req.status
                                 }}</span>
                             {% endif %}
-                            <div class="emp-req-date">{{ req.request_date|date:"d M Y" }}</div>
+                            <div class="emp-req-date">{{ req.request_date|date:"d/m/Y" }}</div>
                         </div>
                     </div>
                     {% empty %}
@@ -960,7 +960,7 @@
                             {% else %}
                             <div class="badge-pill badge-pending mb-2">Pending</div>
                             {% endif %}
-                            <div class="req-date">{{ r.request_date|date:"d M Y" }}</div>
+                            <div class="req-date">{{ r.request_date|date:"d/m/Y" }}</div>
                         </div>
                     </div>
                     {% empty %}
@@ -1594,7 +1594,7 @@
                         <td style="font-weight:600; font-size:0.8rem;">REQ{{ r.id|stringformat:"04d" }}</td>
                         <td>{{ r.requested_by.username|title }}</td>
                         <td>{{ r.asset_type }}</td>
-                        <td>{{ r.request_date|date:"d M Y" }}</td>
+                        <td>{{ r.request_date|date:"d/m/Y" }}</td>
                         <td>
                             {% if r.status == 'Approved' %}<span class="badge-status bs-approved">Approved</span>
                             {% elif r.status == 'Rejected' %}<span class="badge-status bs-rejected">Rejected</span>

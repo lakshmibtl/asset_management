@@ -549,7 +549,7 @@
                             <span class="type-chip">{{ rq.asset.asset_type }}</span>
                         </td>
                         <td class="reason-text">{{ rq.reason }}</td>
-                        <td class="rr-cell-muted">{{ rq.created_at|date:"d M Y" }}<div style="font-size:0.75rem;">{{ rq.created_at|date:"H:i" }}</div></td>
+                        <td class="rr-cell-muted">{{ rq.created_at|date:"d/m/Y" }}<div style="font-size:0.75rem;">{{ rq.created_at|date:"H:i" }}</div></td>
                         <td class="text-end">
                             <form method="POST" action="{% url 'process_return' rq.pk %}"
                                 class="d-inline-flex justify-content-end gap-2">
@@ -643,7 +643,7 @@
                                 —
                             {% endif %}
                         </td>
-                        <td class="rr-cell-muted">{{ rq.processed_at|date:"d M Y, H:i"|default:"—" }}</td>
+                        <td class="rr-cell-muted">{{ rq.processed_at|date:"d/m/Y, H:i"|default:"—" }}</td>
                         {% if request.user.role == 'superadmin' or request.user.role == 'admin' %}
                         <td class="text-end">
                             <div class="d-inline-flex gap-2">

@@ -552,7 +552,7 @@
                             <span class="pill-type mt-1 d-inline-block">{{ rq.asset.asset_type }}</span>
                         </td>
                         <td class="text-muted small" style="max-width: 260px;">{{ rq.reason }}</td>
-                        <td class="text-muted small">{{ rq.created_at|date:"d M Y, H:i" }}</td>
+                        <td class="text-muted small">{{ rq.created_at|date:"d/m/Y, H:i" }}</td>
                         <td class="text-end">
                             <form method="POST" action="{% url 'process_return' rq.pk %}"
                                 class="d-flex justify-content-end gap-2">
