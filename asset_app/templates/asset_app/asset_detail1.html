@@ -396,6 +396,16 @@
                             <div class="col-sm-6 mt-1 fw-medium" style="color: var(--primary);">
                                 <i class="bi bi-calendar-event me-1"></i> Date: {% if record.assigned_date %}{{ record.assigned_date }}{% else %}{{ record.assigned_at|date:"d M Y, h:i A" }}{% endif %}
                             </div>
+                            {% if record.assigned_by %}
+                            <div class="col-sm-12 mt-2 pt-1 border-top">
+                                <small class="text-muted"><i class="bi bi-person-gear me-1"></i> Assigned by: <strong>{{ record.assigned_by.username }}</strong></small>
+                            </div>
+                            {% endif %}
+                            {% if record.status == 'Returned' and record.return_reason %}
+                            <div class="col-sm-12 mt-2 pt-1 border-top">
+                                <small class="text-muted"><i class="bi bi-arrow-return-left me-1"></i> Return Reason: <strong>{{ record.return_reason }}</strong></small>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

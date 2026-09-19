@@ -2451,61 +2451,90 @@ def activity_log(request):
         messages.error(request, "Access denied. Only Super Admin can view the Activity Log.")
         return redirect('asset_dashboard')
         
-    from .models import Assignment, ReturnRequest, ProcurementRequestWorkflow, Notification
+    from .models import Assignment, ReturnRequest, ProcurementRequestWorkflow, Notification, Asset, AssetHistory
     
     # Gather recent activities
     recent_assignments = Assignment.objects.all().select_related('asset', 'employee', 'assigned_by').order_by('-assigned_at')[:30]
     recent_returns = ReturnRequest.objects.exclude(status='Pending').select_related('asset', 'employee', 'processed_by').order_by('-processed_at')[:30]
     recent_procurements = ProcurementRequestWorkflow.objects.exclude(status='Pending Manager Approval').select_related('requested_by').order_by('-created_at')[:30]
     recent_reports = Notification.objects.filter(notification_type='work_report').select_related('recipient').order_by('-created_at')[:30]
+    recent_assets = Asset.objects.all().order_by('-created_at')[:30]
+    recent_edits = AssetHistory.objects.select_related('asset', 'edited_by').order_by('-edited_at')[:30]
     
     # Combine and sort them
     activities = []
     
     for a in recent_assignments:
+        user_name = (a.assigned_by.get_full_name() or a.assigned_by.username) if a.assigned_by else 'System'
         activities.append({
             'type': 'Assignment',
             'icon': 'bi-person-plus',
             'color': '#0d6efd',
             'bg': 'rgba(13,110,253,.12)',
             'title': f"Asset Assigned: {a.asset.asset_id}",
-            'message': f"Assigned to {a.employee.name} by {a.assigned_by.username if a.assigned_by else 'System'}.",
+            'message': f"Assigned to {a.employee.name} by {user_name}.",
             'timestamp': a.assigned_at
         })
         
     for r in recent_returns:
         if r.processed_at:
+            user_name = (r.processed_by.get_full_name() or r.processed_by.username) if r.processed_by else 'System'
             activities.append({
                 'type': 'Return',
                 'icon': 'bi-arrow-return-left',
                 'color': '#198754',
                 'bg': 'rgba(25,135,84,.12)',
                 'title': f"Return {r.get_status_display()}: {r.asset.asset_id}",
-                'message': f"Processed by {r.processed_by.username if r.processed_by else 'System'}.",
+                'message': f"Processed by {user_name}.",
                 'timestamp': r.processed_at
             })
             
     for p in recent_procurements:
         timestamp = p.completed_date if p.completed_date else p.created_at
+        user_name = (p.requested_by.get_full_name() or p.requested_by.username) if p.requested_by else 'System'
         activities.append({
             'type': 'Procurement',
             'icon': 'bi-cart-check',
             'color': '#6f42c1',
             'bg': 'rgba(111,66,193,.12)',
             'title': f"Procurement: {p.asset_type}",
-            'message': f"Status: {p.status}. Requested by {p.requested_by.username}.",
+            'message': f"Status: {p.status}. Requested by {user_name}.",
             'timestamp': timestamp
         })
         
     for w in recent_reports:
+        user_name = (w.recipient.get_full_name() or w.recipient.username) if w.recipient else 'System'
         activities.append({
             'type': 'Work Report',
             'icon': 'bi-journal-check',
             'color': '#0dcaf0',
             'bg': 'rgba(13,202,240,.12)',
             'title': f"Work Report: {w.title}",
-            'message': f"Submitted by {w.recipient.username if w.recipient else 'Unknown'}.",
+            'message': f"Submitted by {user_name}.",
             'timestamp': w.created_at
+        })
+
+    for a in recent_assets:
+        activities.append({
+            'type': 'Asset Created',
+            'icon': 'bi-plus-circle',
+            'color': '#10b981',  # green color for additions
+            'bg': 'rgba(16,185,129,.12)',
+            'title': f"New Asset Added: {a.asset_id}",
+            'message': f"Type: {a.asset_type}. Added by System.",
+            'timestamp': a.created_at
+        })
+        
+    for h in recent_edits:
+        user_name = (h.edited_by.get_full_name() or h.edited_by.username) if h.edited_by else 'System'
+        activities.append({
+            'type': 'Asset Edited',
+            'icon': 'bi-pencil-square',
+            'color': '#f59e0b',  # warning/amber color for edits
+            'bg': 'rgba(245,158,11,.12)',
+            'title': f"Asset Details Edited: {h.asset.asset_id}",
+            'message': f"Modified by {user_name}.",
+            'timestamp': h.edited_at
         })
         
     activities.sort(key=lambda x: x['timestamp'], reverse=True)
