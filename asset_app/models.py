@@ -80,17 +80,17 @@ class Asset(models.Model):
     company_name = models.CharField(max_length=100, blank=True)
     series_number = models.CharField(max_length=100, blank=True)
     model = models.CharField(max_length=100, blank=True)
-    status = models.CharField(max_length=50, choices=ASSET_STATUS, default='Available')
+    status = models.CharField(max_length=50, default='Available')
 
-    ram = models.CharField(max_length=50, choices=RAM_CHOICES, blank=True, null=True)
-    storage = models.CharField(max_length=50, choices=STORAGE_CHOICES, blank=True, null=True)
+    ram = models.CharField(max_length=50, blank=True, null=True)
+    storage = models.CharField(max_length=50, blank=True, null=True)
 
     image = models.ImageField(upload_to='assets/', blank=True, null=True)
     qr_code_base64 = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     purchase_date = models.DateField(blank=True, null=True)
     cost = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    warranty = models.CharField(max_length=10, choices=WARRANTY_CHOICES, blank=True, null=True)
+    warranty = models.CharField(max_length=50, blank=True, null=True)
     warranty_end_date = models.DateField(blank=True, null=True)
 
 

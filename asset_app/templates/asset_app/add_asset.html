@@ -274,6 +274,7 @@
                                     {{ form.ram|add_class:"form-select form-select-lg shadow-sm" }}
                                     <label>RAM</label>
                                 </div>
+                                {{ form.other_ram }}
                             </div>
 
                             <div class="col-md-6 animate__animated animate__fadeInRight" id="storageContainer">
@@ -281,6 +282,7 @@
                                     {{ form.storage|add_class:"form-select form-select-lg shadow-sm" }}
                                     <label>Storage</label>
                                 </div>
+                                {{ form.other_storage }}
                             </div>
 
                             <div class="col-md-6 animate__animated animate__fadeInLeft">
@@ -293,7 +295,7 @@
                             <div class="col-md-6 animate__animated animate__fadeInRight">
                                 <div class="form-floating">
                                     {{ form.cost|add_class:"form-control form-control-lg shadow-sm"|attr:"placeholder:Cost" }}
-                                    <label>Cost</label>
+                                    <label>Cost <span class="text-danger">*</span></label>
                                 </div>
                             </div>
 
@@ -433,6 +435,46 @@
             // Trigger on load in case of re-render with errors
             if (warrantySelect.value === 'Other') {
                 otherWarrantyInput.style.display = 'block';
+            }
+        }
+        
+        const ramSelect = document.getElementById('id_ram');
+        const otherRamInput = document.getElementById('otherRamInput');
+        
+        if (ramSelect && otherRamInput) {
+            ramSelect.addEventListener('change', function () {
+                if (this.value === 'Other') {
+                    otherRamInput.style.display = 'block';
+                    otherRamInput.required = true;
+                } else {
+                    otherRamInput.style.display = 'none';
+                    otherRamInput.required = false;
+                    otherRamInput.value = ''; // clear out
+                }
+            });
+
+            if (ramSelect.value === 'Other') {
+                otherRamInput.style.display = 'block';
+            }
+        }
+        
+        const storageSelect = document.getElementById('id_storage');
+        const otherStorageInput = document.getElementById('otherStorageInput');
+        
+        if (storageSelect && otherStorageInput) {
+            storageSelect.addEventListener('change', function () {
+                if (this.value === 'Other') {
+                    otherStorageInput.style.display = 'block';
+                    otherStorageInput.required = true;
+                } else {
+                    otherStorageInput.style.display = 'none';
+                    otherStorageInput.required = false;
+                    otherStorageInput.value = ''; // clear out
+                }
+            });
+
+            if (storageSelect.value === 'Other') {
+                otherStorageInput.style.display = 'block';
             }
         }
     });

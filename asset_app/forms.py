@@ -87,7 +87,18 @@ class AssetForm(forms.ModelForm):
         choices=Asset.RAM_CHOICES,
         required=False,
         widget=forms.Select(attrs={
-            'class': 'form-select form-select-lg rounded-3 shadow-sm'
+            'class': 'form-select form-select-lg rounded-3 shadow-sm',
+            'id': 'id_ram'
+        })
+    )
+
+    other_ram = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control form-control-lg rounded-3 shadow-sm mt-2',
+            'placeholder': 'Enter custom RAM...',
+            'style': 'display: none;',
+            'id': 'otherRamInput'
         })
     )
 
@@ -95,7 +106,18 @@ class AssetForm(forms.ModelForm):
         choices=Asset.STORAGE_CHOICES,
         required=False,
         widget=forms.Select(attrs={
-            'class': 'form-select form-select-lg rounded-3 shadow-sm'
+            'class': 'form-select form-select-lg rounded-3 shadow-sm',
+            'id': 'id_storage'
+        })
+    )
+
+    other_storage = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control form-control-lg rounded-3 shadow-sm mt-2',
+            'placeholder': 'Enter custom storage...',
+            'style': 'display: none;',
+            'id': 'otherStorageInput'
         })
     )
 
@@ -144,7 +166,8 @@ class AssetForm(forms.ModelForm):
             }),
             'cost': forms.NumberInput(attrs={
                 'class': 'form-control form-control-lg rounded-3 shadow-sm',
-                'placeholder': 'Enter Cost'
+                'placeholder': 'Enter Cost',
+                'required': 'required'
             }),
         }
 
@@ -155,6 +178,7 @@ class AssetForm(forms.ModelForm):
         self.fields['company_name'].required = True
         self.fields['series_number'].required = True
         self.fields['model'].required = True
+        self.fields['cost'].required = True
 
         # Handle custom asset type on Edit
         if self.instance and self.instance.pk:
@@ -177,6 +201,20 @@ class AssetForm(forms.ModelForm):
             if self.instance.warranty and self.instance.warranty not in valid_warranties:
                 self.initial['other_warranty'] = self.instance.warranty
                 self.initial['warranty'] = 'Other'
+
+        # Handle custom RAM on Edit
+        if self.instance and self.instance.pk:
+            valid_rams = [choice[0] for choice in Asset.RAM_CHOICES]
+            if self.instance.ram and self.instance.ram not in valid_rams:
+                self.initial['other_ram'] = self.instance.ram
+                self.initial['ram'] = 'Other'
+                
+        # Handle custom storage on Edit
+        if self.instance and self.instance.pk:
+            valid_storages = [choice[0] for choice in Asset.STORAGE_CHOICES]
+            if self.instance.storage and self.instance.storage not in valid_storages:
+                self.initial['other_storage'] = self.instance.storage
+                self.initial['storage'] = 'Other'
 
     def clean(self):
         cleaned_data = super().clean()
@@ -207,6 +245,24 @@ class AssetForm(forms.ModelForm):
                 self.add_error('other_warranty', 'Please specify the custom warranty.')
             else:
                 cleaned_data['warranty'] = other_warranty.strip()
+
+        ram = cleaned_data.get('ram')
+        other_ram = cleaned_data.get('other_ram')
+        
+        if ram == 'Other':
+            if not other_ram:
+                self.add_error('other_ram', 'Please specify the custom RAM.')
+            else:
+                cleaned_data['ram'] = other_ram.strip()
+                
+        storage = cleaned_data.get('storage')
+        other_storage = cleaned_data.get('other_storage')
+        
+        if storage == 'Other':
+            if not other_storage:
+                self.add_error('other_storage', 'Please specify the custom storage.')
+            else:
+                cleaned_data['storage'] = other_storage.strip()
         
         return cleaned_data
 
