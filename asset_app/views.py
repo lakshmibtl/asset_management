@@ -1645,21 +1645,28 @@ def update_request_status(request, pk):
 # ------------------- DELETE / PUBLIC -------------------
 @login_required
 def delete_asset(request, pk):
-    is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
+    is_admin = request.user.is_staff or request.user.is_superuser or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
     if not is_admin:
-        messages.error(request, "Only Admins can delete assets.")
+        messages.error(request, "Only Admins and Super Admins can delete assets.")
         return redirect('view_assets')
         
     asset = get_object_or_404(Asset, pk=pk)
+    asset_id_display = asset.asset_id
     
-    if request.method == 'POST':
-        asset.delete()
-        messages.success(request, f"Asset {asset.asset_id} deleted successfully.")
-        return redirect('view_assets')
+    try:
+        from django.db import connection, transaction
+        with transaction.atomic():
+            with connection.cursor() as cursor:
+                for table in ['asset_app_maintenancerecord', 'asset_app_maintenanceplan', 'asset_app_returnrequest', 'asset_app_assignment', 'asset_app_ticket', 'asset_app_assethistory']:
+                    try:
+                        cursor.execute(f"DELETE FROM {table} WHERE asset_id = %s", [asset.pk])
+                    except Exception:
+                        pass
+            asset.delete()
+        messages.success(request, f"Asset {asset_id_display} deleted successfully.")
+    except Exception as e:
+        messages.error(request, f"Could not delete asset {asset_id_display}: {e}")
         
-    # If not POST (e.g. from the old <a> tag), delete anyway for backward compatibility, but ideally should be POST
-    asset.delete()
-    messages.success(request, f"Asset {asset.asset_id} deleted successfully.")
     return redirect('view_assets')
 
 

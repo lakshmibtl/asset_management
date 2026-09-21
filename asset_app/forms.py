@@ -165,24 +165,27 @@ class AssetForm(forms.ModelForm):
 
     class Meta:
         model = Asset
-        fields = ['asset_type', 'company_name', 'series_number', 'model', 'status', 'ram', 'storage', 'purchase_date', 'cost', 'warranty', 'warranty_end_date', 'image']
+        fields = ['asset_type', 'model', 'series_number', 'vendor_name', 'company_name', 'status', 'ram', 'storage', 'purchase_date', 'cost', 'warranty', 'warranty_end_date', 'image']
 
         widgets = {
+            'model': forms.TextInput(attrs={
+                'class': 'form-control form-control-lg rounded-3 shadow-sm',
+                'placeholder': 'Enter Model Name',
+                'required': 'required'
+            }),
+            'series_number': forms.TextInput(attrs={
+                'class': 'form-control form-control-lg rounded-3 shadow-sm',
+                'placeholder': 'Enter Serial / Series Number',
+                'required': 'required'
+            }),
+            'vendor_name': forms.TextInput(attrs={
+                'class': 'form-control form-control-lg rounded-3 shadow-sm',
+                'placeholder': 'Enter Vendor Name',
+            }),
             'company_name': forms.TextInput(attrs={
                 'class': 'form-control form-control-lg rounded-3 shadow-sm',
                 'placeholder': 'Enter Company Name',
                 'required': 'required'   # ✅ browser validation
-            }),
-
-            'series_number': forms.TextInput(attrs={
-                'class': 'form-control form-control-lg rounded-3 shadow-sm',
-                'placeholder': 'Enter Series Number',
-                'required': 'required'
-            }),
-            'model': forms.TextInput(attrs={
-                'class': 'form-control form-control-lg rounded-3 shadow-sm',
-                'placeholder': 'Enter Model',
-                'required': 'required'
             }),
             'cost': forms.NumberInput(attrs={
                 'class': 'form-control form-control-lg rounded-3 shadow-sm',

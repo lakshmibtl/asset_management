@@ -247,8 +247,8 @@
 
                             <div class="col-md-6 animate__animated animate__fadeInLeft">
                                 <div class="form-floating">
-                                    {{ form.company_name|add_class:"form-control form-control-lg shadow-sm"|attr:"required"|attr:"placeholder:Company" }}
-                                    <label>Manufacturer/Company</label>
+                                    {{ form.model|add_class:"form-control form-control-lg shadow-sm"|attr:"required"|attr:"placeholder:Model" }}
+                                    <label>Model Name</label>
                                 </div>
                             </div>
 
@@ -261,12 +261,19 @@
 
                             <div class="col-md-6 animate__animated animate__fadeInLeft">
                                 <div class="form-floating">
-                                    {{ form.model|add_class:"form-control form-control-lg shadow-sm"|attr:"required"|attr:"placeholder:Model" }}
-                                    <label>Model Name</label>
+                                    {{ form.vendor_name|add_class:"form-control form-control-lg shadow-sm"|attr:"placeholder:Vendor Name" }}
+                                    <label>Vendor Name</label>
                                 </div>
                             </div>
 
                             <div class="col-md-6 animate__animated animate__fadeInRight">
+                                <div class="form-floating">
+                                    {{ form.company_name|add_class:"form-control form-control-lg shadow-sm"|attr:"required"|attr:"placeholder:Company" }}
+                                    <label>Manufacturer/Company</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 animate__animated animate__fadeInLeft">
                                 <div class="form-floating" id="statusContainer">
                                     {{ form.status|add_class:"form-select form-select-lg shadow-sm"|attr:"required"|attr:"id:id_status" }}
                                     <label> Status</label>
