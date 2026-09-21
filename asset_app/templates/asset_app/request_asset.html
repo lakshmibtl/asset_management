@@ -233,6 +233,7 @@
                     <div class="col-md-6">
                         <label class="f-label" for="{{ form.required_date.id_for_label }}">Required Date</label>
                         {{ form.required_date|add_class:"f-control" }}
+                        <div class="form-text">Format: DD/MM/YYYY</div>
                         {% if form.required_date.errors %}
                         <div class="text-danger small mt-1 fw-medium">{{ form.required_date.errors }}</div>
                         {% endif %}

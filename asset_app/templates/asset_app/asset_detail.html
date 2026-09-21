@@ -451,7 +451,7 @@
                                 <i class="bi bi-person-badge me-1"></i> ID: {{ record.employee.employee_id }}
                             </div>
                             <div class="col-sm-6 mt-1 fw-medium" style="color: var(--primary);">
-                                <i class="bi bi-calendar-event me-1"></i> Date: {% if record.assigned_date %}{{ record.assigned_date }}{% else %}{{ record.assigned_at|date:"d/m/Y, h:i A" }}{% endif %}
+                                <i class="bi bi-calendar-event me-1"></i> Date: {% if record.assigned_date %}{{ record.assigned_date|date:"d/m/Y" }}{% else %}{{ record.assigned_at|date:"d/m/Y, h:i A" }}{% endif %}
                             </div>
                             {% if record.assigned_by %}
                             <div class="col-sm-12 mt-2 pt-1 border-top">

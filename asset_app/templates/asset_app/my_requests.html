@@ -21,7 +21,7 @@
                     <td>{{ req.asset.asset_id }} ({{ req.asset.asset_type }})</td>
                     <td>{{ req.reason }}</td>
                     <td>{{ req.status }}</td>
-                    <td>{{ req.requested_at }}</td>
+                    <td>{{ req.requested_at|date:"d/m/Y" }}</td>
                 </tr>
                 {% empty %}
                 <tr>

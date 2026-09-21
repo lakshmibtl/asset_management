@@ -18,6 +18,18 @@
         --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
+    .fm-hint {
+        font-size: 0.8em;
+        font-weight: 400;
+        opacity: 0.8;
+        margin-left: 4px;
+    }
+
+    .form-floating > .form-control:not(:read-only),
+    .form-floating > .form-control[type="text"] {
+        cursor: text;
+    }
+
     /* ============ HERO ============ */
     .form-hero {
         background: var(--grad-primary);
@@ -336,8 +348,9 @@
 
                             <div class="col-md-6 animate__animated animate__fadeInLeft">
                                 <div class="form-floating">
-                                    {{ form.purchase_date|add_class:"form-control form-control-lg shadow-sm"|attr:"placeholder:Purchase Date" }}
-                                    <label>Purchase / Add Date</label>
+                                    {{ form.purchase_date|add_class:"form-control form-control-lg shadow-sm"|attr:"placeholder:DD/MM/YYYY"|attr:"autocomplete:off" }}
+                                    <label>Purchase / Add Date <span class="fm-hint">(DD/MM/YYYY)</span></label>
+                                    <div class="form-text">Format: DD/MM/YYYY</div>
                                 </div>
                             </div>
 
@@ -358,8 +371,9 @@
 
                             <div class="col-md-6 animate__animated animate__fadeInRight">
                                 <div class="form-floating">
-                                    {{ form.warranty_end_date|add_class:"form-control form-control-lg shadow-sm"|attr:"placeholder:Warranty End Date" }}
-                                    <label>Warranty End Date</label>
+                                    {{ form.warranty_end_date|add_class:"form-control form-control-lg shadow-sm"|attr:"placeholder:DD/MM/YYYY"|attr:"autocomplete:off" }}
+                                    <label>Warranty End Date <span class="fm-hint">(DD/MM/YYYY)</span></label>
+                                    <div class="form-text">Format: DD/MM/YYYY</div>
                                 </div>
                             </div>
 
@@ -536,14 +550,33 @@
     document.addEventListener('DOMContentLoaded', function () {
         const purchaseDateInput = document.getElementById('id_purchase_date');
         const warrantySelect = document.getElementById('id_warranty');
-        const warrantyEndDate = document.getElementById('warrantyEndDate');
-        const today = new Date().toISOString().split('T')[0];
-        purchaseDateInput.max = today;
+        const warrantyEndDate = document.getElementById('id_warranty_end_date');
+
+        if (!purchaseDateInput) return;
+
+        function parseDmY(s) {
+            const m = (s || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (!m) return null;
+            const d = new Date(+m[3], (+m[2]) - 1, +m[1]);
+            return (d.getDate() === +m[1] && d.getMonth() === (+m[2]) - 1) ? d : null;
+        }
+
+        function toDmY(d) {
+            return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+        }
+
+        let purchaseFlat = null;
+        let warrantyFlat = null;
+        if (window.__dmy) {
+            purchaseFlat = window.__dmy['id_purchase_date'] || null;
+            warrantyFlat = window.__dmy['id_warranty_end_date'] || null;
+        }
 
         function calculateWarrantyEndDate() {
-            const baseDate = purchaseDateInput.value || today;
+            let base = parseDmY(purchaseDateInput.value);
+            if (!base) base = new Date();
             let years = 0, months = 0, days = 0;
-            
+
             if (warrantySelect && warrantySelect.value === 'Other') {
                 const otherInput = document.getElementById('otherWarrantyInput');
                 const customVal = (otherInput ? otherInput.value : '').toLowerCase().trim();
@@ -555,36 +588,35 @@
                     if (unit === 'month') months = num;
                     if (unit === 'day') days = num;
                 } else {
-                    warrantyEndDate.value = '';
+                    warrantyFlat ? warrantyFlat.clear() : (warrantyEndDate.value = '');
                     return;
                 }
             } else if (warrantySelect) {
                 if (warrantySelect.value === 'Complete') {
-                    warrantyEndDate.type = 'text';
-                    warrantyEndDate.value = 'Complete';
+                    warrantyFlat ? warrantyFlat.clear() : (warrantyEndDate.value = '');
                     return;
                 }
                 years = parseInt(warrantySelect.value, 10);
                 if (isNaN(years)) {
-                    warrantyEndDate.type = 'date';
-                    warrantyEndDate.value = '';
+                    warrantyFlat ? warrantyFlat.clear() : (warrantyEndDate.value = '');
                     return;
                 }
             }
-            
-            const d = new Date(baseDate + 'T00:00:00');
+
+            const d = new Date(base);
             if (isNaN(d.getTime())) {
-                warrantyEndDate.value = '';
+                warrantyFlat ? warrantyFlat.clear() : (warrantyEndDate.value = '');
                 return;
             }
             d.setFullYear(d.getFullYear() + years);
             d.setMonth(d.getMonth() + months);
             d.setDate(d.getDate() + days);
-            
-            const mm = String(d.getMonth() + 1).padStart(2, '0');
-            const dd = String(d.getDate()).padStart(2, '0');
-            warrantyEndDate.type = 'date';
-            warrantyEndDate.value = d.getFullYear() + '-' + mm + '-' + dd;
+
+            if (warrantyFlat) {
+                warrantyFlat.setDate(d, true);
+            } else {
+                warrantyEndDate.value = toDmY(d);
+            }
         }
 
         if (warrantySelect) {
@@ -596,10 +628,8 @@
             otherWarrantyInput.addEventListener('input', calculateWarrantyEndDate);
             otherWarrantyInput.addEventListener('change', calculateWarrantyEndDate);
         }
-        if (purchaseDateInput) {
-            purchaseDateInput.addEventListener('change', calculateWarrantyEndDate);
-            purchaseDateInput.addEventListener('input', calculateWarrantyEndDate);
-        }
+        purchaseDateInput.addEventListener('change', calculateWarrantyEndDate);
+        purchaseDateInput.addEventListener('input', calculateWarrantyEndDate);
         calculateWarrantyEndDate();
     });
 

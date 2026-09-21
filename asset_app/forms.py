@@ -139,6 +139,30 @@ class AssetForm(forms.ModelForm):
         })
     )
 
+    purchase_date = forms.DateField(
+        required=False,
+        input_formats=['%d/%m/%Y'],
+        widget=forms.DateInput(
+            attrs={
+                'class': 'form-control form-control-lg rounded-3 shadow-sm',
+                'placeholder': 'DD/MM/YYYY',
+            },
+            format='%d/%m/%Y',
+        ),
+    )
+
+    warranty_end_date = forms.DateField(
+        required=False,
+        input_formats=['%d/%m/%Y'],
+        widget=forms.DateInput(
+            attrs={
+                'class': 'form-control form-control-lg rounded-3 shadow-sm',
+                'placeholder': 'DD/MM/YYYY',
+            },
+            format='%d/%m/%Y',
+        ),
+    )
+
     class Meta:
         model = Asset
         fields = ['asset_type', 'company_name', 'series_number', 'model', 'status', 'ram', 'storage', 'purchase_date', 'cost', 'warranty', 'warranty_end_date', 'image']
@@ -160,18 +184,10 @@ class AssetForm(forms.ModelForm):
                 'placeholder': 'Enter Model',
                 'required': 'required'
             }),
-            'purchase_date': forms.DateInput(attrs={
-                'class': 'form-control form-control-lg rounded-3 shadow-sm',
-                'type': 'date'
-            }),
             'cost': forms.NumberInput(attrs={
                 'class': 'form-control form-control-lg rounded-3 shadow-sm',
                 'placeholder': 'Enter Cost',
                 'required': 'required'
-            }),
-            'warranty_end_date': forms.DateInput(attrs={
-                'class': 'form-control form-control-lg rounded-3 shadow-sm',
-                'type': 'date'
             }),
         }
 
@@ -281,6 +297,18 @@ from .models import Assignment, AssetRequest
 # 🔹 Assignment Form  ✅ MUST BE EXACT NAME
 # ---------------------------------------------------------
 class AssignmentForm(forms.ModelForm):
+    assigned_date = forms.DateField(
+        required=False,
+        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        widget=forms.DateInput(
+            attrs={
+                'class': 'form-control',
+                'placeholder': 'DD/MM/YYYY',
+            },
+            format='%d/%m/%Y',
+        ),
+    )
+
     class Meta:
         model = Assignment
         fields = ['asset', 'employee', 'status', 'assigned_date']
@@ -294,10 +322,6 @@ class AssignmentForm(forms.ModelForm):
             'status': forms.Select(attrs={
                 'class': 'form-select form-select-lg custom-input'
             }),
-            'assigned_date': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'date',
-            }, format='%Y-%m-%d'),
         }
 
 
@@ -315,6 +339,18 @@ class AssetRequestForm(forms.ModelForm):
     asset_category = forms.CharField(
         required=False,
         widget=forms.Select(choices=AssetRequest.ASSET_TYPES, attrs={'class': 'form-select'})
+    )
+
+    required_date = forms.DateField(
+        required=False,
+        input_formats=['%d/%m/%Y'],
+        widget=forms.DateInput(
+            attrs={
+                'class': 'form-control',
+                'placeholder': 'DD/MM/YYYY',
+            },
+            format='%d/%m/%Y',
+        ),
     )
 
     other_asset_category = forms.CharField(
@@ -343,10 +379,6 @@ class AssetRequestForm(forms.ModelForm):
                 'class': 'form-control',
                 'rows': 3,
                 'placeholder': 'Reason for request'
-            }),
-            'required_date': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'date'
             }),
         }
 

@@ -532,7 +532,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="fw-bold" style="color: #334155;">{{ assignment.assigned_date|default:assignment.assigned_at|date:"d/m/Y" }}</span>
+                                    <span class="fw-bold" style="color: #334155;">{{ assignment.assigned_date|date:"d/m/Y"|default:assignment.assigned_at|date:"d/m/Y" }}</span>
                                 </td>
                             </tr>
                             {% empty %}

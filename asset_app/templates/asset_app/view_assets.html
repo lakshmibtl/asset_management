@@ -901,7 +901,8 @@
 
             <div class="mb-4">
                 <label class="form-label fw-bold small text-muted"><i class="bi bi-calendar-event me-1"></i> ASSIGNMENT DATE</label>
-                <input type="date" name="assigned_date" class="form-control" value="{{ today_date }}" max="{{ today_date }}">
+                <input type="text" name="assigned_date" class="form-control" id="assignOffcanvasDate" placeholder="DD/MM/YYYY" value="{{ today_date_display }}">
+                <div class="form-text">Format: DD/MM/YYYY</div>
             </div>
 
             <div class="mb-4">
@@ -1171,11 +1172,26 @@
         const assignForm = document.getElementById('assignFormOffcanvas');
         if (assignForm) {
             const assignToday = "{{ today_date }}";
+            const assignTodayObj = new Date(assignToday + 'T00:00:00');
+
+            function parseAssignDate(s) {
+                const m = (s || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+                if (!m) return null;
+                const d = new Date(+m[3], (+m[2]) - 1, +m[1]);
+                return (d.getDate() === +m[1] && d.getMonth() === (+m[2]) - 1) ? d : null;
+            }
+
+            const assignOffcanvasInput = document.getElementById('assignOffcanvasDate');
+            if (assignOffcanvasInput && window.__dmy && window.__dmy['assignOffcanvasDate']) {
+                window.__dmy['assignOffcanvasDate'].set('maxDate', assignToday);
+            }
+
             assignForm.addEventListener('submit', function () {
                 const dateInput = this.querySelector('input[name="assigned_date"]');
                 if (dateInput && dateInput.value) {
-                    if (dateInput.value > assignToday) {
-                        dateInput.value = assignToday;
+                    const parsed = parseAssignDate(dateInput.value);
+                    if (parsed && parsed > assignTodayObj) {
+                        dateInput.value = '';
                         dateInput.setCustomValidity('Future dates are not allowed.');
                         dateInput.reportValidity();
                         return false;
@@ -1186,8 +1202,9 @@
             const assignDateInput = assignForm.querySelector('input[name="assigned_date"]');
             if (assignDateInput) {
                 assignDateInput.addEventListener('change', function () {
-                    if (this.value > assignToday) {
-                        this.value = assignToday;
+                    const parsed = parseAssignDate(this.value);
+                    if (parsed && parsed > assignTodayObj) {
+                        this.value = '';
                     }
                 });
             }

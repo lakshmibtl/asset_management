@@ -830,10 +830,12 @@ def assign_asset(request):
     if request.method == "POST":
         assigned_date = request.POST.get('assigned_date')
         assigned_date_obj = None
-        try:
-            assigned_date_obj = datetime.strptime(assigned_date, '%Y-%m-%d').date()
-        except (TypeError, ValueError):
-            pass
+        for fmt in ('%d/%m/%Y', '%Y-%m-%d'):
+            try:
+                assigned_date_obj = datetime.strptime(assigned_date, fmt).date()
+                break
+            except (TypeError, ValueError):
+                continue
         if assigned_date_obj and assigned_date_obj > timezone.now().date():
             messages.error(request, "Assignment date cannot be in the future.")
             next_url = request.POST.get('next')
@@ -883,6 +885,7 @@ def assign_asset(request):
         "assets": assets_query,
         "pre_selected_asset": pre_selected_asset_id,
         "today_date": timezone.now().date().isoformat(),
+        "today_date_display": timezone.now().date().strftime('%d/%m/%Y'),
         "form": form,
     }
     return render(request, "asset_app/assign_asset.html", context)
@@ -1245,6 +1248,7 @@ def view_assets(request):
         'asset_stats': asset_stats,
         'employees': Employee.objects.all().order_by('name'),
         'today_date': timezone.now().date().isoformat(),
+        'today_date_display': timezone.now().date().strftime('%d/%m/%Y'),
         'is_employee': not (is_staff or is_manager),
         'type_dropdowns': type_dropdowns,
         'employee_requested': employee_requested,
