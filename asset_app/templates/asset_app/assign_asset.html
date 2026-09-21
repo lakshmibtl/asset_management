@@ -5,7 +5,7 @@
 
 {% block content %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
 
 <style>
     :root {
@@ -108,14 +108,17 @@
     }
 
     /* ============ INPUTS ============ */
-    .form-control, .form-select, .select2-container--default .select2-selection--single {
+    .form-control,
+    .form-select,
+    .select2-container--default .select2-selection--single {
         border: 1.5px solid var(--input-border) !important;
         border-radius: 12px !important;
         padding: 10px 15px !important;
         height: auto !important;
     }
 
-    .form-control:focus, .form-select:focus {
+    .form-control:focus,
+    .form-select:focus {
         border-color: var(--primary) !important;
         box-shadow: 0 0 0 0.25rem rgba(7, 81, 138, 0.12) !important;
     }
@@ -131,8 +134,11 @@
     /* ============ SUBMIT ============ */
     .btn-assign {
         background: var(--grad-primary);
-        color: white; border: none; border-radius: 14px;
-        padding: 16px; font-weight: 700;
+        color: white;
+        border: none;
+        border-radius: 14px;
+        padding: 16px;
+        font-weight: 700;
         transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         box-shadow: 0 14px 30px rgba(7, 81, 138, 0.35);
     }
@@ -145,11 +151,22 @@
     }
 
     /* Visual pulse for data updates */
-    .data-update-flash { animation: pulse 0.5s ease-in-out; }
+    .data-update-flash {
+        animation: pulse 0.5s ease-in-out;
+    }
+
     @keyframes pulse {
-        0% { background-color: #f8fafc; }
-        50% { background-color: #e0f2fe; }
-        100% { background-color: #f8fafc; }
+        0% {
+            background-color: #f8fafc;
+        }
+
+        50% {
+            background-color: #e0f2fe;
+        }
+
+        100% {
+            background-color: #f8fafc;
+        }
     }
 </style>
 
@@ -179,11 +196,12 @@
                     </span>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold small text-muted"><i class="bi bi-person-search me-1" style="color: var(--primary);"></i> EMPLOYEE SEARCH</label>
+                        <label class="form-label fw-bold small text-muted"><i class="bi bi-person-search me-1"
+                                style="color: var(--primary);"></i> EMPLOYEE SEARCH</label>
                         <select id="empSelect" name="employee" class="form-control select2-modern" required>
                             <option value="">Search by ID or Name...</option>
                             {% for emp in employees %}
-                                <option value="{{ emp.id }}">{{ emp.employee_id }} — {{ emp.name }}</option>
+                            <option value="{{ emp.id }}">{{ emp.employee_id }} — {{ emp.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -204,8 +222,13 @@
                     </div>
 
                     <div class="mt-4">
-                        <label class="form-label fw-bold small text-muted"><i class="bi bi-calendar-event me-1" style="color: var(--primary);"></i> ASSIGNMENT DATE</label>
-                        <input type="text" name="assigned_date" class="form-control" id="assignDatePicker" placeholder="DD/MM/YYYY" value="{{ today_date_display }}">
+                        <label class="form-label fw-bold small text-muted">
+                            <i class="bi bi-calendar-event me-1" style="color: var(--primary);"></i>
+                            ASSIGNMENT DATE
+                        </label>
+
+                        <input type="text" name="assigned_date" class="form-control" id="assignDatePicker"
+                            placeholder="DD/MM/YYYY" autocomplete="off" value="{{ today_date_display }}">
                         <div class="form-text">Format: DD/MM/YYYY</div>
                     </div>
                 </div>
@@ -214,23 +237,27 @@
             <div class="col-lg-7 animate__animated animate__fadeInRight">
                 <div class="card card-modern p-4 h-100">
                     <div class="card-top" style="background: linear-gradient(135deg,#15803d,#22c55e);"></div>
-                    <span class="section-indicator mt-3" style="background: linear-gradient(135deg, rgba(34,197,94,.1), rgba(34,197,94,.18)); color:#15803d;">
-                        <span class="step-num" style="background: linear-gradient(135deg,#15803d,#22c55e);"><i class="bi bi-cpu-fill" style="font-size:0.75rem;"></i></span>
+                    <span class="section-indicator mt-3"
+                        style="background: linear-gradient(135deg, rgba(34,197,94,.1), rgba(34,197,94,.18)); color:#15803d;">
+                        <span class="step-num" style="background: linear-gradient(135deg,#15803d,#22c55e);"><i
+                                class="bi bi-cpu-fill" style="font-size:0.75rem;"></i></span>
                         Step 2 — Allocation
                     </span>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold small text-muted"><i class="bi bi-box-seam me-1" style="color: var(--primary);"></i> SELECT EQUIPMENT</label>
+                        <label class="form-label fw-bold small text-muted"><i class="bi bi-box-seam me-1"
+                                style="color: var(--primary);"></i> SELECT EQUIPMENT</label>
                         <select name="asset" class="form-control select2-modern" required>
                             <option value="">Choose an available asset...</option>
                             {% for a in assets %}
-                                <option value="{{ a.pk }}" {% if pre_selected_asset|stringformat:"s" == a.pk|stringformat:"s" %}selected{% endif %}>{{ a.asset_type }} [{{ a.asset_id }}]</option>
+                            <option value="{{ a.pk }}" {% if pre_selected_asset|stringformat:"s" == a.pk|stringformat:"s" %}selected{% endif %}>{{ a.asset_type }} [{{ a.asset_id }}]</option>
                             {% endfor %}
                         </select>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold small text-muted"><i class="bi bi-broadcast me-1" style="color: var(--primary);"></i> DEPLOYMENT STATUS</label>
+                        <label class="form-label fw-bold small text-muted"><i class="bi bi-broadcast me-1"
+                                style="color: var(--primary);"></i> DEPLOYMENT STATUS</label>
                         <select name="status" class="form-select">
                             <option value="In Use">In Use</option>
                             <option value="Temporary">Temporary Use</option>
@@ -252,98 +279,98 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
-$(document).ready(function () {
-    // 1. Initialize Select2
-    $('.select2-modern').select2({
-        width: '100%',
-        dropdownAutoWidth: true
-    });
+    $(document).ready(function () {
+        // 1. Initialize Select2
+        $('.select2-modern').select2({
+            width: '100%',
+            dropdownAutoWidth: true
+        });
 
-    const empSelect = $('#empSelect');
-    const empName = $('#empName');
-    const empDept = $('#empDept');
-    const empBranch = $('#empBranch');
+        const empSelect = $('#empSelect');
+        const empName = $('#empName');
+        const empDept = $('#empDept');
+        const empBranch = $('#empBranch');
 
-    // 2. AJAX Employee Data Fetch
-    empSelect.on('change', function () {
-        const empId = $(this).val();
-        
-        if (!empId) {
-            empName.val('—');
-            empDept.val('—');
-            empBranch.val('—');
-            return;
+        // 2. AJAX Employee Data Fetch
+        empSelect.on('change', function () {
+            const empId = $(this).val();
+
+            if (!empId) {
+                empName.val('—');
+                empDept.val('—');
+                empBranch.val('—');
+                return;
+            }
+
+            // Show loading state visually
+            empName.val('Syncing...');
+            empDept.val('Syncing...');
+            empBranch.val('Syncing...');
+
+            $.ajax({
+                url: '/asset/ajax/get-employee/', // Ensure this matches your URL configuration
+                method: 'GET',
+                data: { 'emp_id': empId },
+                dataType: 'json',
+                success: function (data) {
+                    // Apply data to fields
+                    empName.val(data.name || 'Not Found');
+                    empDept.val(data.department || 'Not Found');
+                    empBranch.val(data.branch || 'Not Found');
+
+                    // Visual feedback that data has updated
+                    $('.readonly-box').addClass('data-update-flash');
+                    setTimeout(() => $('.readonly-box').removeClass('data-update-flash'), 500);
+                },
+                error: function (xhr) {
+                    console.error("Error Response:", xhr.responseText);
+                    empName.val('Error fetching');
+                    empDept.val('Error fetching');
+                    empBranch.val('Error fetching');
+                }
+            });
+        });
+
+        // 3. Form Submission Handling
+        const ASSIGN_TODAY = "{{ today_date }}";
+        const todayDateObj = new Date(ASSIGN_TODAY + 'T00:00:00');
+
+        function parseAssignedDate(s) {
+            const m = (s || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (!m) return null;
+            const d = new Date(+m[3], (+m[2]) - 1, +m[1]);
+            return (d.getDate() === +m[1] && d.getMonth() === (+m[2]) - 1) ? d : null;
         }
 
-        // Show loading state visually
-        empName.val('Syncing...');
-        empDept.val('Syncing...');
-        empBranch.val('Syncing...');
+        const assignDatePickerEl = document.getElementById('assignDatePicker');
+        if (assignDatePickerEl && window.__dmy && window.__dmy['assignDatePicker']) {
+            window.__dmy['assignDatePicker'].set('maxDate', ASSIGN_TODAY);
+        }
 
-        $.ajax({
-            url: '/asset/ajax/get-employee/', // Ensure this matches your URL configuration
-            method: 'GET',
-            data: { 'emp_id': empId },
-            dataType: 'json',
-            success: function (data) {
-                // Apply data to fields
-                empName.val(data.name || 'Not Found');
-                empDept.val(data.department || 'Not Found');
-                empBranch.val(data.branch || 'Not Found');
-                
-                // Visual feedback that data has updated
-                $('.readonly-box').addClass('data-update-flash');
-                setTimeout(() => $('.readonly-box').removeClass('data-update-flash'), 500);
-            },
-            error: function (xhr) {
-                console.error("Error Response:", xhr.responseText);
-                empName.val('Error fetching');
-                empDept.val('Error fetching');
-                empBranch.val('Error fetching');
+        $('#assignForm').on('submit', function () {
+            const dateInput = this.querySelector('input[name="assigned_date"]');
+            if (dateInput && dateInput.value) {
+                const parsed = parseAssignedDate(dateInput.value);
+                if (parsed && parsed > todayDateObj) {
+                    dateInput.value = '';
+                    dateInput.setCustomValidity('Future dates are not allowed.');
+                    dateInput.reportValidity();
+                    return false;
+                }
+                dateInput.setCustomValidity('');
+            }
+            if (this.checkValidity()) {
+                $('#submitBtn').prop('disabled', true);
+                $('#btnText').html('<span class="spinner-border spinner-border-sm me-2"></span> Processing Registry...');
+            }
+        });
+
+        document.getElementById('assignForm').querySelector('input[name="assigned_date"]').addEventListener('change', function () {
+            const parsed = parseAssignedDate(this.value);
+            if (parsed && parsed > todayDateObj) {
+                this.value = '';
             }
         });
     });
-
-    // 3. Form Submission Handling
-    const ASSIGN_TODAY = "{{ today_date }}";
-    const todayDateObj = new Date(ASSIGN_TODAY + 'T00:00:00');
-
-    function parseAssignedDate(s) {
-        const m = (s || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-        if (!m) return null;
-        const d = new Date(+m[3], (+m[2]) - 1, +m[1]);
-        return (d.getDate() === +m[1] && d.getMonth() === (+m[2]) - 1) ? d : null;
-    }
-
-    const assignDatePickerEl = document.getElementById('assignDatePicker');
-    if (assignDatePickerEl && window.__dmy && window.__dmy['assignDatePicker']) {
-        window.__dmy['assignDatePicker'].set('maxDate', ASSIGN_TODAY);
-    }
-
-    $('#assignForm').on('submit', function() {
-        const dateInput = this.querySelector('input[name="assigned_date"]');
-        if (dateInput && dateInput.value) {
-            const parsed = parseAssignedDate(dateInput.value);
-            if (parsed && parsed > todayDateObj) {
-                dateInput.value = '';
-                dateInput.setCustomValidity('Future dates are not allowed.');
-                dateInput.reportValidity();
-                return false;
-            }
-            dateInput.setCustomValidity('');
-        }
-        if(this.checkValidity()) {
-            $('#submitBtn').prop('disabled', true);
-            $('#btnText').html('<span class="spinner-border spinner-border-sm me-2"></span> Processing Registry...');
-        }
-    });
-
-    document.getElementById('assignForm').querySelector('input[name="assigned_date"]').addEventListener('change', function() {
-        const parsed = parseAssignedDate(this.value);
-        if (parsed && parsed > todayDateObj) {
-            this.value = '';
-        }
-    });
-});
 </script>
 {% endblock %}

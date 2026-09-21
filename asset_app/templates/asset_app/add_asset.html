@@ -25,8 +25,8 @@
         margin-left: 4px;
     }
 
-    .form-floating > .form-control:not(:read-only),
-    .form-floating > .form-control[type="text"] {
+    .form-floating>.form-control:not(:read-only),
+    .form-floating>.form-control[type="text"] {
         cursor: text;
     }
 
@@ -43,7 +43,7 @@
         color: rgba(255, 255, 255, 0.85);
     }
 
-    .form-hero .breadcrumb-item + .breadcrumb-item::before {
+    .form-hero .breadcrumb-item+.breadcrumb-item::before {
         color: rgba(255, 255, 255, 0.5);
     }
 
@@ -106,16 +106,16 @@
         background-color: #fff;
     }
 
-    .form-floating > label {
+    .form-floating>label {
         padding-left: 1.1rem;
         opacity: 0.72;
         font-weight: 500;
         color: #4a5568;
     }
 
-    .form-floating > .form-control:focus ~ label,
-    .form-floating > .form-control:not(:placeholder-shown) ~ label,
-    .form-floating > .form-select ~ label {
+    .form-floating>.form-control:focus~label,
+    .form-floating>.form-control:not(:placeholder-shown)~label,
+    .form-floating>.form-select~label {
         color: var(--primary) !important;
         opacity: 1;
         font-weight: 700;
@@ -185,16 +185,59 @@
         <div class="col-12 col-lg-10 col-xl-8">
 
             <!-- Standard Header -->
-            <div class="row mb-4 align-items-center">
-                <div class="col-12 d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center">
-                        <a href="{% url 'asset_dashboard' %}" class="btn btn-outline-secondary rounded-circle me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                            <i class="bi bi-arrow-left"></i>
-                        </a>
-                        <div>
-                            <h4 class="fw-bold text-dark mb-1">Add New Asset</h4>
-                            <p class="text-muted mb-0">Enter the details below to register a new asset.</p>
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+                <div class="d-flex align-items-center">
+                    <a href="{% url 'asset_dashboard' %}" class="btn btn-outline-secondary rounded-circle me-3"
+                        style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h4 class="fw-bold text-dark mb-1">Add New Asset</h4>
+                        <p class="text-muted mb-0">Enter details manually or bulk upload via Excel sheet.</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{% url 'download_asset_template' %}" class="btn btn-outline-success rounded-pill fw-semibold shadow-sm px-3 py-2">
+                        <i class="bi bi-download me-1"></i> Sample Excel Sheet
+                    </a>
+                    <button type="button" class="btn btn-primary rounded-pill shadow-sm px-3 py-2" data-bs-toggle="modal" data-bs-target="#bulkUploadModal">
+                        <i class="bi bi-file-earmark-excel-fill me-1"></i> Bulk Upload Excel
+                    </button>
+                </div>
+            </div>
+
+            <!-- BULK UPLOAD MODAL -->
+            <div class="modal fade" id="bulkUploadModal" tabindex="-1" aria-labelledby="bulkUploadModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content rounded-4 border-0 shadow">
+                        <div class="modal-header text-white rounded-top-4" style="background: var(--grad-primary);">
+                            <h5 class="modal-title fw-bold" id="bulkUploadModalLabel"><i class="bi bi-file-earmark-spreadsheet me-2"></i> Bulk Import Assets via Excel</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
+                        <form action="{% url 'bulk_upload_assets' %}" method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="modal-body p-4">
+                                <p class="text-muted small mb-3">
+                                    Upload an <strong>.xlsx</strong> or <strong>.csv</strong> spreadsheet containing asset rows to register multiple assets at once.
+                                </p>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Upload Excel / CSV Sheet</label>
+                                    <input type="file" name="bulk_file" class="form-control rounded-3" accept=".csv, .xlsx, .xls" required>
+                                </div>
+                                <div class="alert alert-light border rounded-3 p-3 small mb-0">
+                                    <i class="bi bi-info-circle text-primary me-1"></i>
+                                    <strong>Expected Header Columns:</strong><br>
+                                    <code>Asset Type</code>, <code>Manufacturer/Company</code>, <code>Model Name</code>, <code>Serial Number</code>, <code>Vendor Name</code>, <code>Status</code>, <code>RAM</code>, <code>Storage</code>, <code>Purchase Date</code>, <code>Cost</code>, <code>Warranty</code>.
+                                </div>
+                            </div>
+                            <div class="modal-footer bg-light rounded-bottom-4">
+                                <a href="{% url 'download_asset_template' %}" class="btn btn-outline-success btn-sm rounded-pill me-auto">
+                                    <i class="bi bi-download me-1"></i> Download Template
+                                </a>
+                                <button type="button" class="btn btn-secondary btn-sm rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4 fw-semibold">Upload & Import</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -229,8 +272,8 @@
                         <div class="row g-4">
                             <div class="col-md-6 animate__animated animate__fadeInLeft">
                                 <div class="form-floating position-relative">
-                                    <input type="text" class="form-control form-control-lg shadow-sm"
-                                        placeholder="Auto" value="SYSTEM-GENERATED" readonly
+                                    <input type="text" class="form-control form-control-lg shadow-sm" placeholder="Auto"
+                                        value="SYSTEM-GENERATED" readonly
                                         style="background: linear-gradient(135deg,#f6f9fd,#eef3fa); color: var(--primary); font-weight:600;">
                                     <label>Asset ID</label>
                                     <i class="bi bi-lock-fill input-group-icon"></i>
@@ -247,29 +290,29 @@
 
                             <div class="col-md-6 animate__animated animate__fadeInLeft">
                                 <div class="form-floating">
+                                    {{ form.company_name|add_class:"form-control form-control-lg shadow-sm"|attr:"required"|attr:"placeholder:Company" }}
+                                    <label>Manufacturer/Company</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 animate__animated animate__fadeInRight">
+                                <div class="form-floating">
                                     {{ form.model|add_class:"form-control form-control-lg shadow-sm"|attr:"required"|attr:"placeholder:Model" }}
                                     <label>Model Name</label>
                                 </div>
                             </div>
 
-                            <div class="col-md-6 animate__animated animate__fadeInRight">
+                            <div class="col-md-6 animate__animated animate__fadeInLeft">
                                 <div class="form-floating">
                                     {{ form.series_number|add_class:"form-control form-control-lg shadow-sm"|attr:"required"|attr:"placeholder:Series" }}
                                     <label>Serial / Series Number</label>
                                 </div>
                             </div>
 
-                            <div class="col-md-6 animate__animated animate__fadeInLeft">
+                            <div class="col-md-6 animate__animated animate__fadeInRight">
                                 <div class="form-floating">
                                     {{ form.vendor_name|add_class:"form-control form-control-lg shadow-sm"|attr:"placeholder:Vendor Name" }}
                                     <label>Vendor Name</label>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6 animate__animated animate__fadeInRight">
-                                <div class="form-floating">
-                                    {{ form.company_name|add_class:"form-control form-control-lg shadow-sm"|attr:"required"|attr:"placeholder:Company" }}
-                                    <label>Manufacturer/Company</label>
                                 </div>
                             </div>
 
@@ -334,32 +377,36 @@
                                     <div class="form-text">Format: DD/MM/YYYY</div>
                                 </div>
                             </div>
-
-                            {% if form.image %}
-                            <div class="col-12 animate__animated animate__fadeInUp">
-                                <div class="custom-file-upload">
-                                    <i class="bi bi-cloud-arrow-up fs-2 text-primary mb-2" style="color: var(--primary) !important;"></i>
-                                    <p class="mb-2 fw-semibold">Upload Asset Image</p>
-                                    {{ form.image|add_class:"form-control" }}
-                                    <div class="form-text mt-2">Maximum file size: 5MB (JPG, PNG)</div>
-                                </div>
-                            </div>
-                            {% endif %}
                         </div>
-
-                        <div class="mt-5 text-center animate__animated animate__fadeInUp">
-                            <button id="submitBtn" type="submit"
-                                class="btn btn-submit text-white w-100 rounded-pill btn-lg shadow">
-                                <span id="btnText">
-                                    <i class="bi bi-check2-circle me-2"></i> Save Asset
-                                </span>
-                            </button>
-                        </div>
-                    </form>
                 </div>
             </div>
+
+            {% if form.image %}
+            <div class="col-12 animate__animated animate__fadeInUp">
+                <div class="custom-file-upload">
+                    <i class="bi bi-cloud-arrow-up fs-2 text-primary mb-2"
+                        style="color: var(--primary) !important;"></i>
+                    <p class="mb-2 fw-semibold">Upload Asset Image</p>
+                    {{ form.image|add_class:"form-control" }}
+                    <div class="form-text mt-2">Maximum file size: 5MB (JPG, PNG)</div>
+                </div>
+            </div>
+            {% endif %}
         </div>
+
+
+        <div class="mt-4 text-center animate__animated animate__fadeInUp">
+            <button id="submitBtn" type="submit" class="btn btn-submit text-white rounded-pill px-5 py-2.5 shadow fw-semibold">
+                <span id="btnText">
+                    <i class="bi bi-check2-circle me-2"></i> Save Asset
+                </span>
+            </button>
+        </div>
+        </form>
     </div>
+</div>
+</div>
+</div>
 </div>
 
 <script>
@@ -420,7 +467,7 @@
                 otherAssetTypeInput.style.display = 'block';
             }
         }
-        
+
         if (statusSelect && otherStatusInput) {
             statusSelect.addEventListener('change', function () {
                 if (this.value === 'Other') {
@@ -438,7 +485,7 @@
                 otherStatusInput.style.display = 'block';
             }
         }
-        
+
         if (warrantySelect && otherWarrantyInput) {
             warrantySelect.addEventListener('change', function () {
                 if (this.value === 'Other') {
@@ -456,10 +503,10 @@
                 otherWarrantyInput.style.display = 'block';
             }
         }
-        
+
         const ramSelect = document.getElementById('id_ram');
         const otherRamInput = document.getElementById('otherRamInput');
-        
+
         if (ramSelect && otherRamInput) {
             ramSelect.addEventListener('change', function () {
                 if (this.value === 'Other') {
@@ -476,10 +523,10 @@
                 otherRamInput.style.display = 'block';
             }
         }
-        
+
         const storageSelect = document.getElementById('id_storage');
         const otherStorageInput = document.getElementById('otherStorageInput');
-        
+
         if (storageSelect && otherStorageInput) {
             storageSelect.addEventListener('change', function () {
                 if (this.value === 'Other') {
@@ -544,7 +591,8 @@
                 }
             } else if (warrantySelect) {
                 if (warrantySelect.value === 'Complete') {
-                    warrantyFlat ? warrantyFlat.clear() : (warrantyEndDate.value = '');
+                    if (warrantyFlat) warrantyFlat.clear();
+                    warrantyEndDate.value = 'Complete';
                     return;
                 }
                 years = parseInt(warrantySelect.value, 10);
@@ -584,11 +632,11 @@
         calculateWarrantyEndDate();
     });
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const assetTypeSelect = document.getElementById('id_asset_type');
         const ramContainer = document.getElementById('ramContainer');
         const storageContainer = document.getElementById('storageContainer');
-        
+
         function toggleRamStorage() {
             if (assetTypeSelect && ramContainer && storageContainer) {
                 const typeVal = assetTypeSelect.value.toLowerCase();
@@ -601,7 +649,7 @@
                 }
             }
         }
-        
+
         if (assetTypeSelect) {
             assetTypeSelect.addEventListener('change', toggleRamStorage);
             toggleRamStorage();

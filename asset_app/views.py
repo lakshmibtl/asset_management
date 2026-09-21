@@ -713,6 +713,143 @@ def add_asset(request):
 
 
 @login_required
+def bulk_upload_assets(request):
+    if request.method == 'POST' and request.FILES.get('bulk_file'):
+        uploaded_file = request.FILES['bulk_file']
+        filename = uploaded_file.name.lower()
+        
+        import csv
+        import io
+        import random
+        from datetime import datetime
+        
+        created_count = 0
+        errors = []
+        rows = []
+        
+        if filename.endswith('.csv'):
+            try:
+                decoded_file = uploaded_file.read().decode('utf-8-sig', errors='ignore')
+                io_string = io.StringIO(decoded_file)
+                reader = csv.DictReader(io_string)
+                rows = list(reader)
+            except Exception as e:
+                messages.error(request, f"Error parsing CSV file: {str(e)}")
+                return redirect('add_asset')
+        elif filename.endswith('.xlsx') or filename.endswith('.xls'):
+            try:
+                import openpyxl
+                wb = openpyxl.load_workbook(uploaded_file, data_only=True)
+                sheet = wb.active
+                headers = [str(cell.value or '').strip() for cell in sheet[1]]
+                for row in sheet.iter_rows(min_row=2, values_only=True):
+                    if any(row):
+                        row_dict = {headers[i]: row[i] for i in range(min(len(headers), len(row)))}
+                        rows.append(row_dict)
+            except ImportError:
+                messages.error(request, "Excel (.xlsx) parsing requires openpyxl. Please upload a .csv file or install openpyxl.")
+                return redirect('add_asset')
+            except Exception as e:
+                messages.error(request, f"Error parsing Excel file: {str(e)}")
+                return redirect('add_asset')
+        else:
+            messages.error(request, "Unsupported file format. Please upload a .csv or .xlsx Excel file.")
+            return redirect('add_asset')
+            
+        def parse_date(d_val):
+            if not d_val:
+                return None
+            if hasattr(d_val, 'date'):
+                return d_val.date()
+            d_str = str(d_val).strip()
+            if d_str.lower() == 'complete':
+                return None
+            for fmt in ('%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y', '%m/%d/%Y'):
+                try:
+                    return datetime.strptime(d_str, fmt).date()
+                except ValueError:
+                    pass
+            return None
+
+        for idx, row in enumerate(rows, start=2):
+            clean_row = {str(k).strip().lower().replace(' ', '_').replace('/', '_'): v for k, v in row.items() if k}
+            
+            asset_type = clean_row.get('asset_type') or clean_row.get('type') or 'Laptop'
+            company_name = clean_row.get('manufacturer_company') or clean_row.get('manufacturer') or clean_row.get('company_name') or clean_row.get('company') or 'N/A'
+            model = clean_row.get('model_name') or clean_row.get('model') or 'N/A'
+            series_number = clean_row.get('serial___series_number') or clean_row.get('serial_number') or clean_row.get('serial') or clean_row.get('series_number') or f"SN-{random.randint(100000, 999999)}"
+            vendor_name = clean_row.get('vendor_name') or clean_row.get('vendor') or ''
+            status = clean_row.get('status') or 'Available'
+            ram = clean_row.get('ram') or ''
+            storage = clean_row.get('storage') or ''
+            purchase_date_str = clean_row.get('purchase___add_date') or clean_row.get('purchase_date') or ''
+            cost_val = clean_row.get('cost') or 0
+            warranty = clean_row.get('warranty') or ''
+            warranty_end_date_str = clean_row.get('warranty_end_date') or ''
+            
+            try:
+                cost_num = float(cost_val) if cost_val else 0.0
+            except (ValueError, TypeError):
+                cost_num = 0.0
+                
+            try:
+                asset_id = clean_row.get('asset_id')
+                if not asset_id or Asset.objects.filter(asset_id=asset_id).exists():
+                    asset_id = f"AST-{random.randint(10000, 99999)}"
+                    
+                Asset.objects.create(
+                    asset_id=asset_id,
+                    asset_type=str(asset_type).strip(),
+                    company_name=str(company_name).strip(),
+                    model=str(model).strip(),
+                    series_number=str(series_number).strip(),
+                    vendor_name=str(vendor_name).strip() if vendor_name else None,
+                    status=str(status).strip(),
+                    ram=str(ram).strip() if ram else None,
+                    storage=str(storage).strip() if storage else None,
+                    purchase_date=parse_date(purchase_date_str),
+                    cost=cost_num,
+                    warranty=str(warranty).strip() if warranty else None,
+                    warranty_end_date=parse_date(warranty_end_date_str)
+                )
+                created_count += 1
+            except Exception as e:
+                errors.append(f"Row {idx}: {str(e)}")
+                
+        if created_count > 0:
+            messages.success(request, f"Successfully uploaded and imported {created_count} asset(s) from Excel/CSV!")
+        if errors:
+            messages.warning(request, f"Skipped {len(errors)} row(s): {', '.join(errors[:3])}")
+            
+        return redirect('view_assets')
+        
+    messages.error(request, "Please select a valid Excel or CSV file to upload.")
+    return redirect('add_asset')
+
+
+@login_required
+def download_asset_template(request):
+    import csv
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="bulk_asset_upload_template.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow([
+        'Asset Type', 'Manufacturer/Company', 'Model Name', 'Serial Number',
+        'Vendor Name', 'Status', 'RAM', 'Storage', 'Purchase Date', 'Cost', 'Warranty', 'Warranty End Date'
+    ])
+    writer.writerow([
+        'Laptop', 'Dell', 'Latitude 5420', 'SN-DELL12345',
+        'ABC Infotech', 'Available', '16GB', '512GB', '15/01/2024', '75000', '1 Year', '15/01/2025'
+    ])
+    writer.writerow([
+        'Desktop', 'HP', 'ProDesk 400', 'SN-HP98765',
+        'XYZ Suppliers', 'Available', '8GB', '256GB', '20/02/2024', '45000', '3 Years', '20/02/2027'
+    ])
+    return response
+
+
+@login_required
 def edit_asset(request, pk):
     is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
     if not request.user.is_authenticated or not is_admin:
@@ -830,12 +967,14 @@ def assign_asset(request):
     if request.method == "POST":
         assigned_date = request.POST.get('assigned_date')
         assigned_date_obj = None
-        for fmt in ('%d/%m/%Y', '%Y-%m-%d'):
-            try:
-                assigned_date_obj = datetime.strptime(assigned_date, fmt).date()
-                break
-            except (TypeError, ValueError):
-                continue
+        if assigned_date:
+            for fmt in ('%d/%m/%Y', '%Y-%m-%d'):
+                try:
+                    assigned_date_obj = datetime.strptime(str(assigned_date).strip(), fmt).date()
+                    break
+                except (TypeError, ValueError):
+                    continue
+
         if assigned_date_obj and assigned_date_obj > timezone.now().date():
             messages.error(request, "Assignment date cannot be in the future.")
             next_url = request.POST.get('next')
@@ -847,6 +986,8 @@ def assign_asset(request):
         if form.is_valid():
             assignment = form.save(commit=False)
             assignment.assigned_by = request.user
+            if assigned_date_obj:
+                assignment.assigned_date = assigned_date_obj
             assignment.save()
             
             # Update employee branch if provided manually

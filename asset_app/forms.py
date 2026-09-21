@@ -269,6 +269,12 @@ class AssetForm(forms.ModelForm):
             else:
                 cleaned_data['warranty'] = other_warranty.strip()
 
+        warranty_end_raw = self.data.get('warranty_end_date', '').strip()
+        if warranty == 'Complete' or (cleaned_data.get('warranty') and str(cleaned_data.get('warranty')).lower() in ['complete', 'complete warranty']) or warranty_end_raw.lower() in ['complete', 'complete warranty']:
+            cleaned_data['warranty_end_date'] = None
+            if 'warranty_end_date' in self._errors:
+                del self._errors['warranty_end_date']
+
         ram = cleaned_data.get('ram')
         other_ram = cleaned_data.get('other_ram')
         

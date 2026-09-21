@@ -641,7 +641,24 @@
                     var fixed = maskValue(this.value);
                     if (this.value !== fixed) this.value = fixed;
                 });
-                var opts = { dateFormat: 'd/m/Y', allowInput: true, disableMobile: true };
+                var opts = { 
+                    dateFormat: 'd/m/Y', 
+                    allowInput: true, 
+                    disableMobile: true,
+                    parseDate: function (datestr) {
+                        if (!datestr) return null;
+                        var parts = String(datestr).split('/');
+                        if (parts.length === 3) {
+                            var day = parseInt(parts[0], 10);
+                            var month = parseInt(parts[1], 10) - 1;
+                            var year = parseInt(parts[2], 10);
+                            if (!isNaN(day) && !isNaN(month) && !isNaN(year) && year > 1000) {
+                                return new Date(year, month, day);
+                            }
+                        }
+                        return new Date(datestr);
+                    }
+                };
                 if (extra) Object.assign(opts, extra);
                 var inst = window.flatpickr(el, opts);
                 if (el.id) window.__dmy[el.id] = inst;

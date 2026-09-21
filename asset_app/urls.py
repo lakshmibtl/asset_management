@@ -34,6 +34,8 @@ urlpatterns = [
 
     # Asset CRUD
     path('add/', views.add_asset, name='add_asset'),
+    path('bulk-upload/', views.bulk_upload_assets, name='bulk_upload_assets'),
+    path('download-template/', views.download_asset_template, name='download_asset_template'),
     path('<int:pk>/edit/', views.edit_asset, name='edit_asset'),
     path('warranty-tracking/', views.warranty_tracking, name='warranty_tracking'),
     path('view/', views.view_assets, name='view_assets'),
