@@ -1795,14 +1795,27 @@ def delete_asset(request, pk):
     asset_id_display = asset.asset_id
     
     try:
-        from django.db import connection, transaction
+        from django.db import transaction
         with transaction.atomic():
-            with connection.cursor() as cursor:
-                for table in ['asset_app_maintenancerecord', 'asset_app_maintenanceplan', 'asset_app_returnrequest', 'asset_app_assignment', 'asset_app_ticket', 'asset_app_assethistory']:
-                    try:
-                        cursor.execute(f"DELETE FROM {table} WHERE asset_id = %s", [asset.pk])
-                    except Exception:
-                        pass
+            # Delete related records via Django ORM
+            Assignment.objects.filter(asset=asset).delete()
+            ReturnRequest.objects.filter(asset=asset).delete()
+            Ticket.objects.filter(asset=asset).delete()
+            AssetHistory.objects.filter(asset=asset).delete()
+
+            # Dynamically delete maintenance records if models exist
+            try:
+                from .models import MaintenancePlan
+                MaintenancePlan.objects.filter(asset=asset).delete()
+            except (ImportError, Exception):
+                pass
+
+            try:
+                from .models import MaintenanceRecord
+                MaintenanceRecord.objects.filter(asset=asset).delete()
+            except (ImportError, Exception):
+                pass
+
             asset.delete()
         messages.success(request, f"Asset {asset_id_display} deleted successfully.")
     except Exception as e:
