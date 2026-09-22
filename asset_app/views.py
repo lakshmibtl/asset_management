@@ -1546,12 +1546,13 @@ def assigned_employees(request):
     if not (is_staff or is_manager):
         return redirect('asset_dashboard')
         
+    active_statuses = ['In Use', 'Temporary', 'Temporary Use']
     if is_staff:
-        assignments = Assignment.objects.select_related("asset", "employee").filter(status__iexact='In Use')
+        assignments = Assignment.objects.select_related("asset", "employee").filter(status__in=active_statuses)
     else:
         assignments = Assignment.objects.select_related("asset", "employee").filter(
             employee__department__iexact=request.user.department,
-            status__iexact='In Use'
+            status__in=active_statuses
         )
 
     # Build map: key = Employee object, value = list of dicts

@@ -123,9 +123,15 @@
                                         {{ item.asset.asset_type }}
                                     </h5>
                                     <p class="text-primary fw-medium mb-2" style="font-family: monospace; letter-spacing: 0.5px;">#{{ item.asset.asset_id }}</p>
+                                    {% if item.assignment.status == 'Temporary' or item.assignment.status == 'Temporary Use' %}
+                                    <span class="badge bg-warning bg-opacity-10 text-dark border border-warning-subtle rounded-pill px-3 py-1 fw-medium">
+                                        <i class="bi bi-clock-history me-1"></i> Temporary Use
+                                    </span>
+                                    {% else %}
                                     <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle rounded-pill px-3 py-1 fw-medium">
                                         <i class="bi bi-check-circle-fill me-1"></i> In Use
                                     </span>
+                                    {% endif %}
                                 </div>
                             </div>
                             
