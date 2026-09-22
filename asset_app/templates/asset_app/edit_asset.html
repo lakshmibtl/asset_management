@@ -143,6 +143,42 @@
         background-color: #fff;
     }
 
+    /* ============ FIELD ERROR STATES ============ */
+    .field-error-input {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.18) !important;
+        background-color: #fff8f8 !important;
+    }
+
+    .field-error-msg {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin-top: 8px;
+        padding: 10px 14px;
+        background: linear-gradient(135deg, #fff0f0, #ffe8e8);
+        border: 1px solid rgba(220, 53, 69, 0.3);
+        border-left: 4px solid #dc3545;
+        border-radius: 10px;
+        color: #b91c1c;
+        font-size: 0.845rem;
+        font-weight: 500;
+        line-height: 1.4;
+        animation: slideInError 0.3s ease-out;
+    }
+
+    .field-error-msg i {
+        font-size: 1rem;
+        flex-shrink: 0;
+        margin-top: 1px;
+        color: #dc3545;
+    }
+
+    @keyframes slideInError {
+        from { opacity: 0; transform: translateY(-6px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
     .form-floating > label {
         padding-left: 1.1rem;
         opacity: 0.72;
@@ -256,19 +292,22 @@
                         {% csrf_token %}
 
                         {% if form.non_field_errors or form.errors %}
-                        <div class="alert alert-danger border-0 rounded-4 shadow-sm py-3" role="alert"
-                            id="assetFormErrors">
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                <strong class="fw-bold">Please fix the following to save the asset:</strong>
+                        <div class="alert alert-danger border-0 rounded-4 shadow-sm py-3 d-flex align-items-start gap-3" role="alert"
+                            id="assetFormErrors" style="background: linear-gradient(135deg,#fff0f0,#ffe8e8); border-left: 5px solid #dc3545 !important;">
+                            <div style="font-size:1.5rem; color:#dc3545; flex-shrink:0;"><i class="bi bi-shield-exclamation"></i></div>
+                            <div>
+                                <div class="fw-bold mb-1" style="color:#b91c1c;">⚠️ Could not save — please fix the errors below:</div>
+                                <ul class="mb-0 ps-3" style="color:#7f1d1d;">
+                                    {% for field in form %}
+                                    {% for error in field.errors %}
+                                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                                    {% endfor %}
+                                    {% endfor %}
+                                    {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
                             </div>
-                            <ul class="mb-0 ps-3">
-                                {% for field in form %}
-                                {% for error in field.errors %}
-                                <li>{{ field.label }}: {{ error }}</li>
-                                {% endfor %}
-                                {% endfor %}
-                            </ul>
                         </div>
                         {% endif %}
 
@@ -302,10 +341,16 @@
                             </div>
 
                             <div class="col-md-6 animate__animated animate__fadeInRight">
-                                <div class="form-floating">
+                                <div class="form-floating{% if form.series_number.errors %} has-error{% endif %}">
                                     {{ form.series_number|add_class:"form-control form-control-lg shadow-sm"|attr:"required"|attr:"placeholder:Series" }}
                                     <label>Serial / Series Number</label>
                                 </div>
+                                {% if form.series_number.errors %}
+                                <div class="field-error-msg">
+                                    <i class="bi bi-exclamation-circle-fill"></i>
+                                    <span>{% for error in form.series_number.errors %}{{ error }}{% endfor %}</span>
+                                </div>
+                                {% endif %}
                             </div>
 
                             <div class="col-md-6 animate__animated animate__fadeInLeft">
@@ -416,6 +461,18 @@
         const form = document.getElementById('assetForm');
         const submitBtn = document.getElementById('submitBtn');
         const btnText = document.getElementById('btnText');
+
+        // ── Auto-hide serial number inline error when user starts typing ──
+        const serialInput = document.getElementById('id_series_number');
+        const serialErrorMsg = document.querySelector('.field-error-msg');
+        if (serialInput && serialErrorMsg) {
+            serialInput.addEventListener('input', function () {
+                serialErrorMsg.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+                serialErrorMsg.style.opacity = '0';
+                serialErrorMsg.style.transform = 'translateY(-6px)';
+                setTimeout(function () { serialErrorMsg.remove(); }, 260);
+            });
+        }
 
         form.addEventListener('submit', function (event) {
             if (!form.checkValidity()) {
