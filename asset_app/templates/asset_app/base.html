@@ -23,6 +23,12 @@
             --text-dark: #2d3436;
         }
 
+        /* Prevent offcanvas from overlapping the fixed header */
+        .offcanvas.offcanvas-end {
+            top: var(--header-height);
+            height: calc(100vh - var(--header-height));
+        }
+
         * {
             font-family: 'Outfit', sans-serif !important;
         }

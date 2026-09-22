@@ -1192,7 +1192,7 @@
 <!-- Assign Asset Offcanvas (staff only) -->
 {% if request.user.is_staff or request.user.role == 'admin' or request.user.role == 'superadmin' %}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="assignAssetOffcanvas" aria-labelledby="assignAssetOffcanvasLabel"
-    style="width: 450px; z-index: 1060;" data-bs-backdrop="false">
+    style="width: 450px; z-index: 1060; top: 65px; height: calc(100vh - 65px);" data-bs-backdrop="false" data-bs-keyboard="false">
     <div class="offcanvas-header offcanvas-modern-header border-bottom">
         <h5 class="offcanvas-title fw-bold" id="assignAssetOffcanvasLabel">
             <span class="stat-icon me-2"
@@ -1211,13 +1211,12 @@
             <div class="mb-4">
                 <label class="form-label fw-bold small text-muted"><i class="bi bi-person-search me-1"></i> EMPLOYEE
                     SEARCH</label>
-                <select id="empSelect" name="employee" class="form-control select2-modern" style="width: 100%;" required>
-                    <option value="">Search by ID or Name...</option>
-                    {% for emp in employees %}
-                    <option value="{{ emp.id }}">{{ emp.employee_id }} — {{ emp.name }}</option>
-                    {% endfor %}
-                </select>
-                <div class="form-text">Search by employee name or ID.</div>
+                <div class="position-relative">
+                    <input type="text" id="empSearchInput" class="form-control" placeholder="Type name or ID to search..." autocomplete="off"
+                        style="border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px 15px; height: 42px;">
+                    <input type="hidden" name="employee" id="empHiddenId" required>
+                    <div id="empDropdown" class="emp-autocomplete-dropdown" style="display:none;"></div>
+                </div>
             </div>
 
             <div class="bg-light rounded-4 p-3 mb-4">
@@ -1278,7 +1277,7 @@
 
 <!-- Transfer Asset Offcanvas -->
 <div class="offcanvas offcanvas-end" tabindex="-1" id="transferAssetOffcanvas"
-    aria-labelledby="transferAssetOffcanvasLabel" style="width: 450px; z-index: 1060;" data-bs-backdrop="false">
+    aria-labelledby="transferAssetOffcanvasLabel" style="width: 450px; z-index: 1060; top: 65px; height: calc(100vh - 65px);" data-bs-backdrop="false" data-bs-keyboard="false">
     <div class="offcanvas-header offcanvas-modern-header border-bottom">
         <h5 class="offcanvas-title fw-bold" id="transferAssetOffcanvasLabel">
             <span class="stat-icon me-2"
@@ -1356,6 +1355,82 @@
 
 <!-- Scripts for Select2 and AJAX -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    /* Fix Select2 dropdown inside offcanvas */
+    .offcanvas .select2-container--open .select2-dropdown {
+        z-index: 1070 !important;
+    }
+    .offcanvas .select2-container {
+        z-index: 1070 !important;
+    }
+    .offcanvas .select2-container--default .select2-selection--single {
+        height: 42px !important;
+        display: flex !important;
+        align-items: center !important;
+        border: 1.5px solid #e2e8f0 !important;
+        border-radius: 10px !important;
+        padding: 0 12px !important;
+    }
+    .offcanvas .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 42px !important;
+    }
+    .offcanvas .select2-search--dropdown .select2-search__field {
+        padding: 8px 12px !important;
+        border: 1.5px solid #07518A !important;
+        border-radius: 8px !important;
+        font-size: 0.9rem !important;
+    }
+    .select2-results__option {
+        padding: 8px 12px !important;
+    }
+    .select2-results__option--highlighted {
+        background: linear-gradient(135deg, #07518A, #0d6efd) !important;
+    }
+
+    /* Employee autocomplete dropdown */
+    .emp-autocomplete-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1080;
+        max-height: 220px;
+        overflow-y: auto;
+        background: #fff;
+        border: 1.5px solid #07518A;
+        border-radius: 10px;
+        margin-top: 4px;
+        box-shadow: 0 8px 24px rgba(7,81,138,0.18);
+    }
+    .emp-autocomplete-dropdown .emp-ac-item {
+        padding: 10px 14px;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background 0.15s;
+    }
+    .emp-autocomplete-dropdown .emp-ac-item:last-child {
+        border-bottom: none;
+    }
+    .emp-autocomplete-dropdown .emp-ac-item:hover,
+    .emp-autocomplete-dropdown .emp-ac-item.active {
+        background: linear-gradient(135deg, rgba(7,81,138,0.08), rgba(13,110,253,0.12));
+    }
+    .emp-autocomplete-dropdown .emp-ac-name {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 0.9rem;
+    }
+    .emp-autocomplete-dropdown .emp-ac-meta {
+        font-size: 0.78rem;
+        color: #64748b;
+    }
+    .emp-autocomplete-dropdown .emp-ac-empty {
+        padding: 12px 14px;
+        color: #94a3b8;
+        font-size: 0.85rem;
+        text-align: center;
+    }
+</style>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
@@ -1473,18 +1548,28 @@
             }
         });
 
-        // Initialize Select2 in offcanvas
-        if ($('#assignAssetOffcanvas').length && $.fn.select2) {
-            $('#assetSelect, #empSelect').select2({
-                dropdownParent: $('#assignAssetOffcanvas'),
-                width: '100%'
-            });
+        // Initialize Select2 in offcanvas for asset picker only
+        function initAssignSelect2() {
+            if ($.fn.select2) {
+                $('#assetSelect').select2({
+                    dropdownParent: $('#assignAssetOffcanvas'),
+                    width: '100%',
+                    minimumResultsForSearch: 0
+                });
+            }
         }
+        $('#assignAssetOffcanvas').on('shown.bs.offcanvas', initAssignSelect2);
+        if ($('#assignAssetOffcanvas').length) { initAssignSelect2(); }
 
         if ($('#transferAssetOffcanvas').length) {
-            $('#transferEmpSelect').select2({
-                dropdownParent: $('#transferAssetOffcanvas'),
-                width: '100%'
+            $('#transferAssetOffcanvas').on('shown.bs.offcanvas', function() {
+                if ($.fn.select2) {
+                    $('#transferEmpSelect').select2({
+                        dropdownParent: $('#transferAssetOffcanvas'),
+                        width: '100%',
+                        minimumResultsForSearch: 0
+                    });
+                }
             });
         }
 
@@ -1568,29 +1653,82 @@
             }
         }
 
-        // Handle empSelect change for Employee Details
-        const empSelect = $('#empSelect');
-        const empName = document.getElementById('empName');
-        const empDept = document.getElementById('empDept');
-        const empBranch = document.getElementById('empBranch');
-        if (empSelect.length) {
+        // Inline Employee Search Autocomplete
+        (function () {
+            const input = document.getElementById('empSearchInput');
+            if (!input) return;
+            const hidden = document.getElementById('empHiddenId');
+            const dropdown = document.getElementById('empDropdown');
+            const empName = document.getElementById('empName');
+            const empDept = document.getElementById('empDept');
+            const empBranch = document.getElementById('empBranch');
             const EMPLOYEES = {{ employees_json|safe }};
-            empSelect.on('change', function () {
-                const empId = $(this).val();
-                if (!empId) {
+
+            function selectEmp(emp) {
+                hidden.value = emp.id;
+                input.value = emp.emp_id + ' — ' + emp.name;
+                if (empName) empName.value = emp.name || '—';
+                if (empDept) empDept.value = emp.dept || '—';
+                if (empBranch) empBranch.value = emp.branch || '—';
+                dropdown.style.display = 'none';
+            }
+
+            function renderResults(list) {
+                if (!list.length) {
+                    dropdown.innerHTML = '<div class="emp-ac-empty">No employees found</div>';
+                    dropdown.style.display = 'block';
+                    return;
+                }
+                let html = '';
+                for (let i = 0; i < list.length; i++) {
+                    const e = list[i];
+                    html += '<div class="emp-ac-item" data-idx="' + i + '">' +
+                        '<div class="emp-ac-name">' + (e.name || '—') + '</div>' +
+                        '<div class="emp-ac-meta">' + (e.emp_id || '') + ' · ' + (e.dept || '—') + '</div>' +
+                        '</div>';
+                }
+                dropdown.innerHTML = html;
+                const items = dropdown.querySelectorAll('.emp-ac-item');
+                items.forEach(function (item, idx) {
+                    item.addEventListener('mousedown', function (ev) {
+                        ev.preventDefault();
+                        selectEmp(list[idx]);
+                    });
+                });
+                dropdown.style.display = 'block';
+            }
+
+            function filterEmp(q) {
+                q = q.toLowerCase();
+                return EMPLOYEES.filter(function (e) {
+                    return (e.name || '').toLowerCase().indexOf(q) !== -1 ||
+                        String(e.emp_id || '').toLowerCase().indexOf(q) !== -1 ||
+                        (e.dept || '').toLowerCase().indexOf(q) !== -1;
+                }).slice(0, 50);
+            }
+
+            input.addEventListener('input', function () {
+                const q = this.value.trim();
+                if (!q) {
+                    dropdown.style.display = 'none';
+                    hidden.value = '';
                     if (empName) empName.value = '—';
                     if (empDept) empDept.value = '—';
                     if (empBranch) empBranch.value = '—';
                     return;
                 }
-                const emp = EMPLOYEES.find(e => String(e.id) === String(empId));
-                if (emp) {
-                    if (empName) empName.value = emp.name || '—';
-                    if (empDept) empDept.value = emp.dept || '—';
-                    if (empBranch) empBranch.value = emp.branch || '—';
-                }
+                renderResults(filterEmp(q));
             });
-        }
+
+            input.addEventListener('focus', function () {
+                const q = this.value.trim();
+                if (q) renderResults(filterEmp(q));
+            });
+
+            input.addEventListener('blur', function () {
+                setTimeout(function () { dropdown.style.display = 'none'; }, 200);
+            });
+        })();
     });
 </script>
 {% endblock %}
