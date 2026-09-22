@@ -12,12 +12,10 @@ from django.http import HttpResponse, JsonResponse
 from django.urls import reverse, resolve
 from django.utils import timezone
 from django.utils.timezone import now
-from django.db.models import Count, Q, Max
-from django.db.models.functions import Lower
+from django.db.models import Count, Q
 from django.db import IntegrityError
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, get_user_model
-from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -364,6 +362,32 @@ def create_admin(request):
     return render(request, "asset_app/create_admin.html")
 
 
+@login_required
+def change_password(request):
+    if request.method == "POST":
+        old_password = request.POST.get("old_password", "")
+        new_password = request.POST.get("new_password", "")
+        confirm_password = request.POST.get("confirm_password", "")
+
+        if not request.user.check_password(old_password):
+            messages.error(request, "Current password is incorrect.")
+        elif len(new_password) < 6:
+            messages.error(request, "New password must be at least 6 characters long.")
+        elif new_password != confirm_password:
+            messages.error(request, "New password and confirm password do not match.")
+        else:
+            request.user.set_password(new_password)
+            request.user.save()
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(request, request.user)
+            messages.success(request, "Your password has been changed successfully!")
+            next_url = request.META.get('HTTP_REFERER') or reverse('asset_dashboard')
+            return redirect(next_url)
+
+    next_url = request.META.get('HTTP_REFERER') or reverse('asset_dashboard')
+    return redirect(next_url)
+
+
 @login_required(login_url='/login/')
 def add_user(request):
     if request.method == 'POST':
@@ -388,50 +412,6 @@ def add_user(request):
 def logout_user(request):
     logout(request)
     return redirect('login_user')
-
-
-@login_required(login_url='/login/')
-def change_password(request):
-    errors = []
-    if request.method == 'POST':
-        current = request.POST.get('current_password', '')
-        new_pass = request.POST.get('new_password', '')
-        confirm = request.POST.get('confirm_password', '')
-
-        if not current:
-            errors.append('Current password is required.')
-        elif not request.user.check_password(current):
-            errors.append('Current password is incorrect.')
-
-        if not errors:
-            if not new_pass:
-                errors.append('New password is required.')
-            elif len(new_pass) < 8:
-                errors.append('New password must be at least 8 characters long.')
-
-        if not errors and new_pass != confirm:
-            errors.append('New password and confirm password do not match.')
-
-        if not errors and new_pass == current:
-            errors.append('New password must be different from the current password.')
-
-        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
-
-        if errors:
-            if is_ajax:
-                return JsonResponse({'success': False, 'errors': errors})
-            return render(request, 'asset_app/change_password.html', {'errors': errors})
-
-        request.user.set_password(new_pass)
-        request.user.save(update_fields=['password'])
-        update_session_auth_hash(request, request.user)
-
-        if is_ajax:
-            return JsonResponse({'success': True, 'message': 'Your password has been changed successfully.'})
-        messages.success(request, 'Your password has been changed successfully.')
-        return redirect('change_password')
-
-    return render(request, 'asset_app/change_password.html', {})
 
 
 # ------------------- DASHBOARD -------------------
@@ -1004,20 +984,6 @@ def warranty_tracking(request):
 
 
 # ------------------- ASSIGN ASSET -------------------
-
-def _employees_json(employees=None):
-    qs = employees if employees is not None else Employee.objects.all().order_by('name')
-    return json.dumps([
-        {
-            'id': e.id,
-            'emp_id': e.employee_id,
-            'name': e.name,
-            'dept': e.department,
-            'branch': e.branch or '',
-        }
-        for e in qs
-    ])
-
 @login_required
 def assign_asset(request):
     is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
@@ -1081,9 +1047,20 @@ def assign_asset(request):
     else:
         assets_query = Asset.objects.filter(status__iexact="Available").order_by('asset_id')
 
+    employees = Employee.objects.all().order_by('name')
+    employees_json = json.dumps([
+        {
+            'id': emp.id,
+            'emp_id': emp.employee_id,
+            'name': emp.name,
+            'dept': emp.department or '',
+            'branch': emp.branch or '',
+        }
+        for emp in employees
+    ])
     context = {
-        "employees": Employee.objects.all().order_by('name'),
-        "employees_json": _employees_json(),
+        "employees": employees,
+        "employees_json": employees_json,
         "assets": assets_query,
         "pre_selected_asset": pre_selected_asset_id,
         "today_date": timezone.now().date().isoformat(),
@@ -1397,54 +1374,43 @@ def view_assets(request):
             status__iexact='In Use'
         )
 
-    # Unassigned assets (includes Available, Under Repair, and custom statuses, excluding Dead and Temporary assets)
+    # Unassigned assets (includes Available, Under Repair, Limbo In-Use, excluding Dead and Temporary assets)
     if is_staff:
-        unassigned_assets = Asset.objects.exclude(status__iexact='In Use').exclude(status__iexact='Dead').exclude(status__iexact='Temporary')
+        active_assigned_asset_ids = assignments.values_list('asset_id', flat=True)
+        unassigned_assets = Asset.objects.exclude(
+            id__in=active_assigned_asset_ids
+        ).exclude(
+            status__iexact='Dead'
+        ).exclude(
+            status__iexact='Temporary'
+        )
         dead_assets = Asset.objects.filter(status__iexact='Dead')
         temporary_assets = Asset.objects.filter(status__iexact='Temporary')
-        # Assets marked "In Use" but with no active assignment row. They are
-        # still In Use, so merge them into the assigned display so the count
-        # of assigned cards always matches the "In Use" tally.
-        active_assignment_asset_ids = Assignment.objects.filter(status__iexact='In Use').values_list('asset_id', flat=True)
-        orphaned_in_use_assets = Asset.objects.filter(status__iexact='In Use').exclude(id__in=active_assignment_asset_ids)
     else:
         unassigned_assets = []
         dead_assets = []
         temporary_assets = []
-        orphaned_in_use_assets = []
 
-    # Calculate asset stats grouped by asset type (case-insensitive so
-    # "Laptop", "laptop", "LAPTOP" are counted as one category).
-    def _asset_stats(qs):
-        rows = (
-            qs.values(type_key=Lower('asset_type'))
-            .annotate(
-                type_label=Max('asset_type'),
-                total=Count('id'),
-                in_use=Count('id', filter=Q(status__iexact='In Use')),
-                available=Count('id', filter=Q(status__iexact='Available')),
-                dead=Count('id', filter=Q(status__iexact='Dead')),
-                temporary=Count('id', filter=Q(status__iexact='Temporary'))
-            )
-            .order_by('type_key')
-        )
-        return [
-            {
-                'asset_type': r['type_label'] or r['type_key'],
-                'total': r['total'],
-                'in_use': r['in_use'],
-                'available': r['available'],
-                'dead': r['dead'],
-                'temporary': r['temporary'],
-            }
-            for r in rows
-        ]
-
+    # Calculate asset stats
     if is_staff:
-        asset_stats = _asset_stats(Asset.objects.all())
+        asset_stats = Asset.objects.values('asset_type').annotate(
+            total=Count('id'),
+            in_use=Count('id', filter=Q(status__iexact='In Use')),
+            available=Count('id', filter=Q(status__iexact='Available')),
+            dead=Count('id', filter=Q(status__iexact='Dead')),
+            temporary=Count('id', filter=Q(status__iexact='Temporary')),
+            other=Count('id', filter=~Q(status__iexact='In Use') & ~Q(status__iexact='Available') & ~Q(status__iexact='Dead') & ~Q(status__iexact='Temporary'))
+        ).order_by('asset_type')
     else:
         assigned_asset_ids = assignments.values_list('asset_id', flat=True)
-        asset_stats = _asset_stats(Asset.objects.filter(id__in=assigned_asset_ids))
+        asset_stats = Asset.objects.filter(id__in=assigned_asset_ids).values('asset_type').annotate(
+            total=Count('id'),
+            in_use=Count('id'),
+            available=Count('id', filter=Q(status__iexact='Available')),
+            dead=Count('id', filter=Q(status__iexact='Dead')),
+            temporary=Count('id', filter=Q(status__iexact='Temporary')),
+            other=Count('id', filter=~Q(status__iexact='In Use') & ~Q(status__iexact='Available') & ~Q(status__iexact='Dead') & ~Q(status__iexact='Temporary'))
+        ).order_by('asset_type')
 
     # Employees see all assets; requests they have made
     employee_requested = []
@@ -1477,10 +1443,8 @@ def view_assets(request):
         'unassigned_assets': unassigned_assets,
         'dead_assets': dead_assets,
         'temporary_assets': temporary_assets,
-        'orphaned_in_use_assets': orphaned_in_use_assets,
         'asset_stats': asset_stats,
         'employees': Employee.objects.all().order_by('name'),
-        'employees_json': _employees_json(),
         'today_date': timezone.now().date().isoformat(),
         'today_date_display': timezone.now().date().strftime('%d/%m/%Y'),
         'is_employee': not (is_staff or is_manager),
@@ -1909,6 +1873,18 @@ def delete_asset(request, pk):
             except (ImportError, Exception):
                 pass
 
+            # Log asset deletion before removing from database
+            try:
+                from .models import AssetDeletionLog
+                AssetDeletionLog.objects.create(
+                    asset_id=asset.asset_id,
+                    asset_type=asset.asset_type,
+                    asset_name=asset.name,
+                    deleted_by=request.user,
+                )
+            except Exception:
+                pass
+
             asset.delete()
         messages.success(request, f"Asset {asset_id_display} deleted successfully.")
     except Exception as e:
@@ -2226,17 +2202,29 @@ def ticket_reopen(request, pk):
         messages.info(request, "Only a Resolved ticket can be reopened.")
         return redirect('ticket_detail', pk=ticket.pk)
 
+    reopen_note = request.POST.get('reopen_note', '').strip()
+    
+    if not reopen_note:
+        messages.error(request, "A reason for reopening is required.")
+        return redirect('ticket_detail', pk=ticket.pk)
+        
     ticket.status = "Pending"
+    existing_msg = ticket.resolution_message or ""
+    ticket.resolution_message = f"{existing_msg}\n\n--- Ticket Reopened ---\nReason: {reopen_note}".strip()
     ticket.save()
 
     requester = _employee_display_name(
         request.user if is_owner else ticket.created_by
     )
     if is_owner:
+        notify_text = f"{requester} reported the issue is NOT yet solved."
+        if reopen_note:
+            notify_text += f"\nReason: {reopen_note}"
+            
         _notify_admins(
             'ticket',
             f"Ticket reopened: {ticket.subject}",
-            f"{requester} reported the issue is NOT yet solved.",
+            notify_text,
             reverse('ticket_detail', args=[ticket.id]),
         )
         messages.warning(request, "↩️ Ticket reopened as Pending. The admin team has been notified.")
@@ -2712,7 +2700,7 @@ def activity_log(request):
         messages.error(request, "Access denied. Only Super Admin can view the Activity Log.")
         return redirect('asset_dashboard')
         
-    from .models import Assignment, ReturnRequest, ProcurementRequestWorkflow, Notification, Asset, AssetHistory
+    from .models import Assignment, ReturnRequest, ProcurementRequestWorkflow, Notification, Asset, AssetHistory, AssetDeletionLog
     
     # Gather recent activities
     recent_assignments = Assignment.objects.all().select_related('asset', 'employee', 'assigned_by').order_by('-assigned_at')[:30]
@@ -2721,6 +2709,7 @@ def activity_log(request):
     recent_reports = Notification.objects.filter(notification_type='work_report').select_related('recipient').order_by('-created_at')[:30]
     recent_assets = Asset.objects.all().order_by('-created_at')[:30]
     recent_edits = AssetHistory.objects.select_related('asset', 'edited_by').order_by('-edited_at')[:30]
+    recent_deletions = AssetDeletionLog.objects.select_related('deleted_by').order_by('-deleted_at')[:30]
     
     # Combine and sort them
     activities = []
@@ -2796,6 +2785,18 @@ def activity_log(request):
             'title': f"Asset Details Edited: {h.asset.asset_id}",
             'message': f"Modified by {user_name}.",
             'timestamp': h.edited_at
+        })
+
+    for d in recent_deletions:
+        user_name = (d.deleted_by.get_full_name() or d.deleted_by.username) if d.deleted_by else 'System'
+        activities.append({
+            'type': 'Asset Deleted',
+            'icon': 'bi-trash3-fill',
+            'color': '#ef4444',  # red color for deletion
+            'bg': 'rgba(239,68,68,.12)',
+            'title': f"Asset Deleted: {d.asset_id}",
+            'message': f"Type: {d.asset_type or 'N/A'}. Deleted by {user_name}.",
+            'timestamp': d.deleted_at
         })
         
     activities.sort(key=lambda x: x['timestamp'], reverse=True)
@@ -3000,4 +3001,5 @@ def delete_return_request(request, pk):
         messages.success(request, f"Return request for {asset_id} deleted successfully.")
         return redirect('return_requests')
         
+    return redirect('return_requests')
     return redirect('return_requests')

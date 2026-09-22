@@ -1192,7 +1192,7 @@
 <!-- Assign Asset Offcanvas (staff only) -->
 {% if request.user.is_staff or request.user.role == 'admin' or request.user.role == 'superadmin' %}
 <div class="offcanvas offcanvas-end" tabindex="-1" id="assignAssetOffcanvas" aria-labelledby="assignAssetOffcanvasLabel"
-    style="width: 450px; z-index: 1060;">
+    style="width: 450px; z-index: 1060;" data-bs-backdrop="false">
     <div class="offcanvas-header offcanvas-modern-header border-bottom">
         <h5 class="offcanvas-title fw-bold" id="assignAssetOffcanvasLabel">
             <span class="stat-icon me-2"
@@ -1211,12 +1211,12 @@
             <div class="mb-4">
                 <label class="form-label fw-bold small text-muted"><i class="bi bi-person-search me-1"></i> EMPLOYEE
                     SEARCH</label>
-                <div class="emp-picker">
-                    <input type="text" id="empSearch" class="form-control" placeholder="Type name or ID..."
-                        autocomplete="off">
-                    <input type="hidden" name="employee" id="empId" required>
-                    <div class="emp-results" id="empResults"></div>
-                </div>
+                <select id="empSelect" name="employee" class="form-control select2-modern" style="width: 100%;" required>
+                    <option value="">Search by ID or Name...</option>
+                    {% for emp in employees %}
+                    <option value="{{ emp.id }}">{{ emp.employee_id }} — {{ emp.name }}</option>
+                    {% endfor %}
+                </select>
                 <div class="form-text">Search by employee name or ID.</div>
             </div>
 
@@ -1280,7 +1280,7 @@
 
 <!-- Transfer Asset Offcanvas -->
 <div class="offcanvas offcanvas-end" tabindex="-1" id="transferAssetOffcanvas"
-    aria-labelledby="transferAssetOffcanvasLabel" style="width: 450px; z-index: 1060;">
+    aria-labelledby="transferAssetOffcanvasLabel" style="width: 450px; z-index: 1060;" data-bs-backdrop="false">
     <div class="offcanvas-header offcanvas-modern-header border-bottom">
         <h5 class="offcanvas-title fw-bold" id="transferAssetOffcanvasLabel">
             <span class="stat-icon me-2"
@@ -1475,9 +1475,9 @@
             }
         });
 
-        // Initialize Select2 in offcanvas (asset picker only)
+        // Initialize Select2 in offcanvas
         if ($('#assignAssetOffcanvas').length && $.fn.select2) {
-            $('#assetSelect').select2({
+            $('#assetSelect, #empSelect').select2({
                 dropdownParent: $('#assignAssetOffcanvas'),
                 width: '100%'
             });
@@ -1570,78 +1570,38 @@
             }
         }
 
-        // Employee picker (no external dependency)
-        (function () {
-            const input = document.getElementById('empSearch');
-            if (!input) return;
-            const hidden = document.getElementById('empId');
-            const results = document.getElementById('empResults');
-            const empName = document.getElementById('empName');
-            const empDept = document.getElementById('empDept');
-            const empBranch = document.getElementById('empBranch');
-            const EMPLOYEES = {{ employees_json|safe }};
-
-            function selectEmployee(id) {
-                for (let i = 0; i < EMPLOYEES.length; i++) {
-                    if (EMPLOYEES[i].id === id) {
-                        const e = EMPLOYEES[i];
-                        hidden.value = e.id;
-                        input.value = e.emp_id + ' — ' + e.name;
-                        if (empName) empName.value = e.name || '—';
-                        if (empDept) empDept.value = e.dept || '—';
-                        if (empBranch) empBranch.value = e.branch || '—';
-                        results.style.display = 'none';
-                        return;
-                    }
-                }
-            }
-
-            function matches(e, q) {
-                return (e.name || '').toLowerCase().indexOf(q) !== -1 ||
-                    String(e.emp_id || '').toLowerCase().indexOf(q) !== -1 ||
-                    (e.dept || '').toLowerCase().indexOf(q) !== -1;
-            }
-
-            function render(list) {
-                if (!list.length) {
-                    results.innerHTML = '<div class="emp-empty">No employees found</div>';
-                    results.style.display = 'block';
+        // Handle empSelect change for Employee Details
+        const empSelect = $('#empSelect');
+        const empName = document.getElementById('empName');
+        const empDept = document.getElementById('empDept');
+        const empBranch = document.getElementById('empBranch');
+        if (empSelect.length) {
+            const EMPLOYEES = [
+                {% for emp in employees %}
+                {
+                    id: "{{ emp.id|escapejs }}",
+                    name: "{{ emp.name|escapejs }}",
+                    dept: "{{ emp.department|escapejs }}",
+                    branch: "{{ emp.branch|escapejs }}"
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ];
+            empSelect.on('change', function () {
+                const empId = $(this).val();
+                if (!empId) {
+                    if (empName) empName.value = '—';
+                    if (empDept) empDept.value = '—';
+                    if (empBranch) empBranch.value = '—';
                     return;
                 }
-                let html = '';
-                for (let i = 0; i < list.length; i++) {
-                    html += '<div class="emp-item" data-id="' + list[i].id + '">' +
-                        '<div class="emp-item-name"></div>' +
-                        '<div class="emp-item-meta"></div></div>';
+                const emp = EMPLOYEES.find(e => String(e.id) === String(empId));
+                if (emp) {
+                    if (empName) empName.value = emp.name || '—';
+                    if (empDept) empDept.value = emp.dept || '—';
+                    if (empBranch) empBranch.value = emp.branch || '—';
                 }
-                results.innerHTML = html;
-                const items = results.querySelectorAll('.emp-item');
-                for (let j = 0; j < items.length; j++) {
-                    const emp = list[j];
-                    items[j].querySelector('.emp-item-name').textContent = emp.name || '—';
-                    items[j].querySelector('.emp-item-meta').textContent = (emp.emp_id || '') + ' · ' + (emp.dept || '—');
-                    items[j].addEventListener('mousedown', (function (id) {
-                        return function (ev) { ev.preventDefault(); selectEmployee(id); };
-                    })(emp.id));
-                }
-                results.style.display = 'block';
-            }
-
-            input.addEventListener('focus', function () {
-                const q = input.value.trim().toLowerCase();
-                if (q) render(EMPLOYEES.filter(function (e) { return matches(e, q); }).slice(0, 50));
             });
-
-            input.addEventListener('keyup', function () {
-                const q = input.value.trim().toLowerCase();
-                if (!q) { results.style.display = 'none'; hidden.value = ''; return; }
-                render(EMPLOYEES.filter(function (e) { return matches(e, q); }).slice(0, 50));
-            });
-
-            input.addEventListener('blur', function () {
-                setTimeout(function () { results.style.display = 'none'; }, 150);
-            });
-        })();
+        }
     });
 </script>
 {% endblock %}
