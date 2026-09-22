@@ -1470,17 +1470,27 @@ def view_assets(request):
             dead=Count('id', filter=Q(status__iexact='Dead')),
         ).order_by('asset_type')
 
-        # Count unassigned temporary assets per type (matching what's shown in Temporary Assets section)
+        # Count Temporary Use: assets currently ASSIGNED with Temporary status (cards at top)
         assigned_ids_for_stats = set(Assignment.objects.filter(status__in=active_statuses).values_list('asset_id', flat=True))
-        temp_counts = {}
+        assigned_temp_counts = {}
+        for a in Assignment.objects.filter(
+            status__in=active_statuses,
+            status__iexact='Temporary'
+        ).values('asset__asset_type').annotate(cnt=Count('asset_id', distinct=True)):
+            assigned_temp_counts[a['asset__asset_type']] = a['cnt']
+
+        # Count Temporary (stock): unassigned assets with status=Temporary (bottom section)
+        unassigned_temp_counts = {}
         for a in Asset.objects.exclude(id__in=assigned_ids_for_stats).filter(
             Q(status__iexact='Temporary') | Q(status__iexact='Temporary Use')
         ).values('asset_type').annotate(cnt=Count('id')):
-            temp_counts[a['asset_type']] = a['cnt']
+            unassigned_temp_counts[a['asset_type']] = a['cnt']
 
         asset_stats = []
         for stat in asset_stats_qs:
-            stat['temporary'] = temp_counts.get(stat['asset_type'], 0)
+            atype = stat['asset_type']
+            stat['temporary_use'] = assigned_temp_counts.get(atype, 0)   # Assigned Temporary Use cards
+            stat['temporary'] = unassigned_temp_counts.get(atype, 0)     # Unassigned Temporary stock
             stat['other'] = 0
             asset_stats.append(stat)
     else:
