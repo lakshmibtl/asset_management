@@ -664,9 +664,15 @@
                 <div class="card-body p-4 d-flex flex-column">
 
                     <div class="d-flex justify-content-between align-items-start mb-3">
+                        {% if 'temporary' in assign.status|lower or 'temporary' in assign.asset.status|lower %}
+                        <span class="badge status-badge" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(251, 191, 36, 0.25)); color: #b45309; border: 1px solid rgba(245, 158, 11, 0.3);">
+                            <i class="bi bi-clock-history me-1"></i> Temporary Use
+                        </span>
+                        {% else %}
                         <span class="badge badge-inuse status-badge">
                             <i class="bi bi-person-check-fill me-1"></i> In Use
                         </span>
+                        {% endif %}
                         <div class="text-muted small fw-semibold">ID: {{ assign.asset.asset_id }}</div>
                     </div>
 
@@ -1219,21 +1225,27 @@
                 </div>
             </div>
 
-            <div class="bg-light rounded-4 p-3 mb-4">
+            <div class="bg-light rounded-4 p-3 mb-4 border" id="empDetailsCard">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="form-label small text-muted fw-bold m-0"><i class="bi bi-person-vcard me-1"></i> USER DETAILS</span>
+                    <button type="button" id="toggleManualEntryBtn" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.72rem; border-radius: 6px;">
+                        <i class="bi bi-pencil-square me-1"></i>Manual Entry
+                    </button>
+                </div>
                 <div class="row g-2">
                     <div class="col-12">
-                        <label class="form-label small text-muted">Full Name</label>
-                        <input type="text" id="empName" class="form-control" readonly placeholder="—"
+                        <label class="form-label small text-muted mb-1">Full Name</label>
+                        <input type="text" id="empName" name="emp_name" class="form-control" readonly placeholder="Search employee or type name..."
                             style="background-color: #f8fafc;">
                     </div>
                     <div class="col-12">
-                        <label class="form-label small text-muted">Department</label>
-                        <input type="text" id="empDept" class="form-control" readonly placeholder="—"
+                        <label class="form-label small text-muted mb-1">Department</label>
+                        <input type="text" id="empDept" name="emp_dept" class="form-control" readonly placeholder="Department..."
                             style="background-color: #f8fafc;">
                     </div>
                     <div class="col-12">
-                        <label class="form-label small text-muted">Branch</label>
-                        <input type="text" id="empBranch" class="form-control" readonly placeholder="—"
+                        <label class="form-label small text-muted mb-1">Branch</label>
+                        <input type="text" id="empBranch" name="emp_branch" class="form-control" readonly placeholder="Branch..."
                             style="background-color: #f8fafc;">
                     </div>
                 </div>
@@ -1261,7 +1273,7 @@
             <div class="mb-4">
                 <label class="form-label fw-bold small text-muted"><i class="bi bi-broadcast me-1"></i> DEPLOYMENT
                     STATUS</label>
-                <select name="status" class="form-select">
+                <select name="status" id="deploymentStatusSelect" class="form-select">
                     <option value="In Use">In Use</option>
                     <option value="Temporary">Temporary Use</option>
                 </select>
@@ -1653,7 +1665,7 @@
             }
         }
 
-        // Inline Employee Search Autocomplete
+        // Inline Employee Search Autocomplete & Manual Entry Toggle
         (function () {
             const input = document.getElementById('empSearchInput');
             if (!input) return;
@@ -1662,14 +1674,58 @@
             const empName = document.getElementById('empName');
             const empDept = document.getElementById('empDept');
             const empBranch = document.getElementById('empBranch');
+            const toggleBtn = document.getElementById('toggleManualEntryBtn');
+            const deploymentSelect = document.getElementById('deploymentStatusSelect');
             const EMPLOYEES = {{ employees_json|safe }};
+
+            function enableManualEntry() {
+                [empName, empDept, empBranch].forEach(field => {
+                    if (field) {
+                        field.removeAttribute('readonly');
+                        field.style.backgroundColor = '#ffffff';
+                    }
+                });
+                if (toggleBtn) {
+                    toggleBtn.className = 'btn btn-sm btn-success py-0 px-2';
+                    toggleBtn.style.fontSize = '0.72rem';
+                    toggleBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Manual Active';
+                }
+            }
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function() {
+                    enableManualEntry();
+                    if (empName) empName.focus();
+                });
+            }
+
+            if (deploymentSelect) {
+                deploymentSelect.addEventListener('change', function() {
+                    if (this.value === 'Temporary') {
+                        enableManualEntry();
+                        if (empName && (empName.value === '—' || !empName.value)) {
+                            empName.value = '';
+                            empDept.value = '';
+                            empBranch.value = '';
+                        }
+                        if (empName) empName.focus();
+                    }
+                });
+            }
+
+            [empName, empDept, empBranch].forEach(field => {
+                if (field) {
+                    field.addEventListener('focus', enableManualEntry);
+                    field.addEventListener('click', enableManualEntry);
+                }
+            });
 
             function selectEmp(emp) {
                 hidden.value = emp.id;
                 input.value = emp.emp_id + ' — ' + emp.name;
-                if (empName) empName.value = emp.name || '—';
-                if (empDept) empDept.value = emp.dept || '—';
-                if (empBranch) empBranch.value = emp.branch || '—';
+                if (empName) empName.value = emp.name || '';
+                if (empDept) empDept.value = emp.dept || '';
+                if (empBranch) empBranch.value = emp.branch || '';
                 dropdown.style.display = 'none';
             }
 
@@ -1712,9 +1768,6 @@
                 if (!q) {
                     dropdown.style.display = 'none';
                     hidden.value = '';
-                    if (empName) empName.value = '—';
-                    if (empDept) empDept.value = '—';
-                    if (empBranch) empBranch.value = '—';
                     return;
                 }
                 renderResults(filterEmp(q));

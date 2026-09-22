@@ -823,12 +823,17 @@
 </div>
 
 <!-- Ticket Details AJAX Offcanvas -->
-<div class="offcanvas offcanvas-end tk-offcanvas shadow-lg" tabindex="-1" id="ticketDetailOffcanvas" aria-labelledby="ticketDetailOffcanvasLabel" style="width: 800px; z-index: 1060; top: 65px; height: calc(100vh - 65px);" data-bs-backdrop="false">
-    <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="ticketDetailOffcanvasLabel">
+<div class="offcanvas offcanvas-end tk-offcanvas shadow-lg" tabindex="-1" id="ticketDetailOffcanvas" aria-labelledby="ticketDetailOffcanvasLabel" style="width: 520px; max-width: 85vw; z-index: 1060; top: 65px; height: calc(100vh - 65px); border-top-left-radius: 16px; border-bottom-left-radius: 16px;" data-bs-backdrop="false">
+    <div class="offcanvas-header border-bottom py-3 px-4">
+        <h5 class="offcanvas-title m-0 fw-bold" id="ticketDetailOffcanvasLabel">
             <i class="bi bi-ticket-detailed me-2" style="color:var(--brand);"></i>Ticket Overview
         </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        <div class="d-flex align-items-center ms-auto gap-2">
+            <a id="ticketFullPageBtn" href="#" class="btn btn-sm btn-outline-brand fw-semibold d-none">
+                <i class="bi bi-box-arrow-up-right me-1"></i>Open Full Page
+            </a>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
     </div>
     <div class="offcanvas-body p-0" id="ticketDetailBody" style="background-color: #f8fafc;">
         <div class="text-center py-5 mt-5">
@@ -845,6 +850,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const detailButtons = document.querySelectorAll('.hover-lift');
     const offcanvasEl = document.getElementById('ticketDetailOffcanvas');
     const offcanvasBody = document.getElementById('ticketDetailBody');
+    const fullPageBtn = document.getElementById('ticketFullPageBtn');
     let bsOffcanvas = null;
 
     if (offcanvasEl) {
@@ -858,6 +864,11 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
                 const url = this.getAttribute('href');
+
+                if (fullPageBtn) {
+                    fullPageBtn.href = url;
+                    fullPageBtn.classList.remove('d-none');
+                }
 
                 if (bsOffcanvas) {
                     // Show loading spinner
@@ -879,7 +890,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .then(html => {
                         offcanvasBody.innerHTML = html;
-                        // Re-initialize any bootstrap components (like tooltips/modals) if needed inside the offcanvas
                     })
                     .catch(err => {
                         console.error('Error fetching ticket details:', err);

@@ -1,3 +1,4 @@
+import re
 from django import template
 from asset_app.models import Employee
 
@@ -19,3 +20,30 @@ def display_name(user):
         return emp.name
         
     return user.get_full_name() or user.username
+
+
+@register.filter
+def split_resolution(value):
+    """Split a resolution_message string into individual history entries.
+    Entries are separated by '---'.
+    Returns a list of non-empty strings."""
+    if not value:
+        return []
+    raw_parts = re.split(r'\n+\s*---\s*', str(value))
+    result = []
+    for i, part in enumerate(raw_parts):
+        part = part.strip()
+        if not part:
+            continue
+        if i > 0:
+            part = '--- ' + part
+        result.append(part)
+    return result
+
+
+@register.filter(name='strip')
+def strip_whitespace(value):
+    """Strip leading/trailing whitespace from a string."""
+    if value is None:
+        return ''
+    return str(value).strip()

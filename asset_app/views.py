@@ -1008,32 +1008,73 @@ def assign_asset(request):
                 return redirect(next_url)
             return redirect(reverse('assign_asset'))
 
-        form = AssignmentForm(request.POST)
+        post_data = request.POST.copy()
+        emp_id = post_data.get('employee')
+        manual_name = (post_data.get('emp_name') or '').strip()
+        manual_dept = (post_data.get('emp_dept') or '').strip()
+        manual_branch = (post_data.get('emp_branch') or post_data.get('branch') or '').strip()
+
+        # Handle manual user entry (especially for Temporary Use or unregistered users)
+        if not emp_id and manual_name:
+            emp_obj = Employee.objects.filter(name__iexact=manual_name).first()
+            if not emp_obj:
+                import random
+                rand_num = random.randint(1000, 9999)
+                emp_obj = Employee.objects.create(
+                    name=manual_name,
+                    employee_id=f"TEMP-{rand_num}",
+                    department=manual_dept or 'Temporary',
+                    branch=manual_branch or ''
+                )
+            post_data['employee'] = emp_obj.id
+
+        form = AssignmentForm(post_data)
         if form.is_valid():
             assignment = form.save(commit=False)
             assignment.assigned_by = request.user
             if assigned_date_obj:
                 assignment.assigned_date = assigned_date_obj
+
+            # Close out any previous active assignments for this asset so it's not assigned twice
+            Assignment.objects.filter(
+                asset=assignment.asset,
+                status__in=['In Use', 'Temporary', 'Temporary Use']
+            ).update(
+                status='Returned',
+                returned_at=timezone.now()
+            )
+
             assignment.save()
             
-            # Update employee branch if provided manually
-            manual_branch = request.POST.get('branch')
-            if manual_branch and manual_branch.strip():
-                employee = assignment.employee
-                employee.branch = manual_branch.strip()
+            # Update employee department and branch if provided/edited manually
+            employee = assignment.employee
+            emp_updated = False
+            if manual_dept and employee.department != manual_dept:
+                employee.department = manual_dept
+                emp_updated = True
+            if manual_branch and employee.branch != manual_branch:
+                employee.branch = manual_branch
+                emp_updated = True
+            if emp_updated:
                 employee.save()
                 
             asset = assignment.asset
-            asset.status = "In Use"
+            if assignment.status and 'temporary' in assignment.status.lower():
+                asset.status = "Temporary"
+            else:
+                asset.status = "In Use"
             asset.save()
-            
-            # We do not automatically redirect to the signature page because the admin does not sign it.
-            # The employee will sign it later via the button on the list views.
 
             next_url = request.POST.get('next')
             if next_url:
                 return redirect(next_url)
             messages.success(request, "Asset assigned successfully!")
+            return redirect('view_assets')
+        else:
+            messages.error(request, f"Assignment failed: {form.errors.as_text()}")
+            next_url = request.POST.get('next')
+            if next_url:
+                return redirect(next_url)
             return redirect('view_assets')
     else:
         from .sync_employees import sync_employees_from_api
@@ -1248,10 +1289,14 @@ def transfer_asset(request, pk):
             messages.error(request, "Please select an employee.")
             return redirect('view_assets')
             
-        old_assign = Assignment.objects.filter(asset=asset, status='In Use').last()
-        if old_assign:
-            old_assign.status = 'Returned'
-            old_assign.save()
+        # Close out any previous active assignments for this asset
+        Assignment.objects.filter(
+            asset=asset,
+            status__in=['In Use', 'Temporary', 'Temporary Use']
+        ).update(
+            status='Returned',
+            returned_at=timezone.now()
+        )
             
         new_emp = get_object_or_404(Employee, id=new_emp_id)
         new_assignment = Assignment.objects.create(
@@ -1360,32 +1405,47 @@ def view_assets(request):
     is_staff = request.user.is_staff or getattr(request.user, 'role', '') in ('superadmin', 'admin', 'asset_admin')
     is_manager = getattr(request.user, 'role', '') == 'manager'
         
+    active_statuses = ['In Use', 'Temporary', 'Temporary Use']
     if is_staff:
-        assignments = Assignment.objects.select_related("asset", "employee").filter(status__iexact='In Use')
+        raw_assignments = Assignment.objects.select_related("asset", "employee").filter(status__in=active_statuses).order_by('asset_id', '-id')
     elif is_manager:
-        assignments = Assignment.objects.select_related("asset", "employee").filter(
+        raw_assignments = Assignment.objects.select_related("asset", "employee").filter(
             employee__department__iexact=request.user.department,
-            status__iexact='In Use'
-        )
+            status__in=active_statuses
+        ).order_by('asset_id', '-id')
     else:
         # Employee - only show their own assets
-        assignments = Assignment.objects.select_related("asset", "employee").filter(
+        raw_assignments = Assignment.objects.select_related("asset", "employee").filter(
             Q(employee__employee_id__iexact=request.user.username) | Q(employee__name__iexact=request.user.username),
-            status__iexact='In Use'
+            status__in=active_statuses
+        ).order_by('asset_id', '-id')
+
+    seen_assets = set()
+    assignments = []
+    for a in raw_assignments:
+        if a.asset_id not in seen_assets:
+            seen_assets.add(a.asset_id)
+            assignments.append(a)
+
+    # Unassigned assets (only truly Available / Under Repair assets, excluding all currently assigned assets)
+    if is_staff:
+        assigned_asset_ids = set(Assignment.objects.filter(status__in=active_statuses).values_list('asset_id', flat=True))
+
+        # Available Stock (Available / Under Repair assets that are not assigned)
+        unassigned_assets = Asset.objects.exclude(
+            id__in=assigned_asset_ids
+        ).filter(
+            Q(status__iexact='Available') | Q(status__iexact='Under Repair')
         )
 
-    # Unassigned assets (includes Available, Under Repair, Limbo In-Use, excluding Dead and Temporary assets)
-    if is_staff:
-        active_assigned_asset_ids = assignments.values_list('asset_id', flat=True)
-        unassigned_assets = Asset.objects.exclude(
-            id__in=active_assigned_asset_ids
-        ).exclude(
-            status__iexact='Dead'
-        ).exclude(
-            status__iexact='Temporary'
+        # Temporary Assets section: Only unassigned stock assets marked with Status='Temporary' or 'Temporary Use'
+        temporary_assets = Asset.objects.exclude(
+            id__in=assigned_asset_ids
+        ).filter(
+            Q(status__iexact='Temporary') | Q(status__iexact='Temporary Use')
         )
+
         dead_assets = Asset.objects.filter(status__iexact='Dead')
-        temporary_assets = Asset.objects.filter(status__iexact='Temporary')
     else:
         unassigned_assets = []
         dead_assets = []
@@ -2316,8 +2376,14 @@ def ticket_detail(request, pk):
             if status_changed or res_changed or assigned_changed:
                 if status_changed:
                     ticket.status = new_status
-                if res_changed:
-                    ticket.resolution_message = resolution_message.strip()
+                if res_changed and resolution_message and resolution_message.strip():
+                    new_note = resolution_message.strip()
+                    existing_msg = (ticket.resolution_message or "").strip()
+                    if existing_msg:
+                        if new_note not in existing_msg:
+                            ticket.resolution_message = f"{existing_msg}\n\n--- Resolution Update ---\n{new_note}"
+                    else:
+                        ticket.resolution_message = new_note
                 if assigned_changed:
                     ticket.assigned_to_id = assigned_to_id if assigned_to_id != 'unassigned' else None
                 
