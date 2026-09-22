@@ -1336,25 +1336,33 @@ def view_assets(request):
             status__iexact='In Use'
         )
 
-    # Unassigned assets (includes Available, Under Repair, and custom statuses)
+    # Unassigned assets (includes Available, Under Repair, and custom statuses, excluding Dead and Temporary assets)
     if is_staff:
-        unassigned_assets = Asset.objects.exclude(status__iexact='In Use')
+        unassigned_assets = Asset.objects.exclude(status__iexact='In Use').exclude(status__iexact='Dead').exclude(status__iexact='Temporary')
+        dead_assets = Asset.objects.filter(status__iexact='Dead')
+        temporary_assets = Asset.objects.filter(status__iexact='Temporary')
     else:
         unassigned_assets = []
+        dead_assets = []
+        temporary_assets = []
 
     # Calculate asset stats
     if is_staff:
         asset_stats = Asset.objects.values('asset_type').annotate(
             total=Count('id'),
             in_use=Count('id', filter=Q(status__iexact='In Use')),
-            available=Count('id', filter=Q(status__iexact='Available'))
+            available=Count('id', filter=Q(status__iexact='Available')),
+            dead=Count('id', filter=Q(status__iexact='Dead')),
+            temporary=Count('id', filter=Q(status__iexact='Temporary'))
         ).order_by('asset_type')
     else:
         assigned_asset_ids = assignments.values_list('asset_id', flat=True)
         asset_stats = Asset.objects.filter(id__in=assigned_asset_ids).values('asset_type').annotate(
             total=Count('id'),
             in_use=Count('id'),
-            available=Count('id', filter=Q(status__iexact='Available'))
+            available=Count('id', filter=Q(status__iexact='Available')),
+            dead=Count('id', filter=Q(status__iexact='Dead')),
+            temporary=Count('id', filter=Q(status__iexact='Temporary'))
         ).order_by('asset_type')
 
     # Employees see all assets; requests they have made
@@ -1386,6 +1394,8 @@ def view_assets(request):
     return render(request, 'asset_app/view_assets.html', {
         'assignments': assignments,
         'unassigned_assets': unassigned_assets,
+        'dead_assets': dead_assets,
+        'temporary_assets': temporary_assets,
         'asset_stats': asset_stats,
         'employees': Employee.objects.all().order_by('name'),
         'today_date': timezone.now().date().isoformat(),

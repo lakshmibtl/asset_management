@@ -1,33 +1,13 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, User
 from django.conf import settings
 import qrcode
 import base64
 import socket
 from io import BytesIO
 from django.urls import reverse
-from django.contrib.auth.models import User
 from django.utils import timezone
 
-# --------------------------------------------------------------------
-# Custom User Model
-# --------------------------------------------------------------------
-# models.py
-
-#ROLE_CHOICES = [
- #    ("admin", "Admin"),
-   # ("manager", "Manager"),
-    #("purchase", "Purchase Manager"),
-    #("accounts", "Account Manager"),
-    #("user", "User"),
-#]
-
-#class CustomUser(AbstractUser):
- #   role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="user")
-
-
-  #  def __str__(self):
-   #     return f"{self.username} ({self.role})"
 # --------------------------------------------------------------------
 # Asset Model
 # --------------------------------------------------------------------
@@ -45,6 +25,7 @@ class Asset(models.Model):
         ('Available', 'Available'),
         ('In Use', 'In Use'),
         ('Temporary', 'Temporary'),
+        ('Dead', 'Dead'),
         ('Other', 'Other'),
     ]
 
