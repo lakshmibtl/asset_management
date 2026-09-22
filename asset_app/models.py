@@ -61,7 +61,7 @@ class Asset(models.Model):
     name = models.CharField(max_length=100, blank=True, default='')
     company_name = models.CharField(max_length=100, blank=True)
     vendor_name = models.CharField(max_length=100, blank=True, null=True)
-    series_number = models.CharField(max_length=100, blank=True)
+    series_number = models.CharField(max_length=100, blank=True, unique=True)
     model = models.CharField(max_length=100, blank=True)
     status = models.CharField(max_length=50, default='Available')
 

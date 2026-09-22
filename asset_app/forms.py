@@ -239,6 +239,19 @@ class AssetForm(forms.ModelForm):
                 self.initial['other_storage'] = self.instance.storage
                 self.initial['storage'] = 'Other'
 
+    def clean_series_number(self):
+        series_number = self.cleaned_data.get('series_number', '').strip()
+        if series_number:
+            qs = Asset.objects.filter(series_number__iexact=series_number)
+            if self.instance and self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)  # Allow editing same asset
+            if qs.exists():
+                existing = qs.first()
+                raise forms.ValidationError(
+                    f'Serial number "{series_number}" is already used by asset {existing.asset_id} ({existing.asset_type}). Please enter a unique serial number.'
+                )
+        return series_number
+
     def clean(self):
         cleaned_data = super().clean()
         asset_type = cleaned_data.get('asset_type')
