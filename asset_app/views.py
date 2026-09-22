@@ -1463,14 +1463,26 @@ def view_assets(request):
 
     # Calculate asset stats
     if is_staff:
-        asset_stats = Asset.objects.values('asset_type').annotate(
+        asset_stats_qs = Asset.objects.values('asset_type').annotate(
             total=Count('id'),
             in_use=Count('id', filter=Q(status__iexact='In Use')),
             available=Count('id', filter=Q(status__iexact='Available')),
             dead=Count('id', filter=Q(status__iexact='Dead')),
-            temporary=Count('id', filter=Q(status__iexact='Temporary')),
-            other=Count('id', filter=~Q(status__iexact='In Use') & ~Q(status__iexact='Available') & ~Q(status__iexact='Dead') & ~Q(status__iexact='Temporary'))
         ).order_by('asset_type')
+
+        # Count unassigned temporary assets per type (matching what's shown in Temporary Assets section)
+        assigned_ids_for_stats = set(Assignment.objects.filter(status__in=active_statuses).values_list('asset_id', flat=True))
+        temp_counts = {}
+        for a in Asset.objects.exclude(id__in=assigned_ids_for_stats).filter(
+            Q(status__iexact='Temporary') | Q(status__iexact='Temporary Use')
+        ).values('asset_type').annotate(cnt=Count('id')):
+            temp_counts[a['asset_type']] = a['cnt']
+
+        asset_stats = []
+        for stat in asset_stats_qs:
+            stat['temporary'] = temp_counts.get(stat['asset_type'], 0)
+            stat['other'] = 0
+            asset_stats.append(stat)
     else:
         assigned_asset_ids = assignments.values_list('asset_id', flat=True)
         asset_stats = Asset.objects.filter(id__in=assigned_asset_ids).values('asset_type').annotate(
