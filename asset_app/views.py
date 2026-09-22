@@ -17,6 +17,7 @@ from django.db.models.functions import Lower
 from django.db import IntegrityError
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, get_user_model
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -387,6 +388,50 @@ def add_user(request):
 def logout_user(request):
     logout(request)
     return redirect('login_user')
+
+
+@login_required(login_url='/login/')
+def change_password(request):
+    errors = []
+    if request.method == 'POST':
+        current = request.POST.get('current_password', '')
+        new_pass = request.POST.get('new_password', '')
+        confirm = request.POST.get('confirm_password', '')
+
+        if not current:
+            errors.append('Current password is required.')
+        elif not request.user.check_password(current):
+            errors.append('Current password is incorrect.')
+
+        if not errors:
+            if not new_pass:
+                errors.append('New password is required.')
+            elif len(new_pass) < 8:
+                errors.append('New password must be at least 8 characters long.')
+
+        if not errors and new_pass != confirm:
+            errors.append('New password and confirm password do not match.')
+
+        if not errors and new_pass == current:
+            errors.append('New password must be different from the current password.')
+
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+        if errors:
+            if is_ajax:
+                return JsonResponse({'success': False, 'errors': errors})
+            return render(request, 'asset_app/change_password.html', {'errors': errors})
+
+        request.user.set_password(new_pass)
+        request.user.save(update_fields=['password'])
+        update_session_auth_hash(request, request.user)
+
+        if is_ajax:
+            return JsonResponse({'success': True, 'message': 'Your password has been changed successfully.'})
+        messages.success(request, 'Your password has been changed successfully.')
+        return redirect('change_password')
+
+    return render(request, 'asset_app/change_password.html', {})
 
 
 # ------------------- DASHBOARD -------------------

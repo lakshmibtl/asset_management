@@ -434,6 +434,13 @@
                         </div>
                     </li>
                     <li>
+                        <a class="dropdown-item d-flex align-items-center"
+                                data-bs-toggle="offcanvas" data-bs-target="#changePasswordOffcanvas"
+                                href="#">
+                            <i class="bi bi-key me-2"></i>Change Password
+                        </a>
+                    </li>
+                    <li>
                         <hr class="dropdown-divider">
                         <form action="{% url 'logout_user' %}" method="POST" id="logout-form" class="d-none">{% csrf_token %}</form>
                         <a class="dropdown-item text-danger d-flex align-items-center" href="#"
@@ -675,6 +682,374 @@
             }
 
             initAll();
+        })();
+    </script>
+
+    <!-- ============ CHANGE PASSWORD OFF-CANVAS ============ -->
+    <div class="offcanvas offcanvas-end cp-canvas" tabindex="-1" id="changePasswordOffcanvas"
+        aria-labelledby="changePasswordOffcanvasLabel">
+        <div class="cp-header">
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            <div class="cp-user">
+                <div class="cp-avatar">{{ request.user.first_name|default:request.user.username|make_list|first|upper }}</div>
+                <div>
+                    <div class="cp-greet">Account Security</div>
+                    <div class="cp-name">{{ request.user.get_full_name|default:request.user.first_name|default:request.user.username }}</div>
+                    <div class="cp-emp"><i class="bi bi-hash"></i> Emp ID: {{ request.user.username }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="offcanvas-body">
+            <div id="cpAlert"></div>
+
+            <form id="cpForm" autocomplete="off" novalidate>
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label cp-label">CURRENT PASSWORD</label>
+                    <div class="cp-field">
+                        <i class="bi bi-lock cp-field-icon"></i>
+                        <input type="password" name="current_password" id="cpCurrent"
+                            class="form-control cp-input cp-password" placeholder="Enter current password" required>
+                        <i class="bi bi-eye cp-toggle" data-target="cpCurrent"></i>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label cp-label">NEW PASSWORD</label>
+                    <div class="cp-field">
+                        <i class="bi bi-key cp-field-icon"></i>
+                        <input type="password" name="new_password" id="cpNew"
+                            class="form-control cp-input cp-password" placeholder="Min 8 characters" required>
+                        <i class="bi bi-eye cp-toggle" data-target="cpNew"></i>
+                    </div>
+                </div>
+
+                <!-- Strength meter -->
+                <div class="cp-meter mb-1" id="cpMeter">
+                    <span></span><span></span><span></span><span></span>
+                </div>
+                <div class="cp-strength-label" id="cpStrengthLabel">Enter a new password</div>
+
+                <div class="cp-checklist mb-3" id="cpChecklist">
+                    <div data-check="len"><i class="bi bi-x-circle"></i> At least 8 characters</div>
+                    <div data-check="upper"><i class="bi bi-x-circle"></i> One uppercase letter</div>
+                    <div data-check="lower"><i class="bi bi-x-circle"></i> One lowercase letter</div>
+                    <div data-check="num"><i class="bi bi-x-circle"></i> One number or symbol</div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label cp-label">CONFIRM NEW PASSWORD</label>
+                    <div class="cp-field">
+                        <i class="bi bi-shield-check cp-field-icon"></i>
+                        <input type="password" name="confirm_password" id="cpConfirm"
+                            class="form-control cp-input cp-password" placeholder="Re-enter new password" required>
+                        <i class="bi bi-eye cp-toggle" data-target="cpConfirm"></i>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn cp-submit w-100">
+                    <i class="bi bi-shield-lock me-2"></i>Update Password
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        .cp-canvas {
+            width: 420px !important;
+            max-width: 94vw;
+            border-left: none;
+            z-index: 1090 !important;
+        }
+
+        /* Keep the popup above the fixed page header (z-index 1050) */
+        .offcanvas-backdrop {
+            z-index: 1080 !important;
+        }
+
+        .cp-header {
+            background: linear-gradient(135deg, #07518A 0%, #0d6efd 100%);
+            padding: 26px 22px 22px;
+            color: #fff;
+            position: relative;
+        }
+
+        .cp-header .btn-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+        }
+
+        .cp-user {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .cp-avatar {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.22);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .cp-greet {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            opacity: 0.85;
+        }
+
+        .cp-name {
+            font-weight: 700;
+            font-size: 1.05rem;
+            line-height: 1.3;
+        }
+
+        .cp-emp {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        .offcanvas-body {
+            padding: 22px;
+        }
+
+        .cp-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+
+        .cp-field {
+            position: relative;
+        }
+
+        .cp-field-icon {
+            position: absolute;
+            top: 50%;
+            left: 14px;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 1rem;
+        }
+
+        .cp-input {
+            padding: 11px 42px 11px 40px;
+            border-radius: 10px;
+            border: 1.5px solid #e2e8f0;
+            background: #f8fafc;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+
+        .cp-input:focus {
+            background: #fff;
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.12);
+        }
+
+        .cp-toggle {
+            position: absolute;
+            top: 50%;
+            right: 14px;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #94a3b8;
+            font-size: 1.1rem;
+            padding: 4px;
+        }
+
+        .cp-toggle:hover {
+            color: #07518A;
+        }
+
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {
+            display: none;
+        }
+
+        /* Strength meter */
+        .cp-meter {
+            display: flex;
+            gap: 5px;
+            height: 5px;
+        }
+
+        .cp-meter span {
+            flex: 1;
+            border-radius: 4px;
+            background: #e2e8f0;
+            transition: background 0.25s;
+        }
+
+        .cp-meter[data-score="1"] span:nth-child(-n+1) { background: #dc3545; }
+        .cp-meter[data-score="2"] span:nth-child(-n+2) { background: #fd7e14; }
+        .cp-meter[data-score="3"] span:nth-child(-n+3) { background: #0d6efd; }
+        .cp-meter[data-score="4"] span:nth-child(-n+4) { background: #198754; }
+
+        .cp-strength-label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin: 5px 0 8px;
+            min-height: 1em;
+        }
+
+        .cp-checklist {
+            background: #f8fafc;
+            border: 1px dashed #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 14px;
+        }
+
+        .cp-checklist div {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin: 3px 0;
+            transition: color 0.2s;
+        }
+
+        .cp-checklist div.ok {
+            color: #198754;
+        }
+
+        .cp-checklist div.not-ok {
+            color: #dc3545;
+        }
+
+        .cp-submit {
+            background: linear-gradient(135deg, #07518A 0%, #0d6efd 100%);
+            color: #fff;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            border: none;
+            box-shadow: 0 10px 24px rgba(13, 110, 253, 0.35);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .cp-submit:hover {
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 14px 30px rgba(13, 110, 253, 0.4);
+        }
+    </style>
+
+    <script>
+        // ---------- Show/Hide password eye toggles ----------
+        document.querySelectorAll('.cp-toggle').forEach(function (icon) {
+            icon.addEventListener('click', function () {
+                var input = document.getElementById(this.dataset.target);
+                if (!input) return;
+                var show = input.getAttribute('type') === 'password';
+                input.setAttribute('type', show ? 'text' : 'password');
+                this.classList.toggle('bi-eye-slash', show);
+                this.classList.toggle('bi-eye', !show);
+            });
+        });
+
+        // ---------- New password strength meter + checklist ----------
+        (function () {
+            var input = document.getElementById('cpNew');
+            var meter = document.getElementById('cpMeter');
+            var label = document.getElementById('cpStrengthLabel');
+            var checks = {
+                len: document.querySelector('[data-check="len"]'),
+                upper: document.querySelector('[data-check="upper"]'),
+                lower: document.querySelector('[data-check="lower"]'),
+                num: document.querySelector('[data-check="num"]')
+            };
+            if (!input) return;
+
+            function grade(v) {
+                var s = 0;
+                if (v.length >= 8) s++;
+                if (/[A-Z]/.test(v)) s++;
+                if (/[a-z]/.test(v)) s++;
+                if (/[0-9]/.test(v) || /[^A-Za-z0-9]/.test(v)) s++;
+                return s;
+            }
+
+            function mark(el, ok) {
+                el.classList.toggle('ok', ok);
+                el.classList.toggle('not-ok', !ok);
+                el.querySelector('i').className = ok ? 'bi bi-check-circle' : 'bi bi-x-circle';
+            }
+
+            input.addEventListener('input', function () {
+                var v = this.value;
+                if (!v) {
+                    meter.dataset.score = '0';
+                    label.textContent = 'Enter a new password';
+                    ['len', 'upper', 'lower', 'num'].forEach(function (k) {
+                        checks[k].classList.remove('ok', 'not-ok');
+                        checks[k].querySelector('i').className = 'bi bi-x-circle';
+                    });
+                    return;
+                }
+                var score = grade(v);
+                meter.dataset.score = score;
+                var tags = ['Too weak', 'Weak', 'Fair', 'Good', 'Strong'];
+                label.textContent = tags[score];
+                label.style.color = ['#94a3b8', '#dc3545', '#fd7e14', '#0d6efd', '#198754'][score];
+                mark(checks.len, v.length >= 8);
+                mark(checks.upper, /[A-Z]/.test(v));
+                mark(checks.lower, /[a-z]/.test(v));
+                mark(checks.num, /[0-9]/.test(v) || /[^A-Za-z0-9]/.test(v));
+            });
+        })();
+
+        // ---------- Change Password offcanvas submission ----------
+        (function () {
+            var form = document.getElementById('cpForm');
+            if (!form) return;
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var alert = document.getElementById('cpAlert');
+                var data = new FormData(form);
+                fetch('/asset/change-password/', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': data.get('csrfmiddlewaretoken')
+                    },
+                    body: data
+                })
+                    .then(function (r) { return r.json(); })
+                    .then(function (res) {
+                        if (res.success) {
+                            form.reset();
+                            meter.dataset.score = '0';
+                            document.getElementById('cpStrengthLabel').textContent = 'Enter a new password';
+                            alert.className = 'alert alert-success py-2';
+                            alert.textContent = res.message;
+                            setTimeout(function () {
+                                var off = document.getElementById('changePasswordOffcanvas');
+                                if (off && window.bootstrap) window.bootstrap.Offcanvas.getOrCreateInstance(off).hide();
+                            }, 1600);
+                        } else {
+                            var html = '<ul class="mb-0 ps-3">' + res.errors.map(function (m) {
+                                return '<li>' + m + '</li>';
+                            }).join('') + '</ul>';
+                            alert.className = 'alert alert-danger py-2';
+                            alert.innerHTML = html;
+                        }
+                    })
+                    .catch(function () {
+                        alert.className = 'alert alert-danger py-2';
+                        alert.textContent = 'Something went wrong. Please try again.';
+                    });
+            });
         })();
     </script>
 

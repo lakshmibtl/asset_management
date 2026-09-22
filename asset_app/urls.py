@@ -26,6 +26,9 @@ urlpatterns = [
 
    path("create-user/", views.create_asset_user, name="create_asset_user"),
 
+    # Change Password
+    path("change-password/", views.change_password, name="change_password"),
+
     # Dashboard
    
 
