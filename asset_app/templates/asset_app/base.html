@@ -209,6 +209,110 @@
             }
         }
 
+        /* ---------------- PROFILE DROPDOWN ---------------- */
+        .profile-dropdown {
+            width: 280px;
+            padding: 0;
+            border: 0;
+            border-radius: 14px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            margin-top: 10px !important;
+        }
+
+        .profile-dropdown-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .profile-avatar-circle {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #07518A, #0d6efd);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);
+            flex-shrink: 0;
+        }
+
+        .profile-user-info {
+            min-width: 0; /* allows text truncation */
+        }
+
+        .profile-user-name {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 1.05rem;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .profile-user-id {
+            color: #64748b;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .profile-dropdown-menu {
+            padding: 8px 0;
+        }
+
+        .profile-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #475569;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .profile-dropdown-item:hover {
+            background: #f1f5f9;
+            color: #07518A;
+        }
+
+        .profile-dropdown-item i {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            transition: color 0.2s;
+        }
+
+        .profile-dropdown-item:hover i {
+            color: #07518A;
+        }
+
+        .profile-dropdown-item.text-danger {
+            color: #e11d48;
+        }
+
+        .profile-dropdown-item.text-danger:hover {
+            background: #fff1f2;
+            color: #be123c;
+        }
+
+        .profile-dropdown-item.text-danger i {
+            color: #fb7185;
+        }
+
+        .profile-dropdown-item.text-danger:hover i {
+            color: #be123c;
+        }
+
         .header img.logo {
             height: 32px;
             width: auto;
@@ -423,35 +527,38 @@
             </div>
             <div class="dropdown">
                 <button class="btn btn-light dropdown-toggle d-flex align-items-center border-0 bg-transparent"
-                    type="button" data-bs-toggle="dropdown">
-                    <i class="bi bi-person-circle fs-5 me-md-2"></i>
-                    <span class="d-none d-md-inline fw-medium">{{ request.user.first_name|default:request.user.username }}</span>
-                    <span class="d-none d-md-inline text-muted small ms-1">({{ request.user.username }})</span>
+                    type="button" data-bs-toggle="dropdown" aria-expanded="false" style="padding-right: 0;">
+                    <div class="d-flex align-items-center justify-content-center bg-primary text-white rounded-circle me-md-2" style="width: 35px; height: 35px; font-weight: 600;">
+                        {{ request.user.first_name|default:request.user.username|make_list|first|upper }}
+                    </div>
+                    <div class="d-none d-md-flex flex-column align-items-start text-start me-1">
+                        <span class="fw-bold" style="font-size: 0.9rem; line-height: 1.2; color: #1e293b;">{{ request.user.first_name|default:request.user.username }}</span>
+                        <span class="text-muted" style="font-size: 0.75rem; line-height: 1;">Emp: {{ request.user.username }}</span>
+                    </div>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                <ul class="dropdown-menu dropdown-menu-end profile-dropdown">
                     <li>
-                        <h6 class="dropdown-header text-muted">
-                            {{ request.user.first_name|default:request.user.username }}
-                        </h6>
-                    </li>
-                    <li>
-                        <div class="dropdown-item text-muted small text-truncate">
-                            <i class="bi bi-hash me-2"></i>Emp ID: {{ request.user.username }}
+                        <div class="profile-dropdown-header">
+                            <div class="profile-avatar-circle">
+                                {{ request.user.first_name|default:request.user.username|make_list|first|upper }}
+                            </div>
+                            <div class="profile-user-info">
+                                <div class="profile-user-name" title="{{ request.user.get_full_name|default:request.user.first_name|default:request.user.username }}">
+                                    {{ request.user.get_full_name|default:request.user.first_name|default:request.user.username }}
+                                </div>
+                                <div class="profile-user-id">
+                                    <i class="bi bi-hash text-primary"></i> {{ request.user.username }}
+                                </div>
+                            </div>
                         </div>
                     </li>
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center"
-                                data-bs-toggle="offcanvas" data-bs-target="#changePasswordOffcanvas"
-                                href="#">
-                            <i class="bi bi-key me-2"></i>Change Password
+                    <li class="profile-dropdown-menu">
+                        <a class="profile-dropdown-item" href="#" data-bs-toggle="offcanvas" data-bs-target="#changePasswordOffcanvas">
+                            <i class="bi bi-shield-lock"></i> Change Password
                         </a>
-                    </li>
-                    <li>
-                        <hr class="dropdown-divider">
                         <form action="{% url 'logout_user' %}" method="POST" id="logout-form" class="d-none">{% csrf_token %}</form>
-                        <a class="dropdown-item text-danger d-flex align-items-center" href="#"
-                            onclick="document.getElementById('logout-form').submit();">
-                            <i class="bi bi-box-arrow-right me-2"></i>Logout
+                        <a class="profile-dropdown-item text-danger" href="#" onclick="document.getElementById('logout-form').submit();">
+                            <i class="bi bi-box-arrow-right"></i> Logout
                         </a>
                     </li>
                 </ul>
