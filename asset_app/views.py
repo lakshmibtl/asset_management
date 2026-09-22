@@ -1009,24 +1009,33 @@ def assign_asset(request):
             return redirect(reverse('assign_asset'))
 
         post_data = request.POST.copy()
-        emp_id = post_data.get('employee')
-        manual_name = (post_data.get('emp_name') or '').strip()
+        status = post_data.get('status', '')
+        search_input = (request.POST.get('emp_search') or '').strip()
+        manual_name = (post_data.get('emp_name') or search_input or '').strip()
         manual_dept = (post_data.get('emp_dept') or '').strip()
         manual_branch = (post_data.get('emp_branch') or post_data.get('branch') or '').strip()
 
-        # Handle manual user entry (especially for Temporary Use or unregistered users)
-        if not emp_id and manual_name:
-            emp_obj = Employee.objects.filter(name__iexact=manual_name).first()
-            if not emp_obj:
-                import random
-                rand_num = random.randint(1000, 9999)
-                emp_obj = Employee.objects.create(
-                    name=manual_name,
-                    employee_id=f"TEMP-{rand_num}",
-                    department=manual_dept or 'Temporary',
-                    branch=manual_branch or ''
-                )
-            post_data['employee'] = emp_obj.id
+        # Handle manual user entry (only permitted for Temporary Use status)
+        if not emp_id:
+            if 'temporary' in status.lower():
+                name_to_use = manual_name if manual_name else "Temporary User"
+                emp_obj = Employee.objects.filter(name__iexact=name_to_use).first()
+                if not emp_obj:
+                    import random
+                    rand_num = random.randint(1000, 9999)
+                    emp_obj = Employee.objects.create(
+                        name=name_to_use,
+                        employee_id=f"TEMP-{rand_num}",
+                        department=manual_dept or 'Temporary',
+                        branch=manual_branch or ''
+                    )
+                post_data['employee'] = emp_obj.id
+            else:
+                messages.error(request, "Please select a registered employee for 'In Use' assignments.")
+                next_url = request.POST.get('next')
+                if next_url:
+                    return redirect(next_url)
+                return redirect('view_assets')
 
         form = AssignmentForm(post_data)
         if form.is_valid():

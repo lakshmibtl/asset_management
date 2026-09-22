@@ -255,26 +255,26 @@
                         <label class="form-label fw-bold small text-muted"><i class="bi bi-person-search me-1"
                                 style="color: var(--primary);"></i> EMPLOYEE SEARCH</label>
                         <div class="emp-picker">
-                            <input type="text" id="empSearch" class="form-control" placeholder="Type name or ID..."
+                            <input type="text" id="empSearch" name="emp_search" class="form-control" placeholder="Type name or ID..."
                                 autocomplete="off">
-                            <input type="hidden" name="employee" id="empId" required>
+                            <input type="hidden" name="employee" id="empId">
                             <div class="emp-results" id="empResults"></div>
                         </div>
-                        <div class="form-text">Search by employee name or ID.</div>
+                        <div class="form-text" id="empSearchHelp">Search by employee name or ID.</div>
                     </div>
 
                     <div class="row g-2">
                         <div class="col-12 col-md-4">
                             <label class="form-label small text-muted">Full Name</label>
-                            <input type="text" id="empName" class="form-control readonly-box" readonly placeholder="—">
+                            <input type="text" id="empName" name="emp_name" class="form-control readonly-box" readonly placeholder="—">
                         </div>
                         <div class="col-12 col-md-4">
                             <label class="form-label small text-muted">Department</label>
-                            <input type="text" id="empDept" class="form-control readonly-box" readonly placeholder="—">
+                            <input type="text" id="empDept" name="emp_dept" class="form-control readonly-box" readonly placeholder="—">
                         </div>
                         <div class="col-12 col-md-4">
                             <label class="form-label small text-muted">Branch</label>
-                            <input type="text" id="empBranch" name="branch" class="form-control" placeholder="—">
+                            <input type="text" id="empBranch" name="branch" class="form-control readonly-box" readonly placeholder="—">
                         </div>
                     </div>
 
@@ -315,7 +315,7 @@
                     <div class="mb-4">
                         <label class="form-label fw-bold small text-muted"><i class="bi bi-broadcast me-1"
                                 style="color: var(--primary);"></i> DEPLOYMENT STATUS</label>
-                        <select name="status" class="form-select">
+                        <select name="status" id="assignStatusSelect" class="form-select">
                             <option value="In Use">In Use</option>
                             <option value="Temporary">Temporary Use</option>
                         </select>
@@ -348,6 +348,40 @@
         const empName = $('#empName');
         const empDept = $('#empDept');
         const empBranch = $('#empBranch');
+
+        // 1.5 Handle Deployment Status toggle between "In Use" and "Temporary Use"
+        const statusSelect = document.getElementById('assignStatusSelect');
+        const empSearchEl = document.getElementById('empSearch');
+        const empSearchHelpEl = document.getElementById('empSearchHelp');
+        const empIdEl = document.getElementById('empId');
+
+        function updateStatusMode() {
+            const isTemp = statusSelect && statusSelect.value === 'Temporary';
+            if (isTemp) {
+                if (empSearchEl) empSearchEl.placeholder = 'Type name or ID (optional for Temporary Use)...';
+                if (empSearchHelpEl) empSearchHelpEl.textContent = 'Search employee or leave blank / enter details for Temporary Use.';
+                empName.prop('readonly', false).removeClass('readonly-box');
+                empDept.prop('readonly', false).removeClass('readonly-box');
+                empBranch.prop('readonly', false).removeClass('readonly-box');
+            } else {
+                if (empSearchEl) empSearchEl.placeholder = 'Type name or ID...';
+                if (empSearchHelpEl) empSearchHelpEl.textContent = 'Search by employee name or ID.';
+                empName.prop('readonly', true).addClass('readonly-box');
+                empDept.prop('readonly', true).addClass('readonly-box');
+                empBranch.prop('readonly', true).addClass('readonly-box');
+            }
+        }
+
+        if (statusSelect) {
+            statusSelect.addEventListener('change', updateStatusMode);
+            updateStatusMode();
+        }
+
+        if (empSearchEl) {
+            empSearchEl.addEventListener('input', function() {
+                this.setCustomValidity('');
+            });
+        }
 
         // 2. Employee search picker (no external dependency)
         var EMPLOYEES = {{ employees_json|safe }};
@@ -436,7 +470,20 @@
             window.__dmy['assignDatePicker'].set('maxDate', ASSIGN_TODAY);
         }
 
-        $('#assignForm').on('submit', function () {
+        $('#assignForm').on('submit', function (e) {
+            const isTemp = statusSelect && statusSelect.value === 'Temporary';
+            if (!isTemp && (!empIdEl || !empIdEl.value)) {
+                if (empSearchEl) {
+                    empSearchEl.setCustomValidity('Please search and select a registered employee for In Use assignment.');
+                    empSearchEl.reportValidity();
+                    empSearchEl.focus();
+                } else {
+                    alert('Please search and select a registered employee for In Use assignment.');
+                }
+                return false;
+            }
+            if (empSearchEl) empSearchEl.setCustomValidity('');
+
             const dateInput = this.querySelector('input[name="assigned_date"]');
             if (dateInput && dateInput.value) {
                 const parsed = parseAssignedDate(dateInput.value);

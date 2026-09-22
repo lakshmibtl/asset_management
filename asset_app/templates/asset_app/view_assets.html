@@ -1218,9 +1218,9 @@
                 <label class="form-label fw-bold small text-muted"><i class="bi bi-person-search me-1"></i> EMPLOYEE
                     SEARCH</label>
                 <div class="position-relative">
-                    <input type="text" id="empSearchInput" class="form-control" placeholder="Type name or ID to search..." autocomplete="off"
+                    <input type="text" id="empSearchInput" name="emp_search" class="form-control" placeholder="Type name or ID to search..." autocomplete="off"
                         style="border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px 15px; height: 42px;">
-                    <input type="hidden" name="employee" id="empHiddenId" required>
+                    <input type="hidden" name="employee" id="empHiddenId">
                     <div id="empDropdown" class="emp-autocomplete-dropdown" style="display:none;"></div>
                 </div>
             </div>
@@ -1641,7 +1641,25 @@
                 window.__dmy['assignOffcanvasDate'].set('maxDate', assignToday);
             }
 
-            assignForm.addEventListener('submit', function () {
+            assignForm.addEventListener('submit', function (e) {
+                const deploymentSelect = document.getElementById('deploymentStatusSelect');
+                const empHiddenId = document.getElementById('empHiddenId');
+                const empSearchInput = document.getElementById('empSearchInput');
+                const statusVal = deploymentSelect ? deploymentSelect.value : 'In Use';
+                
+                if (statusVal !== 'Temporary' && (!empHiddenId || !empHiddenId.value)) {
+                    if (empSearchInput) {
+                        empSearchInput.setCustomValidity('Please search and select a registered employee for In Use assignment.');
+                        empSearchInput.reportValidity();
+                        empSearchInput.focus();
+                    } else {
+                        alert('Please search and select a registered employee for In Use assignment.');
+                    }
+                    e.preventDefault();
+                    return false;
+                }
+                if (empSearchInput) empSearchInput.setCustomValidity('');
+
                 const dateInput = this.querySelector('input[name="assigned_date"]');
                 if (dateInput && dateInput.value) {
                     const parsed = parseAssignDate(dateInput.value);
@@ -1649,6 +1667,7 @@
                         dateInput.value = '';
                         dateInput.setCustomValidity('Future dates are not allowed.');
                         dateInput.reportValidity();
+                        e.preventDefault();
                         return false;
                     }
                     dateInput.setCustomValidity('');
@@ -1669,6 +1688,7 @@
         (function () {
             const input = document.getElementById('empSearchInput');
             if (!input) return;
+            input.addEventListener('input', function() { this.setCustomValidity(''); });
             const hidden = document.getElementById('empHiddenId');
             const dropdown = document.getElementById('empDropdown');
             const empName = document.getElementById('empName');
@@ -1678,7 +1698,20 @@
             const deploymentSelect = document.getElementById('deploymentStatusSelect');
             const EMPLOYEES = {{ employees_json|safe }};
 
+            function disableManualEntry() {
+                [empName, empDept, empBranch].forEach(field => {
+                    if (field) {
+                        field.setAttribute('readonly', 'readonly');
+                        field.style.backgroundColor = '#f8fafc';
+                    }
+                });
+                if (toggleBtn) {
+                    toggleBtn.style.display = 'none';
+                }
+            }
+
             function enableManualEntry() {
+                if (hidden) hidden.value = '';
                 [empName, empDept, empBranch].forEach(field => {
                     if (field) {
                         field.removeAttribute('readonly');
@@ -1686,16 +1719,22 @@
                     }
                 });
                 if (toggleBtn) {
+                    toggleBtn.style.display = 'inline-block';
                     toggleBtn.className = 'btn btn-sm btn-success py-0 px-2';
                     toggleBtn.style.fontSize = '0.72rem';
                     toggleBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Manual Active';
                 }
             }
 
+            // Default to disabled manual entry for "In Use"
+            disableManualEntry();
+
             if (toggleBtn) {
                 toggleBtn.addEventListener('click', function() {
-                    enableManualEntry();
-                    if (empName) empName.focus();
+                    if (deploymentSelect && deploymentSelect.value === 'Temporary') {
+                        enableManualEntry();
+                        if (empName) empName.focus();
+                    }
                 });
             }
 
@@ -1709,14 +1748,30 @@
                             empBranch.value = '';
                         }
                         if (empName) empName.focus();
+                    } else {
+                        disableManualEntry();
+                        if (!hidden.value) {
+                            if (empName) empName.value = '';
+                            if (empDept) empDept.value = '';
+                            if (empBranch) empBranch.value = '';
+                            if (input) input.value = '';
+                        }
                     }
                 });
             }
 
             [empName, empDept, empBranch].forEach(field => {
                 if (field) {
-                    field.addEventListener('focus', enableManualEntry);
-                    field.addEventListener('click', enableManualEntry);
+                    field.addEventListener('focus', function() {
+                        if (deploymentSelect && deploymentSelect.value === 'Temporary') {
+                            enableManualEntry();
+                        }
+                    });
+                    field.addEventListener('click', function() {
+                        if (deploymentSelect && deploymentSelect.value === 'Temporary') {
+                            enableManualEntry();
+                        }
+                    });
                 }
             });
 
