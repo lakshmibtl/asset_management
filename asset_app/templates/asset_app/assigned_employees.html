@@ -274,11 +274,9 @@
                 const empId = card.getAttribute("data-empid") || "";
                 
                 if (empName.includes(searchTerm) || empId.includes(searchTerm)) {
-                    card.style.display = "block";
-                    // Reset animation so it flows nicely if they were hidden
-                    card.style.animation = 'none';
-                    card.offsetHeight; // trigger reflow
-                    card.style.animation = null; 
+                    // Restore the original grid layout without re-running the
+                    // entrance animation so cards do not jump/slide down.
+                    card.style.display = "";
                 } else {
                     card.style.display = "none";
                 }

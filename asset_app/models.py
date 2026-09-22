@@ -110,13 +110,15 @@ class Asset(models.Model):
         if not self.asset_id:
             prefix_map = {'Laptop': 'LP', 'Desktop': 'DT', 'Printer': 'PR'}
             prefix = prefix_map.get(self.asset_type, 'AS')
-            used = set(
-                Asset.objects.filter(asset_id__startswith=f"{prefix}-")
-                .values_list('asset_id', flat=True)
-            )
-            next_number = 1
-            while f"{prefix}-{next_number:04d}" in used:
-                next_number += 1
+            numbers = []
+            for aid in Asset.objects.filter(asset_id__startswith=f"{prefix}-").values_list('asset_id', flat=True):
+                try:
+                    numbers.append(int(aid.split('-')[-1]))
+                except (ValueError, IndexError):
+                    continue
+            # Always use the NEXT sequential number after the highest existing
+            # one, so deleted IDs are never reused.
+            next_number = max(numbers) + 1 if numbers else 1
             self.asset_id = f"{prefix}-{next_number:04d}"
 
         # Auto-calculate warranty end date = add/purchase date + warranty years/months/days

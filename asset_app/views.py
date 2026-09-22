@@ -12,7 +12,8 @@ from django.http import HttpResponse, JsonResponse
 from django.urls import reverse, resolve
 from django.utils import timezone
 from django.utils.timezone import now
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Max
+from django.db.models.functions import Lower
 from django.db import IntegrityError
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, get_user_model
@@ -958,6 +959,20 @@ def warranty_tracking(request):
 
 
 # ------------------- ASSIGN ASSET -------------------
+
+def _employees_json(employees=None):
+    qs = employees if employees is not None else Employee.objects.all().order_by('name')
+    return json.dumps([
+        {
+            'id': e.id,
+            'emp_id': e.employee_id,
+            'name': e.name,
+            'dept': e.department,
+            'branch': e.branch or '',
+        }
+        for e in qs
+    ])
+
 @login_required
 def assign_asset(request):
     is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
@@ -1023,6 +1038,7 @@ def assign_asset(request):
 
     context = {
         "employees": Employee.objects.all().order_by('name'),
+        "employees_json": _employees_json(),
         "assets": assets_query,
         "pre_selected_asset": pre_selected_asset_id,
         "today_date": timezone.now().date().isoformat(),
@@ -1341,29 +1357,49 @@ def view_assets(request):
         unassigned_assets = Asset.objects.exclude(status__iexact='In Use').exclude(status__iexact='Dead').exclude(status__iexact='Temporary')
         dead_assets = Asset.objects.filter(status__iexact='Dead')
         temporary_assets = Asset.objects.filter(status__iexact='Temporary')
+        # Assets marked "In Use" but with no active assignment row. They are
+        # still In Use, so merge them into the assigned display so the count
+        # of assigned cards always matches the "In Use" tally.
+        active_assignment_asset_ids = Assignment.objects.filter(status__iexact='In Use').values_list('asset_id', flat=True)
+        orphaned_in_use_assets = Asset.objects.filter(status__iexact='In Use').exclude(id__in=active_assignment_asset_ids)
     else:
         unassigned_assets = []
         dead_assets = []
         temporary_assets = []
+        orphaned_in_use_assets = []
 
-    # Calculate asset stats
+    # Calculate asset stats grouped by asset type (case-insensitive so
+    # "Laptop", "laptop", "LAPTOP" are counted as one category).
+    def _asset_stats(qs):
+        rows = (
+            qs.values(type_key=Lower('asset_type'))
+            .annotate(
+                type_label=Max('asset_type'),
+                total=Count('id'),
+                in_use=Count('id', filter=Q(status__iexact='In Use')),
+                available=Count('id', filter=Q(status__iexact='Available')),
+                dead=Count('id', filter=Q(status__iexact='Dead')),
+                temporary=Count('id', filter=Q(status__iexact='Temporary'))
+            )
+            .order_by('type_key')
+        )
+        return [
+            {
+                'asset_type': r['type_label'] or r['type_key'],
+                'total': r['total'],
+                'in_use': r['in_use'],
+                'available': r['available'],
+                'dead': r['dead'],
+                'temporary': r['temporary'],
+            }
+            for r in rows
+        ]
+
     if is_staff:
-        asset_stats = Asset.objects.values('asset_type').annotate(
-            total=Count('id'),
-            in_use=Count('id', filter=Q(status__iexact='In Use')),
-            available=Count('id', filter=Q(status__iexact='Available')),
-            dead=Count('id', filter=Q(status__iexact='Dead')),
-            temporary=Count('id', filter=Q(status__iexact='Temporary'))
-        ).order_by('asset_type')
+        asset_stats = _asset_stats(Asset.objects.all())
     else:
         assigned_asset_ids = assignments.values_list('asset_id', flat=True)
-        asset_stats = Asset.objects.filter(id__in=assigned_asset_ids).values('asset_type').annotate(
-            total=Count('id'),
-            in_use=Count('id'),
-            available=Count('id', filter=Q(status__iexact='Available')),
-            dead=Count('id', filter=Q(status__iexact='Dead')),
-            temporary=Count('id', filter=Q(status__iexact='Temporary'))
-        ).order_by('asset_type')
+        asset_stats = _asset_stats(Asset.objects.filter(id__in=assigned_asset_ids))
 
     # Employees see all assets; requests they have made
     employee_requested = []
@@ -1396,8 +1432,10 @@ def view_assets(request):
         'unassigned_assets': unassigned_assets,
         'dead_assets': dead_assets,
         'temporary_assets': temporary_assets,
+        'orphaned_in_use_assets': orphaned_in_use_assets,
         'asset_stats': asset_stats,
         'employees': Employee.objects.all().order_by('name'),
+        'employees_json': _employees_json(),
         'today_date': timezone.now().date().isoformat(),
         'today_date_display': timezone.now().date().strftime('%d/%m/%Y'),
         'is_employee': not (is_staff or is_manager),

@@ -169,6 +169,61 @@
             background-color: #f8fafc;
         }
     }
+
+    /* ============ EMPLOYEE SEARCH PICKER ============ */
+    .emp-picker {
+        position: relative;
+    }
+
+    .emp-results {
+        display: none;
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        z-index: 1080;
+        background: #fff;
+        border: 1px solid var(--input-border);
+        border-radius: 12px;
+        box-shadow: 0 18px 40px rgba(7, 81, 138, 0.18);
+        max-height: 260px;
+        overflow-y: auto;
+    }
+
+    .emp-item {
+        padding: 10px 14px;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background 0.15s ease;
+    }
+
+    .emp-item:last-child {
+        border-bottom: none;
+    }
+
+    .emp-item:hover,
+    .emp-item.emp-active {
+        background: linear-gradient(135deg, rgba(7, 81, 138, 0.08), rgba(13, 110, 253, 0.12));
+    }
+
+    .emp-item-name {
+        font-weight: 700;
+        color: var(--primary);
+        font-size: 0.92rem;
+    }
+
+    .emp-item-meta {
+        font-size: 0.78rem;
+        color: #64748b;
+        margin-top: 2px;
+    }
+
+    .emp-empty {
+        padding: 14px;
+        color: #94a3b8;
+        text-align: center;
+        font-size: 0.85rem;
+    }
 </style>
 
 <div class="container py-4">
@@ -199,12 +254,13 @@
                     <div class="mb-4">
                         <label class="form-label fw-bold small text-muted"><i class="bi bi-person-search me-1"
                                 style="color: var(--primary);"></i> EMPLOYEE SEARCH</label>
-                        <select id="empSelect" name="employee" class="form-control select2-modern" required>
-                            <option value="">Search by ID or Name...</option>
-                            {% for emp in employees %}
-                            <option value="{{ emp.id }}">{{ emp.employee_id }} — {{ emp.name }}</option>
-                            {% endfor %}
-                        </select>
+                        <div class="emp-picker">
+                            <input type="text" id="empSearch" class="form-control" placeholder="Type name or ID..."
+                                autocomplete="off">
+                            <input type="hidden" name="employee" id="empId" required>
+                            <div class="emp-results" id="empResults"></div>
+                        </div>
+                        <div class="form-text">Search by employee name or ID.</div>
                     </div>
 
                     <div class="row g-2">
@@ -251,8 +307,7 @@
                         <select name="asset" class="form-control select2-modern" required>
                             <option value="">Choose an available asset...</option>
                             {% for a in assets %}
-                            <option value="{{ a.pk }}" {% if pre_selected_asset|stringformat:"s"==a.pk|stringformat:"s"
-                                %}selected{% endif %}>{{ a.asset_type }} [{{ a.asset_id }}]</option>
+                            <option value="{{ a.pk }}" {% if pre_selected_asset|stringformat:"s" == a.pk|stringformat:"s" %}selected{% endif %}>{{ a.asset_type }} [{{ a.asset_id }}]</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -282,56 +337,88 @@
 
 <script>
     $(document).ready(function () {
-        // 1. Initialize Select2
-        $('.select2-modern').select2({
-            width: '100%',
-            dropdownAutoWidth: true
-        });
+        // 1. Initialize Select2 only if the library actually loaded
+        if (window.jQuery && $.fn.select2) {
+            $('.select2-modern').select2({
+                width: '100%',
+                dropdownAutoWidth: true
+            });
+        }
 
-        const empSelect = $('#empSelect');
         const empName = $('#empName');
         const empDept = $('#empDept');
         const empBranch = $('#empBranch');
 
-        // 2. AJAX Employee Data Fetch
-        empSelect.on('change', function () {
-            const empId = $(this).val();
+        // 2. Employee search picker (no external dependency)
+        var EMPLOYEES = {{ employees_json|safe }};
+        (function () {
+            var input = document.getElementById('empSearch');
+            if (!input) return;
+            var hidden = document.getElementById('empId');
+            var results = document.getElementById('empResults');
 
-            if (!empId) {
-                empName.val('—');
-                empDept.val('—');
-                empBranch.val('—');
-                return;
+            function selectEmployee(id) {
+                for (var i = 0; i < EMPLOYEES.length; i++) {
+                    if (EMPLOYEES[i].id === id) {
+                        var e = EMPLOYEES[i];
+                        hidden.value = e.id;
+                        input.value = e.emp_id + ' — ' + e.name;
+                        empName.val(e.name || '—');
+                        empDept.val(e.dept || '—');
+                        empBranch.val(e.branch || '—');
+                        results.style.display = 'none';
+                        return;
+                    }
+                }
             }
 
-            // Show loading state visually
-            empName.val('Syncing...');
-            empDept.val('Syncing...');
-            empBranch.val('Syncing...');
+            function matches(e, q) {
+                return (e.name || '').toLowerCase().indexOf(q) !== -1 ||
+                    String(e.emp_id || '').toLowerCase().indexOf(q) !== -1 ||
+                    (e.dept || '').toLowerCase().indexOf(q) !== -1;
+            }
 
-            $.ajax({
-                url: '/asset/ajax/get-employee/', // Ensure this matches your URL configuration
-                method: 'GET',
-                data: { 'emp_id': empId },
-                dataType: 'json',
-                success: function (data) {
-                    // Apply data to fields
-                    empName.val(data.name || 'Not Found');
-                    empDept.val(data.department || 'Not Found');
-                    empBranch.val(data.branch || 'Not Found');
-
-                    // Visual feedback that data has updated
-                    $('.readonly-box').addClass('data-update-flash');
-                    setTimeout(() => $('.readonly-box').removeClass('data-update-flash'), 500);
-                },
-                error: function (xhr) {
-                    console.error("Error Response:", xhr.responseText);
-                    empName.val('Error fetching');
-                    empDept.val('Error fetching');
-                    empBranch.val('Error fetching');
+            function render(list) {
+                if (!list.length) {
+                    results.innerHTML = '<div class="emp-empty">No employees found</div>';
+                    results.style.display = 'block';
+                    return;
                 }
+                var html = '';
+                for (var i = 0; i < list.length; i++) {
+                    var e = list[i];
+                    html += '<div class="emp-item" data-id="' + e.id + '">' +
+                        '<div class="emp-item-name"></div>' +
+                        '<div class="emp-item-meta"></div></div>';
+                }
+                results.innerHTML = html;
+                var items = results.querySelectorAll('.emp-item');
+                for (var j = 0; j < items.length; j++) {
+                    var emp = list[j];
+                    items[j].querySelector('.emp-item-name').textContent = emp.name || '—';
+                    items[j].querySelector('.emp-item-meta').textContent = (emp.emp_id || '') + ' · ' + (emp.dept || '—');
+                    items[j].addEventListener('mousedown', function (id) {
+                        return function (ev) { ev.preventDefault(); selectEmployee(id); };
+                    }(emp.id));
+                }
+                results.style.display = 'block';
+            }
+
+            input.addEventListener('focus', function () {
+                var q = input.value.trim().toLowerCase();
+                if (q) render(EMPLOYEES.filter(function (e) { return matches(e, q); }).slice(0, 50));
             });
-        });
+
+            input.addEventListener('keyup', function () {
+                var q = input.value.trim().toLowerCase();
+                if (!q) { results.style.display = 'none'; hidden.value = ''; return; }
+                render(EMPLOYEES.filter(function (e) { return matches(e, q); }).slice(0, 50));
+            });
+
+            input.addEventListener('blur', function () {
+                setTimeout(function () { results.style.display = 'none'; }, 150);
+            });
+        })();
 
         // 3. Form Submission Handling
         const ASSIGN_TODAY = "{{ today_date }}";
