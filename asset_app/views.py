@@ -1009,6 +1009,7 @@ def assign_asset(request):
             return redirect(reverse('assign_asset'))
 
         post_data = request.POST.copy()
+        emp_id = post_data.get('employee')
         status = post_data.get('status', '')
         search_input = (request.POST.get('emp_search') or '').strip()
         manual_name = (post_data.get('emp_name') or search_input or '').strip()
