@@ -1246,9 +1246,7 @@
                 <select id="assetSelect" name="asset" class="form-control select2-modern" style="width: 100%;">
                     <option value="">Search by ID, Type, or Name...</option>
                     {% for asset in unassigned_assets %}
-                    <option value="{{ asset.id }}">{{ asset.asset_id }} — {{ asset.asset_type }} ({{
-                        asset.name|default:asset.asset_type }})
-                    </option>
+                    <option value="{{ asset.id }}">{{ asset.asset_id }} — {{ asset.asset_type }} ({{ asset.name|default:asset.asset_type }})</option>
                     {% endfor %}
                 </select>
             </div>
@@ -1576,16 +1574,7 @@
         const empDept = document.getElementById('empDept');
         const empBranch = document.getElementById('empBranch');
         if (empSelect.length) {
-            const EMPLOYEES = [
-                {% for emp in employees %}
-                {
-                    id: "{{ emp.id|escapejs }}",
-                    name: "{{ emp.name|escapejs }}",
-                    dept: "{{ emp.department|escapejs }}",
-                    branch: "{{ emp.branch|escapejs }}"
-                }{% if not forloop.last %},{% endif %}
-                {% endfor %}
-            ];
+            const EMPLOYEES = {{ employees_json|safe }};
             empSelect.on('change', function () {
                 const empId = $(this).val();
                 if (!empId) {

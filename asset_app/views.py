@@ -1438,13 +1438,26 @@ def view_assets(request):
         ReturnRequest.objects.filter(employee__employee_id__iexact=request.user.username, status__in=['Pending', 'Manager_Approved']).values_list('asset_id', flat=True)
     )
 
+    employees = Employee.objects.all().order_by('name')
+    employees_json = json.dumps([
+        {
+            'id': emp.id,
+            'emp_id': emp.employee_id,
+            'name': emp.name,
+            'dept': emp.department or '',
+            'branch': emp.branch or '',
+        }
+        for emp in employees
+    ])
+
     return render(request, 'asset_app/view_assets.html', {
         'assignments': assignments,
         'unassigned_assets': unassigned_assets,
         'dead_assets': dead_assets,
         'temporary_assets': temporary_assets,
         'asset_stats': asset_stats,
-        'employees': Employee.objects.all().order_by('name'),
+        'employees': employees,
+        'employees_json': employees_json,
         'today_date': timezone.now().date().isoformat(),
         'today_date_display': timezone.now().date().strftime('%d/%m/%Y'),
         'is_employee': not (is_staff or is_manager),
