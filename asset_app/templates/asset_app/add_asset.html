@@ -712,5 +712,61 @@
             toggleRamStorage();
         }
     });
+
+    // Smart Form State Preservation for Back Navigation
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('assetForm');
+        if (!form) return;
+
+        // Detect if the user arrived via the browser's Back button
+        const navEntries = performance.getEntriesByType("navigation");
+        const isBack = (navEntries.length > 0 && navEntries[0].type === "back_forward") || 
+                       (window.performance && window.performance.navigation && window.performance.navigation.type === 2);
+
+        if (isBack) {
+            // Restore data if we came back
+            const savedData = sessionStorage.getItem('addAssetDraft');
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    Object.keys(data).forEach(key => {
+                        const el = document.getElementById(key);
+                        if (el) {
+                            if (el.type === 'checkbox' || el.type === 'radio') {
+                                el.checked = data[key];
+                            } else {
+                                el.value = data[key];
+                                // Dispatch change event so dependent logic (like "Other" textboxes) triggers
+                                el.dispatchEvent(new Event('change'));
+                            }
+                        }
+                    });
+                } catch(e) {}
+            }
+        } else {
+            // Fresh visit, clear the old draft
+            sessionStorage.removeItem('addAssetDraft');
+        }
+
+        function saveDraft() {
+            const data = {};
+            const elements = form.querySelectorAll('input, select, textarea');
+            elements.forEach(el => {
+                // Ignore file uploads and hidden fields
+                if (el.id && el.name && el.type !== 'file' && el.type !== 'hidden') {
+                    if (el.type === 'checkbox' || el.type === 'radio') {
+                        data[el.id] = el.checked;
+                    } else {
+                        data[el.id] = el.value;
+                    }
+                }
+            });
+            sessionStorage.setItem('addAssetDraft', JSON.stringify(data));
+        }
+
+        // Save data whenever the user types or selects anything
+        form.addEventListener('input', saveDraft);
+        form.addEventListener('change', saveDraft);
+    });
 </script>
 {% endblock %}

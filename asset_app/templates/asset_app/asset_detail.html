@@ -228,8 +228,8 @@
             </h1>
         </div>
         <div class="d-flex gap-2 mt-3 mt-md-0 position-relative" style="z-index:1;">
-            <a href="javascript:history.back()" class="btn hero-outline-btn px-4 fw-bold">
-                <i class="bi bi-arrow-left me-2"></i> Back
+            <a href="{% url 'view_assets' %}" class="btn hero-outline-btn px-4 fw-bold">
+                <i class="bi bi-arrow-left me-2"></i> Back to Assets
             </a>
             {% if request.user.is_staff or request.user.role == 'superadmin' or request.user.role == 'admin' or request.user.role == 'asset_admin' %}
             <button class="btn hero-outline-btn px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#editHistoryModal">

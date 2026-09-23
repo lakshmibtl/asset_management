@@ -267,20 +267,26 @@
         <div class="col-12 col-lg-10 col-xl-8">
 
             <!-- HERO -->
-            <div class="form-hero d-flex align-items-center gap-4 mb-4 animate__animated animate__fadeInDown">
-                <div class="hero-badge d-none d-sm-inline-flex">
-                    <i class="bi bi-pencil-square"></i>
-                </div>
-                <div style="flex:1;">
-                    <nav aria-label="breadcrumb" class="mb-1">
-                        <ol class="breadcrumb mb-0 small">
-                            <li class="breadcrumb-item"><a href="{% url 'asset_dashboard' %}" class="text-decoration-none">Dashboard</a></li>
-                            <li class="breadcrumb-item"><a href="{% url 'view_assets' %}" class="text-decoration-none">Assets</a></li>
-                            <li class="breadcrumb-item active">Edit</li>
-                        </ol>
-                    </nav>
-                    <h1 class="mb-1 mt-1"><i class="bi bi-pencil-square me-2"></i>Edit Asset</h1>
-                    <p class="mb-0">Modify the details below to update the asset.</p>
+            <div class="d-flex align-items-center mb-4 animate__animated animate__fadeInDown">
+                <a href="javascript:history.back()" class="btn rounded-circle me-3"
+                    style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: var(--glass-bg); border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(7, 81, 138, 0.08); color: var(--primary); transition: all 0.2s;" title="Go Back">
+                    <i class="bi bi-arrow-left fs-5"></i>
+                </a>
+                <div class="form-hero d-flex align-items-center gap-4 flex-grow-1 mb-0" style="padding: 1.5rem 2.4rem;">
+                    <div class="hero-badge d-none d-sm-inline-flex">
+                        <i class="bi bi-pencil-square"></i>
+                    </div>
+                    <div style="flex:1;">
+                        <nav aria-label="breadcrumb" class="mb-1">
+                            <ol class="breadcrumb mb-0 small">
+                                <li class="breadcrumb-item"><a href="{% url 'asset_dashboard' %}" class="text-decoration-none">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="{% url 'view_assets' %}" class="text-decoration-none">Assets</a></li>
+                                <li class="breadcrumb-item active">Edit</li>
+                            </ol>
+                        </nav>
+                        <h1 class="mb-1 mt-1"><i class="bi bi-pencil-square me-2"></i>Edit Asset</h1>
+                        <p class="mb-0">Modify the details below to update the asset.</p>
+                    </div>
                 </div>
             </div>
 

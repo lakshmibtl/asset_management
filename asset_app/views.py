@@ -723,9 +723,19 @@ def add_asset(request):
         form = AssetForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                asset = form.save()
+                asset = form.save(commit=False)
+                original_status = asset.status
+                
+                # Prevent ghost assets: If user selects 'In Use', save as 'Available' temporarily
+                # so it doesn't disappear if they hit 'Back' and cancel the assignment.
+                # It will be formally marked 'In Use' when they complete the assign form.
                 if asset.status.lower() == "in use":
-                    messages.info(request, "Asset added and marked as 'In Use'. Please assign it now.")
+                    asset.status = "Available"
+                
+                asset.save()
+                
+                if original_status.lower() == "in use":
+                    messages.info(request, "Asset saved to stock. Please complete assignment to mark it as 'In Use'.")
                     return redirect(f"{reverse('assign_asset')}?asset={asset.pk}")
                 else:
                     messages.success(request, "Asset added successfully!")
@@ -885,6 +895,7 @@ def edit_asset(request, pk):
     asset = get_object_or_404(Asset, pk=pk)
     
     if request.method == 'POST':
+        original_status = asset.status.lower() if asset.status else ''
         form = AssetForm(request.POST, request.FILES, instance=asset)
         if form.is_valid():
             try:
@@ -903,6 +914,16 @@ def edit_asset(request, pk):
                     )
                 else:
                     form.save()
+                    
+                # If they change the status TO 'In Use' from something else, redirect to Assign
+                new_status_val = request.POST.get('status', '').lower() or (form.cleaned_data.get('status') or '').lower()
+                if new_status_val == 'in use' and original_status != 'in use':
+                    # Prevent ghost assets: save as Available until assigned
+                    asset.status = 'Available'
+                    asset.save()
+                    messages.info(request, "Asset updated. Please assign it now to formally mark it as 'In Use'.")
+                    return redirect(f"{reverse('assign_asset')}?asset={asset.pk}")
+                
                 messages.success(request, "Asset updated successfully!")
                 return redirect('asset_detail', pk=asset.pk)
             except IntegrityError:
@@ -1036,7 +1057,8 @@ def assign_asset(request):
                 next_url = request.POST.get('next')
                 if next_url:
                     return redirect(next_url)
-                return redirect('view_assets')
+                asset_val = post_data.get('asset', '')
+                return redirect(f"{reverse('assign_asset')}?asset={asset_val}" if asset_val else 'assign_asset')
 
         form = AssignmentForm(post_data)
         # Allow assignment of any asset (Available, Other, etc.) by not restricting the queryset
@@ -1093,7 +1115,8 @@ def assign_asset(request):
             next_url = request.POST.get('next')
             if next_url:
                 return redirect(next_url)
-            return redirect('view_assets')
+            asset_val = post_data.get('asset', '')
+            return redirect(f"{reverse('assign_asset')}?asset={asset_val}" if asset_val else 'assign_asset')
     else:
         from .sync_employees import sync_employees_from_api
         sync_employees_from_api()
