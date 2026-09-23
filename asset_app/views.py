@@ -1039,6 +1039,8 @@ def assign_asset(request):
                 return redirect('view_assets')
 
         form = AssignmentForm(post_data)
+        # Allow assignment of any asset (Available, Other, etc.) by not restricting the queryset
+        form.fields['asset'].queryset = Asset.objects.all()
         if form.is_valid():
             assignment = form.save(commit=False)
             assignment.assigned_by = request.user
@@ -1071,9 +1073,14 @@ def assign_asset(request):
             asset = assignment.asset
             if assignment.status and 'temporary' in assignment.status.lower():
                 asset.status = "Temporary"
+                asset.save()
             else:
-                asset.status = "In Use"
-            asset.save()
+                # Only move Available/Under Repair → In Use so they leave unassigned stock.
+                # Preserve custom/Other statuses (e.g. 'IN SERVER') and existing 'In Use'.
+                if asset.status in ('Available', 'Under Repair'):
+                    asset.status = "In Use"
+                    asset.save()
+                # else: keep the custom/existing status as-is
 
             next_url = request.POST.get('next')
             if next_url:
@@ -1081,7 +1088,8 @@ def assign_asset(request):
             messages.success(request, "Asset assigned successfully!")
             return redirect('view_assets')
         else:
-            messages.error(request, f"Assignment failed: {form.errors.as_text()}")
+            error_msg = "; ".join([f"{k}: {v.as_text()}" for k, v in form.errors.items()])
+            messages.error(request, f"Assignment failed: {error_msg}")
             next_url = request.POST.get('next')
             if next_url:
                 return redirect(next_url)
@@ -1501,9 +1509,11 @@ def view_assets(request):
             unassigned_temp_counts[a['asset_type']] = a['cnt']
 
         # Directly count "Other" status assets per asset_type AND status name
+        # Includes BOTH assigned (with custom asset.status preserved) and unassigned Other assets
         # Result: {asset_type: {status_name: count}}
         other_status_counts = {}
-        for a in Asset.objects.exclude(
+        # 1. Unassigned assets with custom status
+        for a in Asset.objects.exclude(id__in=assigned_ids_for_stats).exclude(
             Q(status__iexact='Available') |
             Q(status__iexact='Under Repair') |
             Q(status__iexact='In Use') |
@@ -1514,7 +1524,21 @@ def view_assets(request):
             atype_key = a['asset_type']
             if atype_key not in other_status_counts:
                 other_status_counts[atype_key] = {}
-            other_status_counts[atype_key][a['status']] = a['cnt']
+            other_status_counts[atype_key][a['status']] = other_status_counts.get(atype_key, {}).get(a['status'], 0) + a['cnt']
+
+        # 2. Assigned assets with custom status (asset.status != 'In Use' and != standard ones)
+        for a in Asset.objects.filter(id__in=assigned_ids_for_stats).exclude(
+            Q(status__iexact='In Use') |
+            Q(status__iexact='Temporary') |
+            Q(status__iexact='Temporary Use') |
+            Q(status__iexact='Dead') |
+            Q(status__iexact='Available') |
+            Q(status__iexact='Under Repair')
+        ).values('asset_type', 'status').annotate(cnt=Count('id')):
+            atype_key = a['asset_type']
+            if atype_key not in other_status_counts:
+                other_status_counts[atype_key] = {}
+            other_status_counts[atype_key][a['status']] = other_status_counts.get(atype_key, {}).get(a['status'], 0) + a['cnt']
 
         asset_stats = []
         for stat in asset_stats_qs:

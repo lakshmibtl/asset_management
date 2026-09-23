@@ -670,13 +670,23 @@
             data-empid="{{ assign.employee.employee_id }}" data-assetid="{{ assign.asset.asset_id|lower }}"
             data-href="{% url 'asset_detail' assign.asset.pk %}" style="--delay: 0.{{ forloop.counter }}s">
             <div class="card h-100 asset-card">
+                {% if 'temporary' in assign.status|lower or 'temporary' in assign.asset.status|lower %}
+                <div class="status-strip temporary w-100"></div>
+                {% elif assign.asset.status != 'In Use' and assign.asset.status != 'Available' and assign.asset.status != 'Dead' %}
+                <div class="status-strip w-100" style="background: linear-gradient(135deg, #6d28d9 0%, #a78bfa 100%);"></div>
+                {% else %}
                 <div class="status-strip in-use w-100"></div>
+                {% endif %}
                 <div class="card-body p-4 d-flex flex-column">
 
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         {% if 'temporary' in assign.status|lower or 'temporary' in assign.asset.status|lower %}
                         <span class="badge status-badge" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(251, 191, 36, 0.25)); color: #b45309; border: 1px solid rgba(245, 158, 11, 0.3);">
                             <i class="bi bi-clock-history me-1"></i> Temporary Use
+                        </span>
+                        {% elif assign.asset.status != 'In Use' and assign.asset.status != 'Available' %}
+                        <span class="badge status-badge" style="background: linear-gradient(135deg, rgba(109, 40, 217, 0.12), rgba(167, 139, 250, 0.22)); color: #6d28d9; border: 1px solid rgba(109, 40, 217, 0.25);">
+                            <i class="bi bi-tools me-1"></i> {{ assign.asset.status }}
                         </span>
                         {% else %}
                         <span class="badge badge-inuse status-badge">
@@ -1381,9 +1391,20 @@
                     ASSET</label>
                 <select id="assetSelect" name="asset" class="form-control select2-modern" style="width: 100%;">
                     <option value="">Search by ID, Type, or Name...</option>
+                    {% if unassigned_assets %}
+                    <optgroup label="── Available Stock ──">
                     {% for asset in unassigned_assets %}
-                    <option value="{{ asset.id }}">{{ asset.asset_id }} — {{ asset.asset_type }} ({{ asset.name|default:asset.asset_type }})</option>
+                    <option value="{{ asset.id }}">{{ asset.asset_id }} — {{ asset.asset_type }} ({{ asset.name|default:asset.asset_type }}) [{{ asset.status }}]</option>
                     {% endfor %}
+                    </optgroup>
+                    {% endif %}
+                    {% if other_assets %}
+                    <optgroup label="── Other Status ──">
+                    {% for asset in other_assets %}
+                    <option value="{{ asset.id }}">{{ asset.asset_id }} — {{ asset.asset_type }} ({{ asset.name|default:asset.asset_type }}) [{{ asset.status }}]</option>
+                    {% endfor %}
+                    </optgroup>
+                    {% endif %}
                 </select>
             </div>
 
