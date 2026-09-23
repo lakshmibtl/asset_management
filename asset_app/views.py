@@ -1614,7 +1614,7 @@ def view_assets(request):
             stat['other'] = sum(stat['other_statuses'].values())          # Total other count
             asset_stats.append(stat)
     else:
-        assigned_asset_ids = assignments.values_list('asset_id', flat=True)
+        assigned_asset_ids = [a.asset_id for a in assignments]
         asset_stats = Asset.objects.filter(id__in=assigned_asset_ids).values('asset_type').annotate(
             total=Count('id'),
             in_use=Count('id'),

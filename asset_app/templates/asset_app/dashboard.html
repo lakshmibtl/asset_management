@@ -819,8 +819,7 @@
                     style="width:36px; height:36px; font-size:14px;">{{ request.user.username|make_list|first|upper }}
                 </div>
                 <div class="d-none d-md-block">
-                    <div class="fw-bold" style="font-size:0.85rem;">{{
-                        request.user.first_name|default:request.user.username }}</div>
+                    <div class="fw-bold" style="font-size:0.85rem;">{{ request.user.first_name|default:request.user.username }}</div>
                     <div class="text-muted" style="font-size:0.75rem;">{{ request.user.role|title }}</div>
                 </div>
             </div>
