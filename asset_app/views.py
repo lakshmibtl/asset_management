@@ -1456,10 +1456,24 @@ def view_assets(request):
         )
 
         dead_assets = Asset.objects.filter(status__iexact='Dead')
+
+        # Other Assets: unassigned assets whose status doesn't match any known category
+        # Use iexact (case-insensitive) to work correctly on PostgreSQL
+        other_assets = Asset.objects.exclude(
+            id__in=assigned_asset_ids
+        ).exclude(
+            Q(status__iexact='Available') |
+            Q(status__iexact='Under Repair') |
+            Q(status__iexact='In Use') |
+            Q(status__iexact='Temporary') |
+            Q(status__iexact='Temporary Use') |
+            Q(status__iexact='Dead')
+        )
     else:
         unassigned_assets = []
         dead_assets = []
         temporary_assets = []
+        other_assets = []
 
     # Calculate asset stats
     if is_staff:
@@ -1486,12 +1500,29 @@ def view_assets(request):
         ).values('asset_type').annotate(cnt=Count('id')):
             unassigned_temp_counts[a['asset_type']] = a['cnt']
 
+        # Directly count "Other" status assets per asset_type AND status name
+        # Result: {asset_type: {status_name: count}}
+        other_status_counts = {}
+        for a in Asset.objects.exclude(
+            Q(status__iexact='Available') |
+            Q(status__iexact='Under Repair') |
+            Q(status__iexact='In Use') |
+            Q(status__iexact='Temporary') |
+            Q(status__iexact='Temporary Use') |
+            Q(status__iexact='Dead')
+        ).values('asset_type', 'status').annotate(cnt=Count('id')):
+            atype_key = a['asset_type']
+            if atype_key not in other_status_counts:
+                other_status_counts[atype_key] = {}
+            other_status_counts[atype_key][a['status']] = a['cnt']
+
         asset_stats = []
         for stat in asset_stats_qs:
             atype = stat['asset_type']
             stat['temporary_use'] = assigned_temp_counts.get(atype, 0)   # Assigned Temporary Use cards
             stat['temporary'] = unassigned_temp_counts.get(atype, 0)     # Unassigned Temporary stock
-            stat['other'] = 0
+            stat['other_statuses'] = other_status_counts.get(atype, {})  # {status_name: count}
+            stat['other'] = sum(stat['other_statuses'].values())          # Total other count
             asset_stats.append(stat)
     else:
         assigned_asset_ids = assignments.values_list('asset_id', flat=True)
@@ -1547,6 +1578,7 @@ def view_assets(request):
         'unassigned_assets': unassigned_assets,
         'dead_assets': dead_assets,
         'temporary_assets': temporary_assets,
+        'other_assets': other_assets,
         'asset_stats': asset_stats,
         'employees': employees,
         'employees_json': employees_json,
