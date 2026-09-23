@@ -720,10 +720,22 @@
                         <p class="info-label text-uppercase small fw-bold mb-2" style="color: #2F4F4F;">
                             <i class="bi bi-person-fill-exclamation me-1"></i> Assigned To (Manual)
                         </p>
-                        <p class="info-value fs-5 mb-0 text-wrap text-break" style="color: #2F4F4F;" title="Manually Entered Employee">
-                            {{ assign.employee.name }} {% if assign.employee.employee_id %}<span
-                                class="fw-normal fs-6" style="color: #4b5563;">({{ assign.employee.employee_id }})</span>{% endif %}
-                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <p class="info-value fs-5 mb-0 text-wrap text-break" style="color: #2F4F4F;" title="Manually Entered Employee">
+                                {{ assign.employee.name }} {% if assign.employee.employee_id %}<span
+                                    class="fw-normal fs-6" style="color: #4b5563;">({{ assign.employee.employee_id }})</span>{% endif %}
+                            </p>
+                            {% if request.user.is_staff or request.user.role == 'admin' or request.user.role == 'superadmin' or request.user.role == 'asset_admin' %}
+                            <button type="button" class="btn btn-sm text-muted p-0 edit-manual-emp border-0 shadow-none hover-lift" 
+                                data-empid="{{ assign.employee.id }}" 
+                                data-empname="{{ assign.employee.name }}"
+                                data-empdept="{{ assign.employee.department|default:'' }}"
+                                data-empbranch="{{ assign.employee.branch|default:'' }}"
+                                title="Edit Manual Employee">
+                                <i class="bi bi-pencil-square" style="font-size: 1.2rem; color: #2F4F4F; opacity: 0.8;"></i>
+                            </button>
+                            {% endif %}
+                        </div>
                     </div>
                     {% else %}
                     <div class="assigned-pill mb-4">
@@ -2036,6 +2048,66 @@
                 setTimeout(function () { dropdown.style.display = 'none'; }, 200);
             });
         })();
+    });
+</script>
+
+<!-- Edit Manual Employee Modal -->
+<div class="modal fade" id="editManualEmpModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-light border-bottom">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-pencil-square me-2 text-primary"></i>Edit Employee Details</h5>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" id="editManualEmpForm">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" name="employee_name" id="editManualEmpName" class="form-control form-control-lg bg-light" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Department</label>
+                        <input type="text" name="employee_dept" id="editManualEmpDept" class="form-control bg-light" placeholder="Optional">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Branch</label>
+                        <input type="text" name="employee_branch" id="editManualEmpBranch" class="form-control bg-light" placeholder="Optional">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-top">
+                    <button type="button" class="btn btn-outline-secondary px-4 fw-medium" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm"><i class="bi bi-check2-circle me-1"></i> Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Handle Edit Manual Employee Modal
+        document.querySelectorAll('.edit-manual-emp').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const empId = this.dataset.empid;
+                const name = this.dataset.empname;
+                const dept = this.dataset.empdept;
+                const branch = this.dataset.empbranch;
+                
+                document.getElementById('editManualEmpName').value = name;
+                document.getElementById('editManualEmpDept').value = dept;
+                document.getElementById('editManualEmpBranch').value = branch;
+                
+                // Add the correct URL prefix based on deployment (assumes root is empty or matches request)
+                document.getElementById('editManualEmpForm').action = "{% url 'view_assets' %}".replace('view/', '') + 'edit-employee/' + empId + '/';
+                
+                $('#editManualEmpModal').modal('show');
+            });
+        });
     });
 </script>
 {% endblock %}

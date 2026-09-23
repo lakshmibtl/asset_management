@@ -1004,6 +1004,35 @@ def warranty_tracking(request):
     return render(request, 'asset_app/warranty_tracking.html', context)
 
 
+# ------------------- EDIT EMPLOYEE (Manual) -------------------
+@login_required
+def edit_employee(request, emp_id):
+    if request.method == "POST":
+        is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
+        if not request.user.is_authenticated or not is_admin:
+            messages.error(request, "Only an admin can edit employee details.")
+            return redirect("asset_dashboard")
+            
+        employee = get_object_or_404(Employee, id=emp_id)
+        new_name = request.POST.get('employee_name', '').strip()
+        new_dept = request.POST.get('employee_dept', '').strip()
+        new_branch = request.POST.get('employee_branch', '').strip()
+        
+        if new_name:
+            employee.name = new_name
+            if new_dept: employee.department = new_dept
+            if new_branch: employee.branch = new_branch
+            employee.save()
+            messages.success(request, f"Successfully updated employee: {new_name}")
+        else:
+            messages.error(request, "Employee name cannot be empty.")
+            
+    next_url = request.POST.get('next')
+    if next_url:
+        return redirect(next_url)
+    return redirect('view_assets')
+
+
 # ------------------- ASSIGN ASSET -------------------
 @login_required
 def assign_asset(request):

@@ -43,6 +43,7 @@ urlpatterns = [
     path('warranty-tracking/', views.warranty_tracking, name='warranty_tracking'),
     path('view/', views.view_assets, name='view_assets'),
     path('assigned-employees/', views.assigned_employees, name='assigned_employees'),
+    path('edit-employee/<int:emp_id>/', views.edit_employee, name='edit_employee'),
     path('delete/<int:pk>/', views.delete_asset, name='delete_asset'),
     path('view-request/<int:pk>/', views.view_request, name='view_request'),
 
