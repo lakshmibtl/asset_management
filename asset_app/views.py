@@ -1037,23 +1037,36 @@ def assign_asset(request):
         manual_dept = (post_data.get('emp_dept') or '').strip()
         manual_branch = (post_data.get('emp_branch') or post_data.get('branch') or '').strip()
 
-        # Handle manual user entry (only permitted for Temporary Use status)
+        # Handle manual user entry
         if not emp_id:
-            if 'temporary' in status.lower():
-                name_to_use = manual_name if manual_name else "Temporary User"
-                emp_obj = Employee.objects.filter(name__iexact=name_to_use).first()
+            if manual_name:
+                emp_obj = Employee.objects.filter(name__iexact=manual_name).first()
+                if not emp_obj:
+                    import random
+                    rand_num = random.randint(10000, 99999)
+                    prefix = "TEMP-" if 'temporary' in status.lower() else "EMP-"
+                    emp_obj = Employee.objects.create(
+                        name=manual_name,
+                        employee_id=f"{prefix}{rand_num}",
+                        department=manual_dept or ('Temporary' if 'temporary' in status.lower() else 'Unspecified'),
+                        branch=manual_branch or ''
+                    )
+                post_data['employee'] = emp_obj.id
+            elif 'temporary' in status.lower():
+                # Default for temporary without name
+                emp_obj = Employee.objects.filter(name__iexact="Temporary User").first()
                 if not emp_obj:
                     import random
                     rand_num = random.randint(1000, 9999)
                     emp_obj = Employee.objects.create(
-                        name=name_to_use,
+                        name="Temporary User",
                         employee_id=f"TEMP-{rand_num}",
                         department=manual_dept or 'Temporary',
                         branch=manual_branch or ''
                     )
                 post_data['employee'] = emp_obj.id
             else:
-                messages.error(request, "Please select a registered employee for 'In Use' assignments.")
+                messages.error(request, "Please search and select an employee, or manually type their name.")
                 next_url = request.POST.get('next')
                 if next_url:
                     return redirect(next_url)

@@ -266,7 +266,13 @@
                             <input type="hidden" name="employee" id="empId">
                             <div class="emp-results" id="empResults"></div>
                         </div>
-                        <div class="form-text" id="empSearchHelp">Search by employee name or ID.</div>
+                        <div class="d-flex justify-content-between mt-2 align-items-start">
+                            <div class="form-text mt-0" id="empSearchHelp">Search by employee name or ID.</div>
+                            <div class="form-check form-switch mt-0 me-1">
+                                <input class="form-check-input" type="checkbox" id="manualEntryToggle">
+                                <label class="form-check-label small fw-semibold text-muted" for="manualEntryToggle">Enter Manually</label>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="row g-2">
@@ -355,22 +361,39 @@
         const empDept = $('#empDept');
         const empBranch = $('#empBranch');
 
-        // 1.5 Handle Deployment Status toggle between "In Use" and "Temporary Use"
+        // 1.5 Handle Deployment Status and Manual Toggle
         const statusSelect = document.getElementById('assignStatusSelect');
         const empSearchEl = document.getElementById('empSearch');
         const empSearchHelpEl = document.getElementById('empSearchHelp');
         const empIdEl = document.getElementById('empId');
+        const manualEntryToggle = document.getElementById('manualEntryToggle');
 
         function updateStatusMode() {
             const isTemp = statusSelect && statusSelect.value === 'Temporary';
-            if (isTemp) {
-                if (empSearchEl) empSearchEl.placeholder = 'Type name or ID (optional for Temporary Use)...';
-                if (empSearchHelpEl) empSearchHelpEl.textContent = 'Search employee or leave blank / enter details for Temporary Use.';
+            const isManual = manualEntryToggle && manualEntryToggle.checked;
+            
+            if (isTemp || isManual) {
+                if (empSearchEl) {
+                    empSearchEl.placeholder = isManual ? 'Disabled (Manual Mode)' : 'Type name or ID (optional)...';
+                    empSearchEl.disabled = isManual;
+                    if (isManual) empSearchEl.value = '';
+                }
+                if (empSearchHelpEl) empSearchHelpEl.textContent = isManual ? 'Enter details directly below.' : 'Search employee or leave blank / enter details for Temporary Use.';
                 empName.prop('readonly', false).removeClass('readonly-box');
                 empDept.prop('readonly', false).removeClass('readonly-box');
                 empBranch.prop('readonly', false).removeClass('readonly-box');
+                
+                if (isManual && empIdEl && empIdEl.value) {
+                    empIdEl.value = '';
+                    empName.val('');
+                    empDept.val('');
+                    empBranch.val('');
+                }
             } else {
-                if (empSearchEl) empSearchEl.placeholder = 'Type name or ID...';
+                if (empSearchEl) {
+                    empSearchEl.placeholder = 'Type name or ID...';
+                    empSearchEl.disabled = false;
+                }
                 if (empSearchHelpEl) empSearchHelpEl.textContent = 'Search by employee name or ID.';
                 empName.prop('readonly', true).addClass('readonly-box');
                 empDept.prop('readonly', true).addClass('readonly-box');
@@ -380,8 +403,11 @@
 
         if (statusSelect) {
             statusSelect.addEventListener('change', updateStatusMode);
-            updateStatusMode();
         }
+        if (manualEntryToggle) {
+            manualEntryToggle.addEventListener('change', updateStatusMode);
+        }
+        updateStatusMode();
 
         if (empSearchEl) {
             empSearchEl.addEventListener('input', function() {

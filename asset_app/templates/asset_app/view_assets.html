@@ -1792,8 +1792,9 @@
                 const empHiddenId = document.getElementById('empHiddenId');
                 const empSearchInput = document.getElementById('empSearchInput');
                 const statusVal = deploymentSelect ? deploymentSelect.value : 'In Use';
+                const isManual = empSearchInput && empSearchInput.disabled;
                 
-                if (statusVal !== 'Temporary' && (!empHiddenId || !empHiddenId.value)) {
+                if (!isManual && statusVal !== 'Temporary' && (!empHiddenId || !empHiddenId.value)) {
                     if (empSearchInput) {
                         empSearchInput.setCustomValidity('Please search and select a registered employee for In Use assignment.');
                         empSearchInput.reportValidity();
@@ -1803,6 +1804,19 @@
                     }
                     e.preventDefault();
                     return false;
+                }
+                
+                if (isManual) {
+                    const empNameInput = document.getElementById('empName');
+                    if (empNameInput && !empNameInput.value.trim()) {
+                        empNameInput.setCustomValidity('Please enter the employee name.');
+                        empNameInput.reportValidity();
+                        empNameInput.focus();
+                        e.preventDefault();
+                        return false;
+                    } else if (empNameInput) {
+                        empNameInput.setCustomValidity('');
+                    }
                 }
                 if (empSearchInput) empSearchInput.setCustomValidity('');
 
@@ -1852,7 +1866,10 @@
                     }
                 });
                 if (toggleBtn) {
-                    toggleBtn.style.display = 'none';
+                    toggleBtn.style.display = 'inline-block';
+                    toggleBtn.className = 'btn btn-sm btn-outline-primary py-0 px-2';
+                    toggleBtn.style.fontSize = '0.72rem';
+                    toggleBtn.innerHTML = '<i class="bi bi-pencil-square me-1"></i>Manual Entry';
                 }
             }
 
@@ -1872,14 +1889,28 @@
                 }
             }
 
-            // Default to disabled manual entry for "In Use"
+            // Default to disabled manual entry
             disableManualEntry();
+
+            let manualIsActive = false;
 
             if (toggleBtn) {
                 toggleBtn.addEventListener('click', function() {
-                    if (deploymentSelect && deploymentSelect.value === 'Temporary') {
+                    manualIsActive = !manualIsActive;
+                    if (manualIsActive) {
                         enableManualEntry();
                         if (empName) empName.focus();
+                        if (input) {
+                            input.disabled = true;
+                            input.placeholder = 'Disabled (Manual Mode)';
+                            input.value = '';
+                        }
+                    } else {
+                        disableManualEntry();
+                        if (input) {
+                            input.disabled = false;
+                            input.placeholder = 'Type name or ID to search...';
+                        }
                     }
                 });
             }
@@ -1887,6 +1918,7 @@
             if (deploymentSelect) {
                 deploymentSelect.addEventListener('change', function() {
                     if (this.value === 'Temporary') {
+                        manualIsActive = true;
                         enableManualEntry();
                         if (empName && (empName.value === '—' || !empName.value)) {
                             empName.value = '';
@@ -1894,13 +1926,22 @@
                             empBranch.value = '';
                         }
                         if (empName) empName.focus();
+                        if (input) {
+                            input.disabled = true;
+                            input.placeholder = 'Disabled (Manual Mode)';
+                        }
                     } else {
+                        manualIsActive = false;
                         disableManualEntry();
                         if (!hidden.value) {
                             if (empName) empName.value = '';
                             if (empDept) empDept.value = '';
                             if (empBranch) empBranch.value = '';
                             if (input) input.value = '';
+                        }
+                        if (input) {
+                            input.disabled = false;
+                            input.placeholder = 'Type name or ID to search...';
                         }
                     }
                 });
