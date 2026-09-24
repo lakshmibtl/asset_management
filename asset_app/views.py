@@ -929,6 +929,20 @@ def edit_asset(request, pk):
                         return HttpResponse(f"<script>window.parent.location.href='{url}';</script>")
                     return redirect(f"{reverse('assign_asset')}?asset={asset.pk}")
                 
+                # If they manually changed the status to an unassigned state, close any active assignments
+                if new_status_val in ('available', 'dead', 'under repair') and original_status not in ('available', 'dead', 'under repair'):
+                    active_assignments = Assignment.objects.filter(
+                        asset=asset
+                    ).exclude(status__iexact='Returned')
+                    
+                    if active_assignments.exists():
+                        active_assignments.update(
+                            status='Returned',
+                            return_reason=f"Asset status manually changed to {asset.status} by Admin",
+                            returned_at=timezone.now()
+                        )
+                        messages.info(request, f"Active assignments for {asset.asset_id} were automatically closed.")
+
                 messages.success(request, "Asset updated successfully!")
                 if request.GET.get('iframe') == '1':
                     return HttpResponse("<script>window.parent.location.href = window.parent.location.href;</script>")
@@ -1727,69 +1741,39 @@ def view_assets(request):
 
     # Calculate asset stats
     if is_staff:
+        assigned_ids_for_stats = list(Assignment.objects.exclude(status__iexact='Returned').values_list('asset_id', flat=True))
+
         asset_stats_qs = Asset.objects.values('asset_type').annotate(
             total=Count('id'),
-            in_use=Count('id', filter=Q(status__iexact='In Use')),
+            in_use=Count('id', filter=Q(status__iexact='In Use') | (Q(status__in=['Temporary', 'Temporary Use', 'temporary', 'temporary use']) & Q(id__in=assigned_ids_for_stats))),
             available=Count('id', filter=Q(status__iexact='Available')),
             dead=Count('id', filter=Q(status__iexact='Dead')),
+            temporary=Count('id', filter=Q(status__in=['Temporary', 'Temporary Use', 'temporary', 'temporary use']) & ~Q(id__in=assigned_ids_for_stats)),
         ).order_by('asset_type')
 
-        # Count Temporary Use: assets currently ASSIGNED with Temporary status (cards at top)
-        assigned_ids_for_stats = set(Assignment.objects.exclude(status__iexact='Returned').values_list('asset_id', flat=True))
-        assigned_temp_counts = {}
-        for a in Assignment.objects.filter(
-            status__iexact='Temporary'
-        ).values('asset__asset_type').annotate(cnt=Count('asset_id', distinct=True)):
-            assigned_temp_counts[a['asset__asset_type']] = a['cnt']
-
-        # Count Temporary (stock): unassigned assets with status=Temporary (bottom section)
-        unassigned_temp_counts = {}
-        for a in Asset.objects.exclude(id__in=assigned_ids_for_stats).filter(
-            Q(status__iexact='Temporary') | Q(status__iexact='Temporary Use')
-        ).values('asset_type').annotate(cnt=Count('id')):
-            unassigned_temp_counts[a['asset_type']] = a['cnt']
-
         # Directly count "Other" status assets per asset_type AND status name
-        # Includes BOTH assigned (with custom asset.status preserved) and unassigned Other assets
-        # Result: {asset_type: {status_name: count}}
-        other_status_counts = {}
-        # 1. Unassigned assets with custom status
-        for a in Asset.objects.exclude(id__in=assigned_ids_for_stats).exclude(
+        other_qs = Asset.objects.exclude(
             Q(status__iexact='Available') |
-            Q(status__iexact='Under Repair') |
             Q(status__iexact='In Use') |
             Q(status__iexact='Temporary') |
             Q(status__iexact='Temporary Use') |
             Q(status__iexact='Dead')
-        ).values('asset_type', 'status').annotate(cnt=Count('id')):
-            atype_key = a['asset_type']
-            if atype_key not in other_status_counts:
-                other_status_counts[atype_key] = {}
-            other_status_counts[atype_key][a['status']] = other_status_counts.get(atype_key, {}).get(a['status'], 0) + a['cnt']
+        ).values('asset_type', 'status').annotate(cnt=Count('id'))
 
-        # 2. Assigned assets with custom status (asset.status != 'In Use' and != standard ones)
-        for a in Asset.objects.filter(id__in=assigned_ids_for_stats).exclude(
-            Q(status__iexact='In Use') |
-            Q(status__iexact='Temporary') |
-            Q(status__iexact='Temporary Use') |
-            Q(status__iexact='Dead') |
-            Q(status__iexact='Available') |
-            Q(status__iexact='Under Repair')
-        ).values('asset_type', 'status').annotate(cnt=Count('id')):
-            atype_key = a['asset_type']
-            if atype_key not in other_status_counts:
-                other_status_counts[atype_key] = {}
-            other_status_counts[atype_key][a['status']] = other_status_counts.get(atype_key, {}).get(a['status'], 0) + a['cnt']
+        other_dict = {}
+        for o in other_qs:
+            atype = o['asset_type']
+            if atype not in other_dict:
+                other_dict[atype] = {}
+            s_name = o['status'] or 'Unknown'
+            other_dict[atype][s_name] = o['cnt']
 
         asset_stats = []
         for stat in asset_stats_qs:
             atype = stat['asset_type']
             stat['temporary_use'] = 0   # User wants temporary users merged into In Use
-            temp_use_count = assigned_temp_counts.get(atype, 0)
-            stat['in_use'] += temp_use_count
-            stat['temporary'] = unassigned_temp_counts.get(atype, 0)     # Unassigned Temporary stock
-            stat['other_statuses'] = other_status_counts.get(atype, {})  # {status_name: count}
-            stat['other'] = sum(stat['other_statuses'].values())          # Total other count
+            stat['other_statuses'] = other_dict.get(atype, {})
+            stat['other'] = sum(stat['other_statuses'].values())
             asset_stats.append(stat)
     else:
         assigned_asset_ids = [a.asset_id for a in assignments]
