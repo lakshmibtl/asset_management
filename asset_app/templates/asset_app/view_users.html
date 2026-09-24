@@ -18,19 +18,6 @@
         {% endif %}
     </div>
 
-    {% if messages %}
-    <div class="mb-4">
-        {% for message in messages %}
-        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show border-0 rounded-3 shadow-sm py-3" role="alert">
-            <div class="d-flex align-items-center">
-                <i class="bi bi-{% if message.tags == 'error' %}exclamation-triangle-fill{% else %}check-circle-fill{% endif %} me-2"></i>
-                <div>{{ message }}</div>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
 
     <!-- Search Box -->
     <div class="card border-0 shadow-sm rounded-4 mb-4">
@@ -103,9 +90,9 @@
                         
                         {% if request.user.is_staff or request.user.role == 'admin' or request.user.role == 'superadmin' or request.user.role == 'asset_admin' %}
                             {% if u.id != request.user.id %}
-                            <a href="{% url 'delete_user' u.id %}" class="btn btn-sm btn-outline-danger rounded-pill px-3 mt-1" onclick="return confirm('Are you sure you want to delete user {{ u.username }}?');">
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 mt-1" data-bs-toggle="modal" data-bs-target="#deleteUserModal" data-url="{% url 'delete_user' u.id %}" data-username="{{ u.username }}">
                                 <i class="bi bi-trash"></i> Delete
-                            </a>
+                            </button>
                             {% endif %}
                         {% endif %}
                     </div>
@@ -123,6 +110,27 @@
         {% endfor %}
     </div>
 
+</div>
+
+<!-- Delete User Modal -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+    <div class="modal-content border-0 shadow-lg p-4 text-center" style="border-radius: 20px;">
+      <div class="modal-body p-0">
+        <div class="mb-4 mt-2 position-relative d-inline-block">
+            <i class="bi bi-stars position-absolute" style="top: -15px; left: -20px; font-size: 1.5rem; opacity: 0.8; color: #e63946;"></i>
+            <i class="bi bi-trash-fill" style="font-size: 3.5rem; color: #e63946;"></i>
+            <i class="bi bi-stars position-absolute" style="top: 0px; right: -25px; font-size: 1.2rem; opacity: 0.6; color: #e63946;"></i>
+        </div>
+        <h4 class="fw-bold mb-3" style="color: #1a1d20;">Confirm User Deletion?</h4>
+        <p class="text-muted mb-4" style="font-size: 0.95rem;">Are you sure you want to delete user <strong id="deleteUserName" class="text-dark"></strong>?<br>This action cannot be undone.</p>
+        <div class="d-flex gap-3 mt-2">
+            <button type="button" class="btn rounded-pill flex-grow-1 fw-semibold" style="border: 1px solid #e63946; color: #e63946; padding: 10px 0; background: transparent; transition: 0.2s;" data-bs-dismiss="modal">Cancel</button>
+            <a href="#" id="confirmDeleteUserBtn" class="btn rounded-pill flex-grow-1 fw-semibold text-white d-flex align-items-center justify-content-center" style="background-color: #e63946; padding: 10px 0; border: none; text-decoration: none; transition: 0.2s;">Delete</a>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Offcanvas Panel -->
@@ -300,6 +308,15 @@ document.getElementById('userSearch').addEventListener('input', function() {
 });
 
 document.addEventListener("DOMContentLoaded", function() {
+    const deleteUserModal = document.getElementById('deleteUserModal');
+    if (deleteUserModal) {
+        deleteUserModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            document.getElementById('deleteUserName').textContent = button.getAttribute('data-username');
+            document.getElementById('confirmDeleteUserBtn').href = button.getAttribute('data-url');
+        });
+    }
+
     const toggleBtn = document.getElementById('toggleCreateUserPassword');
     const pwdInput = document.getElementById('createUserPassword');
     if(toggleBtn && pwdInput) {

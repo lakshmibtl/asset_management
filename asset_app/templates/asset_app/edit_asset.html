@@ -5,6 +5,41 @@
 {% block title %}Edit Asset{% endblock %}
 
 {% block content %}
+{% if request.GET.iframe %}
+<style>
+    /* Hide layout elements when loaded in iframe */
+    #sidebar, .header, .sidebar-overlay {
+        display: none !important;
+    }
+    .main-content {
+        margin-left: 0 !important;
+        margin-top: 0 !important;
+        padding: 0 !important;
+    }
+    /* Hide the big blue hero section since the offcanvas already has a header */
+    .d-flex.align-items-center.mb-4 {
+        display: none !important;
+    }
+    .container {
+        max-width: 100% !important;
+        padding: 1rem !important;
+    }
+    .form-card {
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+    body {
+        background: #f8fafc !important;
+    }
+</style>
+<script>
+    if (window.name === 'editAssetIframe' || window !== window.parent) {
+        // We might want to reload on success, but Django messages handle success
+        // So we will just hide elements. Parent reload will happen when iframe loads view_assets.html
+    }
+</script>
+{% endif %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
 
 <style>
@@ -294,7 +329,7 @@
                 <div class="form-card-top"></div>
 
                 <div class="card-body p-4 p-md-5">
-                    <form id="assetForm" method="POST" enctype="multipart/form-data" novalidate>
+                    <form id="assetForm" action="{% if request.GET.iframe %}?iframe=1{% endif %}" method="POST" enctype="multipart/form-data" novalidate>
                         {% csrf_token %}
 
                         {% if form.non_field_errors or form.errors %}
@@ -367,6 +402,13 @@
                             </div>
 
                             <div class="col-md-6 animate__animated animate__fadeInRight">
+                                <div class="form-floating">
+                                    {{ form.vendor_name|add_class:"form-control form-control-lg shadow-sm"|attr:"placeholder:Vendor Name" }}
+                                    <label>Vendor Name</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 animate__animated animate__fadeInLeft">
                                 <div class="form-floating">
                                     {{ form.status|add_class:"form-select form-select-lg shadow-sm"|attr:"required"|attr:"id:id_status" }}
                                     <label> Status</label>

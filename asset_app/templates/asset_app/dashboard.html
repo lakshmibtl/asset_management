@@ -996,7 +996,7 @@
         cutout: '75%',
         plugins: {
             legend: {
-                position: 'right',
+                position: window.innerWidth < 1200 ? 'bottom' : 'right',
                 labels: {
                     usePointStyle: true,
                     padding: 20,
@@ -1065,7 +1065,7 @@
     /* Grid for 6 top cards */
     .top-cards-grid {
         display: grid;
-        grid-template-columns: repeat(6, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
         gap: 1rem;
         margin-bottom: 1.5rem;
     }
@@ -1157,7 +1157,7 @@
     /* 3 Column Grids */
     .three-col-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
         gap: 1.5rem;
         margin-bottom: 1.5rem;
     }
@@ -1421,11 +1421,6 @@
         font-weight: 700;
     }
 
-    @media (max-width: 992px) {
-        .top-cards-grid {
-            grid-template-columns: repeat(3, 1fr);
-        }
-    }
     @media (max-width: 768px) {
         .top-cards-grid, .three-col-grid, .sys-grid, .quick-grid {
             grid-template-columns: 1fr;
@@ -1576,8 +1571,9 @@
                 <a href="{% url 'procurement_list' %}" class="view-btn"
                     style="background:transparent; border:none;">View All</a>
             </div>
-            <table class="table-custom">
-                <thead>
+            <div style="overflow-x: auto; width: 100%; padding-bottom: 0.5rem;">
+                <table class="table-custom" style="min-width: 500px; white-space: nowrap;">
+                    <thead>
                     <tr>
                         <th>Request ID</th>
                         <th>Requested By</th>
@@ -1610,6 +1606,7 @@
                     {% endfor %}
                 </tbody>
             </table>
+            </div>
             <div class="text-center mt-auto pt-3">
                 <a href="{% url 'procurement_list' %}"
                     style="display:inline-block; padding:0.4rem 1.5rem; border:1px solid #e2e8f0; border-radius:8px; font-size:0.8rem; font-weight:600; color:#3b82f6; text-decoration:none;">View
@@ -1708,7 +1705,7 @@
         cutout: '75%',
         plugins: {
             legend: {
-                position: 'right',
+                position: window.innerWidth < 1200 ? 'bottom' : 'right',
                 labels: { usePointStyle: true, boxWidth: 8, padding: 15, font: { family: "'Inter', sans-serif", size: 11, weight: '500' } }
             }
         }

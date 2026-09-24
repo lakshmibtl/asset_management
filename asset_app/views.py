@@ -17,6 +17,7 @@ from django.db import IntegrityError
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.clickjacking import xframe_options_exempt
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError as DjangoValidationError
 
@@ -886,6 +887,7 @@ def download_asset_template(request):
 
 
 @login_required
+@xframe_options_exempt
 def edit_asset(request, pk):
     is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
     if not request.user.is_authenticated or not is_admin:
@@ -922,9 +924,14 @@ def edit_asset(request, pk):
                     asset.status = 'Available'
                     asset.save()
                     messages.info(request, "Asset updated. Please assign it now to formally mark it as 'In Use'.")
+                    if request.GET.get('iframe') == '1':
+                        url = reverse('assign_asset') + f"?asset={asset.pk}"
+                        return HttpResponse(f"<script>window.parent.location.href='{url}';</script>")
                     return redirect(f"{reverse('assign_asset')}?asset={asset.pk}")
                 
                 messages.success(request, "Asset updated successfully!")
+                if request.GET.get('iframe') == '1':
+                    return HttpResponse("<script>window.parent.location.href = window.parent.location.href;</script>")
                 return redirect('asset_detail', pk=asset.pk)
             except IntegrityError:
                 messages.error(request, "Error: Asset ID must be unique.")

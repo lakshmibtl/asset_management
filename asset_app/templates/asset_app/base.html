@@ -648,11 +648,55 @@
         <div class="container-fluid">
             {% if messages %}
             {% for message in messages %}
-            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show mt-3 shadow-sm" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <!-- Flash Message Modal -->
+            <div class="modal fade flash-message-modal" id="flashMessageModal{{ forloop.counter }}" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+                <div class="modal-content border-0 shadow-lg p-4 text-center" style="border-radius: 20px;">
+                  <div class="modal-body p-0">
+                    <div class="mb-4 mt-2 position-relative d-inline-block">
+                        {% if message.tags == 'error' or message.tags == 'danger' %}
+                        <i class="bi bi-stars position-absolute" style="top: -15px; left: -20px; font-size: 1.5rem; opacity: 0.8; color: #e63946;"></i>
+                        <i class="bi bi-x-circle-fill" style="font-size: 3.5rem; color: #e63946;"></i>
+                        <i class="bi bi-stars position-absolute" style="top: 0px; right: -25px; font-size: 1.2rem; opacity: 0.6; color: #e63946;"></i>
+                        {% elif message.tags == 'warning' %}
+                        <i class="bi bi-stars position-absolute" style="top: -15px; left: -20px; font-size: 1.5rem; opacity: 0.8; color: #f59e0b;"></i>
+                        <i class="bi bi-exclamation-circle-fill" style="font-size: 3.5rem; color: #f59e0b;"></i>
+                        <i class="bi bi-stars position-absolute" style="top: 0px; right: -25px; font-size: 1.2rem; opacity: 0.6; color: #f59e0b;"></i>
+                        {% else %}
+                        <i class="bi bi-stars position-absolute" style="top: -15px; left: -20px; font-size: 1.5rem; opacity: 0.8; color: #10b981;"></i>
+                        <i class="bi bi-check-circle-fill" style="font-size: 3.5rem; color: #10b981;"></i>
+                        <i class="bi bi-stars position-absolute" style="top: 0px; right: -25px; font-size: 1.2rem; opacity: 0.6; color: #10b981;"></i>
+                        {% endif %}
+                    </div>
+                    <h4 class="fw-bold mb-3" style="color: #1a1d20;">
+                        {% if message.tags == 'error' or message.tags == 'danger' %}Error!
+                        {% elif message.tags == 'warning' %}Warning
+                        {% else %}Success!{% endif %}
+                    </h4>
+                    <p class="text-muted mb-4" style="font-size: 0.95rem;">{{ message }}</p>
+                    <div class="d-flex justify-content-center mt-2">
+                        <button type="button" class="btn rounded-pill fw-semibold text-white px-5 w-100" style="background-color: {% if message.tags == 'error' or message.tags == 'danger' %}#e63946{% elif message.tags == 'warning' %}#f59e0b{% else %}#10b981{% endif %}; padding: 10px 0; border: none; transition: 0.2s;" data-bs-dismiss="modal">OK</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             {% endfor %}
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    var modals = document.querySelectorAll('.flash-message-modal');
+                    if (modals.length > 0) {
+                        var firstModal = new bootstrap.Modal(modals[0]);
+                        firstModal.show();
+                        for (let i = 0; i < modals.length - 1; i++) {
+                            modals[i].addEventListener('hidden.bs.modal', function () {
+                                var nextModal = new bootstrap.Modal(modals[i+1]);
+                                nextModal.show();
+                            });
+                        }
+                    }
+                });
+            </script>
             {% endif %}
             {% block content %}{% endblock %}
         </div>

@@ -20,16 +20,7 @@
         <p class="text-muted small">Enter details to add a new account.</p>
       </div>
 
-      <!-- Messages -->
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-success border-0 rounded-3 shadow-sm fade show py-2 d-flex align-items-center" role="alert">
-            <i class="bi bi-check-circle-fill me-2 text-success"></i>
-            <div>{{ message }}</div>
-            <button type="button" class="btn-close btn-close-sm ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        {% endfor %}
-      {% endif %}
+
 
       <!-- User Form -->
       <form method="POST" class="needs-validation" novalidate>
