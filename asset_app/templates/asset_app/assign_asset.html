@@ -231,7 +231,8 @@
     <!-- HERO -->
     <div class="d-flex align-items-center mb-4 animate__animated animate__fadeInDown">
         <a href="javascript:history.back()" class="btn rounded-circle me-3"
-            style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: var(--glass-bg); border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(7, 81, 138, 0.08); color: var(--primary); transition: all 0.2s;" title="Go Back">
+            style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: var(--glass-bg); border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(7, 81, 138, 0.08); color: var(--primary); transition: all 0.2s;"
+            title="Go Back">
             <i class="bi bi-arrow-left fs-5"></i>
         </a>
         <div class="assign-hero d-flex align-items-center gap-4 flex-grow-1 mb-0">
@@ -261,8 +262,8 @@
                         <label class="form-label fw-bold small text-muted"><i class="bi bi-person-search me-1"
                                 style="color: var(--primary);"></i> EMPLOYEE SEARCH</label>
                         <div class="emp-picker">
-                            <input type="text" id="empSearch" name="emp_search" class="form-control" placeholder="Type name or ID..."
-                                autocomplete="off">
+                            <input type="text" id="empSearch" name="emp_search" class="form-control"
+                                placeholder="Type name or ID..." autocomplete="off">
                             <input type="hidden" name="employee" id="empId">
                             <div class="emp-results" id="empResults"></div>
                         </div>
@@ -270,7 +271,8 @@
                             <div class="form-text mt-0" id="empSearchHelp">Search by employee name or ID.</div>
                             <div class="form-check form-switch mt-0 me-1">
                                 <input class="form-check-input" type="checkbox" id="manualEntryToggle">
-                                <label class="form-check-label small fw-semibold text-muted" for="manualEntryToggle">Enter Manually</label>
+                                <label class="form-check-label small fw-semibold text-muted"
+                                    for="manualEntryToggle">Enter Manually</label>
                             </div>
                         </div>
                     </div>
@@ -330,7 +332,9 @@
                         <select name="status" id="assignStatusSelect" class="form-select">
                             <option value="In Use">In Use</option>
                             <option value="Temporary">Temporary User</option>
+                            <option value="Other">Other (Enter Manually)</option>
                         </select>
+                        <input type="text" id="otherStatusInput" name="other_status" class="form-control mt-2" placeholder="Enter custom status (e.g. Abscond)" style="display: none;">
                     </div>
 
                     <div class="mt-auto">
@@ -363,6 +367,7 @@
 
         // 1.5 Handle Deployment Status and Manual Toggle
         const statusSelect = document.getElementById('assignStatusSelect');
+        const otherStatusInput = document.getElementById('otherStatusInput');
         const empSearchEl = document.getElementById('empSearch');
         const empSearchHelpEl = document.getElementById('empSearchHelp');
         const empIdEl = document.getElementById('empId');
@@ -371,7 +376,20 @@
         function updateStatusMode() {
             const isTemp = statusSelect && statusSelect.value === 'Temporary';
             const isManual = manualEntryToggle && manualEntryToggle.checked;
-            
+
+            if (statusSelect && statusSelect.value === 'Other') {
+                if (otherStatusInput) {
+                    otherStatusInput.style.display = 'block';
+                    otherStatusInput.required = true;
+                }
+            } else {
+                if (otherStatusInput) {
+                    otherStatusInput.style.display = 'none';
+                    otherStatusInput.required = false;
+                    otherStatusInput.value = '';
+                }
+            }
+
             if (isTemp || isManual) {
                 if (empSearchEl) {
                     empSearchEl.placeholder = isManual ? 'Disabled (Manual Mode)' : 'Type name or ID (optional)...';
@@ -382,7 +400,7 @@
                 empName.prop('readonly', false).removeClass('readonly-box');
                 empDept.prop('readonly', false).removeClass('readonly-box');
                 empBranch.prop('readonly', false).removeClass('readonly-box');
-                
+
                 if (isManual && empIdEl && empIdEl.value) {
                     empIdEl.value = '';
                     empName.val('');
@@ -410,7 +428,7 @@
         updateStatusMode();
 
         if (empSearchEl) {
-            empSearchEl.addEventListener('input', function() {
+            empSearchEl.addEventListener('input', function () {
                 this.setCustomValidity('');
             });
         }
@@ -435,122 +453,122 @@
                         results.style.display = 'none';
                         return;
                     }
-                }
             }
+        }
 
-            function matches(e, q) {
-                return (e.name || '').toLowerCase().indexOf(q) !== -1 ||
-                    String(e.emp_id || '').toLowerCase().indexOf(q) !== -1 ||
-                    (e.dept || '').toLowerCase().indexOf(q) !== -1;
-            }
+        function matches(e, q) {
+            return (e.name || '').toLowerCase().indexOf(q) !== -1 ||
+                String(e.emp_id || '').toLowerCase().indexOf(q) !== -1 ||
+                (e.dept || '').toLowerCase().indexOf(q) !== -1;
+        }
 
-            function render(list) {
-                if (!list.length) {
-                    results.innerHTML = '<div class="emp-empty">No employees found</div>';
-                    results.style.display = 'block';
-                    return;
-                }
-                var html = '';
-                for (var i = 0; i < list.length; i++) {
-                    var e = list[i];
-                    html += '<div class="emp-item" data-id="' + e.id + '">' +
-                        '<div class="emp-item-name"></div>' +
-                        '<div class="emp-item-meta"></div></div>';
-                }
-                results.innerHTML = html;
-                var items = results.querySelectorAll('.emp-item');
-                for (var j = 0; j < items.length; j++) {
-                    var emp = list[j];
-                    items[j].querySelector('.emp-item-name').textContent = emp.name || '—';
-                    items[j].querySelector('.emp-item-meta').textContent = (emp.emp_id || '') + ' · ' + (emp.dept || '—');
-                    items[j].addEventListener('mousedown', function (id) {
-                        return function (ev) { ev.preventDefault(); selectEmployee(id); };
-                    }(emp.id));
-                }
+        function render(list) {
+            if (!list.length) {
+                results.innerHTML = '<div class="emp-empty">No employees found</div>';
                 results.style.display = 'block';
+                return;
             }
-
-            input.addEventListener('focus', function () {
-                var q = input.value.trim().toLowerCase();
-                if (q) render(EMPLOYEES.filter(function (e) { return matches(e, q); }).slice(0, 50));
-            });
-
-            input.addEventListener('keyup', function () {
-                var q = input.value.trim().toLowerCase();
-                if (!q) { results.style.display = 'none'; hidden.value = ''; return; }
-                render(EMPLOYEES.filter(function (e) { return matches(e, q); }).slice(0, 50));
-            });
-
-            input.addEventListener('blur', function () {
-                setTimeout(function () { results.style.display = 'none'; }, 150);
-            });
-        })();
-
-        // 3. Form Submission Handling
-        const ASSIGN_TODAY = "{{ today_date }}";
-        const todayDateObj = new Date(ASSIGN_TODAY + 'T00:00:00');
-
-        function parseAssignedDate(s) {
-            const m = (s || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-            if (!m) return null;
-            const d = new Date(+m[3], (+m[2]) - 1, +m[1]);
-            return (d.getDate() === +m[1] && d.getMonth() === (+m[2]) - 1) ? d : null;
+            var html = '';
+            for (var i = 0; i < list.length; i++) {
+                var e = list[i];
+                html += '<div class="emp-item" data-id="' + e.id + '">' +
+                    '<div class="emp-item-name"></div>' +
+                    '<div class="emp-item-meta"></div></div>';
+            }
+            results.innerHTML = html;
+            var items = results.querySelectorAll('.emp-item');
+            for (var j = 0; j < items.length; j++) {
+                var emp = list[j];
+                items[j].querySelector('.emp-item-name').textContent = emp.name || '—';
+                items[j].querySelector('.emp-item-meta').textContent = (emp.emp_id || '') + ' · ' + (emp.dept || '—');
+                items[j].addEventListener('mousedown', function (id) {
+                    return function (ev) { ev.preventDefault(); selectEmployee(id); };
+                }(emp.id));
+            }
+            results.style.display = 'block';
         }
 
-        const assignDatePickerEl = document.getElementById('assignDatePicker');
-        if (assignDatePickerEl && window.__dmy && window.__dmy['assignDatePicker']) {
-            window.__dmy['assignDatePicker'].set('maxDate', ASSIGN_TODAY);
+        input.addEventListener('focus', function () {
+            var q = input.value.trim().toLowerCase();
+            if (q) render(EMPLOYEES.filter(function (e) { return matches(e, q); }).slice(0, 50));
+        });
+
+        input.addEventListener('keyup', function () {
+            var q = input.value.trim().toLowerCase();
+            if (!q) { results.style.display = 'none'; hidden.value = ''; return; }
+            render(EMPLOYEES.filter(function (e) { return matches(e, q); }).slice(0, 50));
+        });
+
+        input.addEventListener('blur', function () {
+            setTimeout(function () { results.style.display = 'none'; }, 150);
+        });
+    })();
+
+    // 3. Form Submission Handling
+    const ASSIGN_TODAY = "{{ today_date }}";
+    const todayDateObj = new Date(ASSIGN_TODAY + 'T00:00:00');
+
+    function parseAssignedDate(s) {
+        const m = (s || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (!m) return null;
+        const d = new Date(+m[3], (+m[2]) - 1, +m[1]);
+        return (d.getDate() === +m[1] && d.getMonth() === (+m[2]) - 1) ? d : null;
+    }
+
+    const assignDatePickerEl = document.getElementById('assignDatePicker');
+    if (assignDatePickerEl && window.__dmy && window.__dmy['assignDatePicker']) {
+        window.__dmy['assignDatePicker'].set('maxDate', ASSIGN_TODAY);
+    }
+
+    $('#assignForm').on('submit', function (e) {
+        const isTemp = statusSelect && statusSelect.value === 'Temporary';
+        const isManual = manualEntryToggle && manualEntryToggle.checked;
+
+        if (!isTemp && !isManual && (!empIdEl || !empIdEl.value)) {
+            if (empSearchEl) {
+                empSearchEl.setCustomValidity('Please search and select a registered employee for In Use assignment.');
+                empSearchEl.reportValidity();
+                empSearchEl.focus();
+            } else {
+                alert('Please search and select a registered employee for In Use assignment.');
+            }
+            return false;
         }
+        if (isManual) {
+            if (!empName.val().trim()) {
+                empName[0].setCustomValidity('Please enter a Full Name for manual assignment.');
+                empName[0].reportValidity();
+                empName.focus();
+                return false;
+            } else {
+                empName[0].setCustomValidity('');
+            }
+        }
+        if (empSearchEl) empSearchEl.setCustomValidity('');
 
-        $('#assignForm').on('submit', function (e) {
-            const isTemp = statusSelect && statusSelect.value === 'Temporary';
-            const isManual = manualEntryToggle && manualEntryToggle.checked;
-
-            if (!isTemp && !isManual && (!empIdEl || !empIdEl.value)) {
-                if (empSearchEl) {
-                    empSearchEl.setCustomValidity('Please search and select a registered employee for In Use assignment.');
-                    empSearchEl.reportValidity();
-                    empSearchEl.focus();
-                } else {
-                    alert('Please search and select a registered employee for In Use assignment.');
-                }
+        const dateInput = this.querySelector('input[name="assigned_date"]');
+        if (dateInput && dateInput.value) {
+            const parsed = parseAssignedDate(dateInput.value);
+            if (parsed && parsed > todayDateObj) {
+                dateInput.value = '';
+                dateInput.setCustomValidity('Future dates are not allowed.');
+                dateInput.reportValidity();
                 return false;
             }
-            if (isManual) {
-                if (!empName.val().trim()) {
-                    empName[0].setCustomValidity('Please enter a Full Name for manual assignment.');
-                    empName[0].reportValidity();
-                    empName.focus();
-                    return false;
-                } else {
-                    empName[0].setCustomValidity('');
-                }
-            }
-            if (empSearchEl) empSearchEl.setCustomValidity('');
+            dateInput.setCustomValidity('');
+        }
+        if (this.checkValidity()) {
+            $('#submitBtn').prop('disabled', true);
+            $('#btnText').html('<span class="spinner-border spinner-border-sm me-2"></span> Processing Registry...');
+        }
+    });
 
-            const dateInput = this.querySelector('input[name="assigned_date"]');
-            if (dateInput && dateInput.value) {
-                const parsed = parseAssignedDate(dateInput.value);
-                if (parsed && parsed > todayDateObj) {
-                    dateInput.value = '';
-                    dateInput.setCustomValidity('Future dates are not allowed.');
-                    dateInput.reportValidity();
-                    return false;
-                }
-                dateInput.setCustomValidity('');
-            }
-            if (this.checkValidity()) {
-                $('#submitBtn').prop('disabled', true);
-                $('#btnText').html('<span class="spinner-border spinner-border-sm me-2"></span> Processing Registry...');
-            }
-        });
-
-        document.getElementById('assignForm').querySelector('input[name="assigned_date"]').addEventListener('change', function () {
-            const parsed = parseAssignedDate(this.value);
-            if (parsed && parsed > todayDateObj) {
-                this.value = '';
-            }
-        });
+    document.getElementById('assignForm').querySelector('input[name="assigned_date"]').addEventListener('change', function () {
+        const parsed = parseAssignedDate(this.value);
+        if (parsed && parsed > todayDateObj) {
+            this.value = '';
+        }
+    });
     });
 </script>
 {% endblock %}

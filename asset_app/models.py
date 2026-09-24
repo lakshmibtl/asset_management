@@ -401,7 +401,7 @@ class Assignment(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     status = models.CharField(
         max_length=50,
-        choices=STATUS_CHOICES,
+
         default='In Use'
     )
     assigned_at = models.DateTimeField(auto_now_add=True)

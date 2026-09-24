@@ -1068,8 +1068,14 @@ def assign_asset(request):
         post_data = request.POST.copy()
         emp_id = post_data.get('employee')
         status = post_data.get('status', '')
+        if status == 'Other':
+            other_status = post_data.get('other_status', '').strip()
+            if other_status:
+                status = other_status
+                post_data['status'] = status
         search_input = (request.POST.get('emp_search') or '').strip()
         manual_name = (post_data.get('emp_name') or search_input or '').strip()
+        manual_emp_id = (post_data.get('emp_id_manual') or '').strip()
         manual_dept = (post_data.get('emp_dept') or '').strip()
         manual_branch = (post_data.get('emp_branch') or post_data.get('branch') or '').strip()
 
@@ -1083,7 +1089,7 @@ def assign_asset(request):
                     prefix = "TEMP-" if 'temporary' in status.lower() else "EMP-"
                     emp_obj = Employee.objects.create(
                         name=manual_name,
-                        employee_id=f"{prefix}{rand_num}",
+                        employee_id=manual_emp_id if manual_emp_id else f"{prefix}{rand_num}",
                         department=manual_dept or ('Temporary' if 'temporary' in status.lower() else 'Unspecified'),
                         branch=manual_branch or ''
                     )
@@ -1096,7 +1102,7 @@ def assign_asset(request):
                     rand_num = random.randint(1000, 9999)
                     emp_obj = Employee.objects.create(
                         name="Temporary User",
-                        employee_id=f"TEMP-{rand_num}",
+                        employee_id=manual_emp_id if manual_emp_id else f"TEMP-{rand_num}",
                         department=manual_dept or 'Temporary',
                         branch=manual_branch or ''
                     )
@@ -1615,7 +1621,9 @@ def view_assets(request):
         asset_stats = []
         for stat in asset_stats_qs:
             atype = stat['asset_type']
-            stat['temporary_use'] = assigned_temp_counts.get(atype, 0)   # Assigned Temporary Use cards
+            stat['temporary_use'] = 0   # User wants temporary users merged into In Use
+            temp_use_count = assigned_temp_counts.get(atype, 0)
+            stat['in_use'] += temp_use_count
             stat['temporary'] = unassigned_temp_counts.get(atype, 0)     # Unassigned Temporary stock
             stat['other_statuses'] = other_status_counts.get(atype, {})  # {status_name: count}
             stat['other'] = sum(stat['other_statuses'].values())          # Total other count
