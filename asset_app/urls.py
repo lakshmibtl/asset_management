@@ -55,6 +55,8 @@ urlpatterns = [
 
     # Assignment
     path('assign/', views.assign_asset, name='assign_asset'),
+    path('assign/<int:pk>/edit/', views.edit_assignment, name='edit_assignment'),
+    path('assign/<int:pk>/api/edit/', views.edit_assignment_api, name='edit_assignment_api'),
     path('return-asset/<int:pk>/', views.return_asset, name='return_asset'),
     path('request-return/<int:pk>/', views.request_return_asset, name='request_return_asset'),
     path('process-return/<int:pk>/', views.process_return, name='process_return'),

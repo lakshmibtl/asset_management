@@ -1207,6 +1207,172 @@ def assign_asset(request):
     return render(request, "asset_app/assign_asset.html", context)
 
 
+# ------------------- EDIT ASSIGNMENT -------------------
+@login_required
+def edit_assignment(request, pk):
+    is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
+    if not request.user.is_authenticated or not is_admin:
+        messages.error(request, "Only an admin can edit assignments.")
+        return redirect("assigned_employees")
+
+    assignment = get_object_or_404(Assignment, pk=pk)
+
+    if request.method == "POST":
+        status = request.POST.get('status', '')
+        if status == 'Other':
+            other_status = request.POST.get('other_status', '').strip()
+            if other_status:
+                status = other_status
+
+        assigned_date = request.POST.get('assigned_date')
+        date_obj = None
+        if assigned_date:
+            for fmt in ('%d/%m/%Y', '%Y-%m-%d'):
+                try:
+                    date_obj = datetime.strptime(str(assigned_date).strip(), fmt).date()
+                    break
+                except (TypeError, ValueError):
+                    continue
+
+        if date_obj and date_obj > timezone.now().date():
+            messages.error(request, "Assignment date cannot be in the future.")
+            return redirect('edit_assignment', pk=assignment.pk)
+
+        emp_id = request.POST.get('employee')
+        if not emp_id:
+            messages.error(request, "Please select an employee.")
+            return redirect('edit_assignment', pk=assignment.pk)
+
+        assignment.employee = get_object_or_404(Employee, id=emp_id)
+        assignment.status = status or 'In Use'
+        if date_obj:
+            assignment.assigned_date = date_obj
+        assignment.assigned_by = request.user
+        assignment.save()
+
+        asset = assignment.asset
+        if assignment.status and assignment.status == 'Temporary User':
+            asset.status = "Temporary"
+        else:
+            asset.status = assignment.status
+        asset.save()
+
+        next_url = request.POST.get('next')
+        if next_url:
+            return redirect(next_url)
+        messages.success(request, f"Assignment updated for {asset.asset_id}!")
+        return redirect('assigned_employees')
+
+    employees = Employee.objects.all().order_by('name')
+    employees_json = json.dumps([
+        {
+            'id': emp.id,
+            'emp_id': emp.employee_id,
+            'name': emp.name,
+            'dept': emp.department or '',
+            'branch': emp.branch or '',
+        }
+        for emp in employees
+    ])
+    return render(request, "asset_app/edit_assignment.html", {
+        "assignment": assignment,
+        "employees": employees,
+        "employees_json": employees_json,
+        "today_date_display": assignment.assigned_date.strftime('%d/%m/%Y') if assignment.assigned_date else timezone.now().date().strftime('%d/%m/%Y'),
+        "today_date": timezone.now().date().isoformat(),
+    })
+
+
+# ------------------- EDIT ASSIGNMENT (JSON API) -------------------
+@login_required
+def edit_assignment_api(request, pk):
+    is_admin = request.user.is_staff or getattr(request.user, 'role', '') in ('admin', 'superadmin', 'asset_admin')
+    if not request.user.is_authenticated or not is_admin:
+        return JsonResponse({"error": "Only an admin can edit assignments."}, status=403)
+
+    assignment = get_object_or_404(Assignment, pk=pk)
+
+    if request.method == "GET":
+        return JsonResponse({
+            "id": assignment.pk,
+            "asset": {
+                "id": assignment.asset.pk,
+                "asset_id": assignment.asset.asset_id,
+                "asset_type": assignment.asset.asset_type,
+            },
+            "employee": {
+                "id": assignment.employee.pk,
+                "employee_id": assignment.employee.employee_id,
+                "name": assignment.employee.name,
+                "department": assignment.employee.department,
+                "branch": assignment.employee.branch,
+            },
+            "status": assignment.status,
+            "assigned_date": assignment.assigned_date.isoformat() if assignment.assigned_date else None,
+            "assigned_at": assignment.assigned_at.isoformat() if assignment.assigned_at else None,
+            "assigned_by": assignment.assigned_by.username if assignment.assigned_by else None,
+        })
+
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed."}, status=405)
+
+    try:
+        data = json.loads(request.body or b"{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON body."}, status=400)
+
+    status = (data.get("status") or assignment.status or "").strip()
+    assigned_date = data.get("assigned_date")
+
+    date_obj = None
+    if assigned_date:
+        for fmt in ('%d/%m/%Y', '%Y-%m-%d'):
+            try:
+                date_obj = datetime.strptime(str(assigned_date).strip(), fmt).date()
+                break
+            except (TypeError, ValueError):
+                continue
+        if date_obj is None:
+            return JsonResponse({"error": "Invalid assigned_date. Use DD/MM/YYYY or YYYY-MM-DD."}, status=400)
+        if date_obj > timezone.now().date():
+            return JsonResponse({"error": "Assignment date cannot be in the future."}, status=400)
+
+    if data.get("employee"):
+        try:
+            assignment.employee = Employee.objects.get(pk=int(data["employee"]))
+        except (Employee.DoesNotExist, ValueError, TypeError):
+            return JsonResponse({"error": "Invalid employee id."}, status=400)
+
+    if status:
+        if 'temporary' in status.lower():
+            assignment.status = 'Temporary' if status.lower() == 'temporary' else status
+        else:
+            assignment.status = status
+
+    if date_obj:
+        assignment.assigned_date = date_obj
+    assignment.assigned_by = request.user
+    assignment.save()
+
+    asset = assignment.asset
+    if assignment.status and 'temporary' in assignment.status.lower():
+        asset.status = "Temporary"
+    else:
+        asset.status = "In Use"
+    asset.save()
+
+    return JsonResponse({
+        "status": "ok",
+        "message": f"Assignment updated for {asset.asset_id}.",
+        "assignment_id": assignment.pk,
+        "data": {
+            "employee": assignment.employee.name,
+            "status": assignment.status,
+            "assigned_date": assignment.assigned_date.isoformat() if assignment.assigned_date else None,
+        },
+    })
+
+
 # ------------------- DIGITAL SIGNATURE / AGREEMENT -------------------
 @login_required
 def sign_agreement(request, assignment_id):
@@ -1501,20 +1667,17 @@ def view_assets(request):
     is_staff = request.user.is_staff or getattr(request.user, 'role', '') in ('superadmin', 'admin', 'asset_admin')
     is_manager = getattr(request.user, 'role', '') == 'manager'
         
-    active_statuses = ['In Use', 'Temporary', 'Temporary Use']
     if is_staff:
-        raw_assignments = Assignment.objects.select_related("asset", "employee").filter(status__in=active_statuses).order_by('asset_id', '-id')
+        raw_assignments = Assignment.objects.select_related("asset", "employee").exclude(status__iexact='Returned').order_by('asset_id', '-id')
     elif is_manager:
         raw_assignments = Assignment.objects.select_related("asset", "employee").filter(
-            employee__department__iexact=request.user.department,
-            status__in=active_statuses
-        ).order_by('asset_id', '-id')
+            employee__department__iexact=request.user.department
+        ).exclude(status__iexact='Returned').order_by('asset_id', '-id')
     else:
         # Employee - only show their own assets
         raw_assignments = Assignment.objects.select_related("asset", "employee").filter(
-            Q(employee__employee_id__iexact=request.user.username) | Q(employee__name__iexact=request.user.username),
-            status__in=active_statuses
-        ).order_by('asset_id', '-id')
+            Q(employee__employee_id__iexact=request.user.username) | Q(employee__name__iexact=request.user.username)
+        ).exclude(status__iexact='Returned').order_by('asset_id', '-id')
 
     seen_assets = set()
     assignments = []
@@ -1525,7 +1688,7 @@ def view_assets(request):
 
     # Unassigned assets (only truly Available / Under Repair assets, excluding all currently assigned assets)
     if is_staff:
-        assigned_asset_ids = set(Assignment.objects.filter(status__in=active_statuses).values_list('asset_id', flat=True))
+        assigned_asset_ids = set(Assignment.objects.exclude(status__iexact='Returned').values_list('asset_id', flat=True))
 
         # Available Stock (Available / Under Repair assets that are not assigned)
         unassigned_assets = Asset.objects.exclude(
@@ -1571,10 +1734,9 @@ def view_assets(request):
         ).order_by('asset_type')
 
         # Count Temporary Use: assets currently ASSIGNED with Temporary status (cards at top)
-        assigned_ids_for_stats = set(Assignment.objects.filter(status__in=active_statuses).values_list('asset_id', flat=True))
+        assigned_ids_for_stats = set(Assignment.objects.exclude(status__iexact='Returned').values_list('asset_id', flat=True))
         assigned_temp_counts = {}
         for a in Assignment.objects.filter(
-            status__in=active_statuses,
             status__iexact='Temporary'
         ).values('asset__asset_type').annotate(cnt=Count('asset_id', distinct=True)):
             assigned_temp_counts[a['asset__asset_type']] = a['cnt']
@@ -1705,14 +1867,12 @@ def assigned_employees(request):
     if not (is_staff or is_manager):
         return redirect('asset_dashboard')
         
-    active_statuses = ['In Use', 'Temporary', 'Temporary Use']
     if is_staff:
-        assignments = Assignment.objects.select_related("asset", "employee").filter(status__in=active_statuses)
+        assignments = Assignment.objects.select_related("asset", "employee").exclude(status__iexact='Returned')
     else:
         assignments = Assignment.objects.select_related("asset", "employee").filter(
-            employee__department__iexact=request.user.department,
-            status__in=active_statuses
-        )
+            employee__department__iexact=request.user.department
+        ).exclude(status__iexact='Returned')
 
     # Build map: key = Employee object, value = list of dicts
     employee_asset_map = {}

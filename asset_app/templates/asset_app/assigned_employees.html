@@ -171,7 +171,13 @@
                         </div>
 
                         <!-- Action Buttons -->
-                        <div class="mt-4 d-flex justify-content-end align-items-center">
+                        <div class="mt-4 d-flex justify-content-between align-items-center">
+                            {% if request.user.is_staff or request.user.role == 'admin' or request.user.role == 'superadmin' or request.user.role == 'asset_admin' %}
+                            <a href="{% url 'edit_assignment' item.assignment.pk %}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-medium" title="Edit Assignment">
+                                <i class="bi bi-pencil-square me-1"></i> Edit
+                            </a>
+                            {% endif %}
+                            <div class="d-flex gap-2">
                             {% if item.assignment.is_signed %}
                             <a href="{% url 'view_agreement' item.assignment.pk %}" class="btn btn-outline-success btn-sm rounded-pill px-3 fw-medium">
                                 <i class="bi bi-file-earmark-check me-1"></i> Signed
