@@ -86,6 +86,19 @@
             </div>
         </div>
 
+        {% empty %}
+        <div class="col-12 text-center py-5 mt-5">
+            <div class="d-inline-flex flex-column align-items-center justify-content-center p-5 rounded-circle bg-white shadow-sm mb-4" style="width: 150px; height: 150px;">
+                <i class="bi bi-folder-x text-muted" style="font-size: 3rem;"></i>
+            </div>
+            <h3 class="fw-bold text-dark">No Assigned Employees</h3>
+            <p class="text-muted fs-5">There are currently no employees holding assets.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Offcanvases moved outside structural containers -->
+    {% for employee, assets in employee_asset_map.items %}
         <!-- Premium Offcanvas Side Panel -->
         <div class="offcanvas offcanvas-end premium-offcanvas border-0 shadow-lg" tabindex="-1" id="empAssetsOffcanvas-{{ forloop.counter }}" aria-labelledby="empAssetsOffcanvasLabel-{{ forloop.counter }}" style="width: 480px; border-top-left-radius: 20px; border-bottom-left-radius: 20px; z-index: 1060; top: 65px; height: calc(100vh - 65px);" data-bs-backdrop="false">
             <div class="offcanvas-header border-bottom bg-light px-4 py-3">
@@ -192,23 +205,14 @@
                                 {% endif %}
                             {% endif %}
                             
-
+                            </div>
                         </div>
                     </div>
                 </div>
                 {% endfor %}
             </div>
         </div>
-        
-        {% empty %}
-        <div class="col-12 text-center py-5 mt-5">
-            <div class="d-inline-flex flex-column align-items-center justify-content-center p-5 rounded-circle bg-white shadow-sm mb-4" style="width: 150px; height: 150px;">
-                <i class="bi bi-folder-x text-muted" style="font-size: 3rem;"></i>
-            </div>
-            <h3 class="fw-bold text-dark">No Assigned Employees</h3>
-            <p class="text-muted fs-5">There are currently no employees holding assets.</p>
-        </div>
-        {% endfor %}
+    {% endfor %}
     </div>
 
 </div>

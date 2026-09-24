@@ -1120,6 +1120,7 @@ def assign_asset(request):
         form.fields['asset'].queryset = Asset.objects.all()
         if form.is_valid():
             assignment = form.save(commit=False)
+            assignment.status = status or 'In Use'
             assignment.assigned_by = request.user
             if assigned_date_obj:
                 assignment.assigned_date = assigned_date_obj

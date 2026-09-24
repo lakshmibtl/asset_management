@@ -671,7 +671,7 @@
             data-type="{{ assign.asset.asset_type|lower }}" data-name="{{ assign.asset.name|lower }}"
             data-model="{{ assign.asset.model|lower }}" data-empname="{{ assign.employee.name|lower }}"
             data-empid="{{ assign.employee.employee_id }}" data-assetid="{{ assign.asset.asset_id|lower }}"
-            data-sn="{{ assign.asset.series_number|lower|default:'' }}"
+            data-sn="{{ assign.asset.series_number|lower|default:'' }}" data-status="{{ assign.status|lower }}"
             data-href="{% url 'asset_detail' assign.asset.pk %}" style="--delay: 0.{{ forloop.counter }}s">
             <div class="card h-100 asset-card">
                 {% if 'temporary' in assign.status|lower or 'temporary' in assign.asset.status|lower %}
@@ -703,9 +703,16 @@
                             </span>
                         </div>
                         {% else %}
-                        <span class="badge badge-inuse status-badge">
-                            <i class="bi bi-person-check-fill me-1"></i> In Use
-                        </span>
+                        <div class="d-flex gap-2">
+                            <span class="badge badge-inuse status-badge">
+                                <i class="bi bi-person-check-fill me-1"></i> In Use
+                            </span>
+                            {% if assign.asset.status != 'In Use' and assign.asset.status != 'Available' and assign.asset.status != 'Temporary' %}
+                            <span class="badge status-badge" style="background: linear-gradient(135deg, rgba(109, 40, 217, 0.12), rgba(167, 139, 250, 0.22)); color: #6d28d9; border: 1px solid rgba(109, 40, 217, 0.25);">
+                                <i class="bi bi-tag-fill me-1"></i> {{ assign.asset.status }}
+                            </span>
+                            {% endif %}
+                        </div>
                         {% endif %}
                         <div class="text-muted small fw-semibold">ID: {{ assign.asset.asset_id }}</div>
                     </div>
@@ -754,7 +761,7 @@
                                     title="Edit Employee Details">
                                     <i class="bi bi-person-lines-fill" style="font-size: 1.2rem; color: #2F4F4F; opacity: 0.8;"></i>
                                 </button>
-                                <a href="{% url 'edit_assignment' assign.pk %}" class="btn btn-sm text-muted p-0 border-0 shadow-none hover-lift" title="Edit Assignment">
+                                <a href="{% url 'edit_assignment' assign.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm text-muted p-0 border-0 shadow-none hover-lift" title="Edit Assignment">
                                     <i class="bi bi-pencil-square" style="font-size: 1.2rem; color: #07518A; opacity: 0.9;"></i>
                                 </a>
                             </div>
@@ -772,9 +779,19 @@
                                     class="text-muted fw-normal fs-6">({{ assign.employee.employee_id }})</span>{% endif %}
                             </p>
                             {% if request.user.is_staff or request.user.role == 'admin' or request.user.role == 'superadmin' or request.user.role == 'asset_admin' %}
-                            <a href="{% url 'edit_assignment' assign.pk %}" class="btn btn-sm text-muted p-0 border-0 shadow-none hover-lift" title="Edit Assignment">
-                                <i class="bi bi-pencil-square" style="font-size: 1.2rem; color: #07518A; opacity: 0.9;"></i>
-                            </a>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm text-muted p-0 edit-manual-emp border-0 shadow-none hover-lift" 
+                                    data-empid="{{ assign.employee.id }}" 
+                                    data-empname="{{ assign.employee.name }}"
+                                    data-empdept="{{ assign.employee.department|default:'' }}"
+                                    data-empbranch="{{ assign.employee.branch|default:'' }}"
+                                    title="Edit Employee Details">
+                                    <i class="bi bi-person-lines-fill" style="font-size: 1.2rem; color: var(--primary); opacity: 0.8;"></i>
+                                </button>
+                                <a href="{% url 'edit_assignment' assign.pk %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm text-muted p-0 border-0 shadow-none hover-lift" title="Edit Assignment">
+                                    <i class="bi bi-pencil-square" style="font-size: 1.2rem; color: #07518A; opacity: 0.9;"></i>
+                                </a>
+                            </div>
                             {% endif %}
                         </div>
                     </div>
@@ -849,7 +866,7 @@
                                     </button>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item py-2" href="{% url 'edit_assignment' assign.pk %}">
+                                    <a class="dropdown-item py-2" href="{% url 'edit_assignment' assign.pk %}?next={{ request.get_full_path|urlencode }}">
                                         <i class="bi bi-pencil-square me-2 text-info"></i> Edit Assignment
                                     </a>
                                 </li>
@@ -890,7 +907,7 @@
         <div class="col-12 col-md-6 col-lg-4 animate-in asset-item" role="button" tabindex="0"
             data-type="{{ a.asset_type|lower }}" data-name="{{ a.name|lower }}"
             data-model="{{ a.model|lower }}" data-empname="" data-empid=""
-            data-assetid="{{ a.asset_id|lower }}" data-sn="{{ a.series_number|lower|default:'' }}"
+            data-assetid="{{ a.asset_id|lower }}" data-sn="{{ a.series_number|lower|default:'' }}" data-status="{{ a.status|lower }}"
             data-href="{% url 'asset_detail' a.pk %}" style="--delay: 0.{{ forloop.counter }}s">
             <div class="card h-100 asset-card">
                 <div class="status-strip in-use w-100"></div>
@@ -960,8 +977,8 @@
         {% endfor %}
     </div>
 
-    <!-- AVAILABLE / UNASSIGNED ASSETS (hidden for employees and managers) -->
-    {% if unassigned_assets and not is_employee and request.user.role != 'manager' %}
+    <!-- AVAILABLE / UNASSIGNED ASSETS (hidden for employees) -->
+    {% if unassigned_assets and not is_employee %}
     <div class="mt-5 pt-5 border-top">
         <div class="d-flex align-items-center mb-4">
             <div class="stat-icon me-3"
@@ -979,7 +996,7 @@
             {% for a in unassigned_assets %}
             <div class="col animate-in asset-item" role="button" tabindex="0" data-type="{{ a.asset_type|lower }}"
                 data-name="{{ a.name|lower }}" data-model="{{ a.model|lower }}" data-empname="" data-empid=""
-                data-assetid="{{ a.asset_id|lower }}" data-sn="{{ a.series_number|lower|default:'' }}" data-href="" style="--delay: 0.{{ forloop.counter }}s">
+                data-assetid="{{ a.asset_id|lower }}" data-sn="{{ a.series_number|lower|default:'' }}" data-status="{{ a.status|lower }}" data-href="" style="--delay: 0.{{ forloop.counter }}s">
                 <div class="card h-100 asset-card">
                     <div class="status-strip available w-100"></div>
                     <div class="card-body p-4 d-flex flex-column">
@@ -1093,8 +1110,8 @@
     </div>
     {% endif %}
 
-    <!-- TEMPORARY ASSETS (hidden for employees and managers) -->
-    {% if temporary_assets and not is_employee and request.user.role != 'manager' %}
+    <!-- TEMPORARY ASSETS (hidden for employees) -->
+    {% if temporary_assets and not is_employee %}
     <div class="mt-5 pt-5 border-top">
         <div class="d-flex align-items-center mb-4">
             <div class="stat-icon me-3" style="background: linear-gradient(135deg, #475569 0%, #64748b 100%); box-shadow: 0 6px 14px rgba(71,85,105,.32);">
@@ -1111,7 +1128,7 @@
             {% for a in temporary_assets %}
             <div class="col animate-in asset-item" role="button" tabindex="0" data-type="{{ a.asset_type|lower }}"
                 data-name="{{ a.name|lower }}" data-model="{{ a.model|lower }}" data-empname="" data-empid=""
-                data-assetid="{{ a.asset_id|lower }}" data-sn="{{ a.series_number|lower|default:'' }}" data-href="{% url 'asset_detail' a.pk %}"
+                data-assetid="{{ a.asset_id|lower }}" data-sn="{{ a.series_number|lower|default:'' }}" data-status="{{ a.status|lower }}" data-href="{% url 'asset_detail' a.pk %}"
                 style="--delay: 0.{{ forloop.counter }}s">
                 <div class="card h-100 asset-card">
                     <div class="status-strip temporary w-100"></div>
@@ -1198,8 +1215,8 @@
     </div>
     {% endif %}
 
-    <!-- OTHER STATUS ASSETS (hidden for employees and managers) -->
-    {% if other_assets and not is_employee and request.user.role != 'manager' %}
+    <!-- OTHER STATUS ASSETS (hidden for employees) -->
+    {% if other_assets and not is_employee %}
     <div class="mt-5 pt-5 border-top">
         <div class="d-flex align-items-center mb-4">
             <div class="stat-icon me-3"
@@ -1217,7 +1234,7 @@
             {% for a in other_assets %}
             <div class="col animate-in asset-item" role="button" tabindex="0" data-type="{{ a.asset_type|lower }}"
                 data-name="{{ a.name|lower }}" data-model="{{ a.model|lower }}" data-empname="" data-empid=""
-                data-assetid="{{ a.asset_id|lower }}" data-sn="{{ a.series_number|lower|default:'' }}" data-href="{% url 'asset_detail' a.pk %}"
+                data-assetid="{{ a.asset_id|lower }}" data-sn="{{ a.series_number|lower|default:'' }}" data-status="{{ a.status|lower }}" data-href="{% url 'asset_detail' a.pk %}"
                 style="--delay: 0.{{ forloop.counter }}s">
                 <div class="card h-100 asset-card">
                     <div class="status-strip w-100" style="background: linear-gradient(135deg, #6d28d9 0%, #a78bfa 100%);"></div>
@@ -1305,8 +1322,8 @@
     </div>
     {% endif %}
 
-    <!-- DEAD / DECOMMISSIONED ASSETS (hidden for employees and managers) -->
-    {% if dead_assets and not is_employee and request.user.role != 'manager' %}
+    <!-- DEAD / DECOMMISSIONED ASSETS (hidden for employees) -->
+    {% if dead_assets and not is_employee %}
     <div class="mt-5 pt-5 border-top">
         <div class="d-flex align-items-center mb-4">
             <div class="stat-icon me-3"
@@ -1324,7 +1341,7 @@
             {% for a in dead_assets %}
             <div class="col animate-in asset-item" role="button" tabindex="0" data-type="{{ a.asset_type|lower }}"
                 data-name="{{ a.name|lower }}" data-model="{{ a.model|lower }}" data-empname="" data-empid=""
-                data-assetid="{{ a.asset_id|lower }}" data-sn="{{ a.series_number|lower|default:'' }}" data-href="{% url 'asset_detail' a.pk %}"
+                data-assetid="{{ a.asset_id|lower }}" data-sn="{{ a.series_number|lower|default:'' }}" data-status="{{ a.status|lower }}" data-href="{% url 'asset_detail' a.pk %}"
                 style="--delay: 0.{{ forloop.counter }}s">
                 <div class="card h-100 asset-card">
                     <div class="status-strip dead w-100"></div>
@@ -1481,6 +1498,13 @@
                     {% if other_assets %}
                     <optgroup label="── Other Status ──">
                     {% for asset in other_assets %}
+                    <option value="{{ asset.id }}">{{ asset.asset_id }} — {{ asset.asset_type }} ({{ asset.name|default:asset.asset_type }}) [{{ asset.status }}]</option>
+                    {% endfor %}
+                    </optgroup>
+                    {% endif %}
+                    {% if temporary_assets %}
+                    <optgroup label="── Temporary Stock ──">
+                    {% for asset in temporary_assets %}
                     <option value="{{ asset.id }}">{{ asset.asset_id }} — {{ asset.asset_type }} ({{ asset.name|default:asset.asset_type }}) [{{ asset.status }}]</option>
                     {% endfor %}
                     </optgroup>
@@ -1700,6 +1724,7 @@
                 const empId = (item.dataset.empid || "").toLowerCase();
                 const assetId = (item.dataset.assetid || "").toLowerCase();
                 const sn = (item.dataset.sn || "").toLowerCase();
+                const status = (item.dataset.status || "").toLowerCase();
 
                 const matchesFilter = (filterValue === "all") || (types.indexOf(filterValue) !== -1) || (names.indexOf(filterValue) !== -1);
                 const matchesQuery =
@@ -1710,7 +1735,8 @@
                     sn.indexOf(query) !== -1 ||
                     types.indexOf(query) !== -1 ||
                     names.indexOf(query) !== -1 ||
-                    models.indexOf(query) !== -1;
+                    models.indexOf(query) !== -1 ||
+                    status.indexOf(query) !== -1;
 
                 if (matchesFilter && matchesQuery) {
                     item.style.display = "";
@@ -1746,6 +1772,16 @@
 
         // Search input — live
         searchInput.addEventListener("input", function () {
+            if (this.value.trim() !== "") {
+                const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
+                if (allBtn && !allBtn.classList.contains("active")) {
+                    filterButtons.forEach(b => b.classList.remove("active"));
+                    allBtn.classList.add("active");
+                    document.querySelectorAll('.subtype-dropdown').forEach(dd => {
+                        dd.classList.add('d-none');
+                    });
+                }
+            }
             applyFilters();
         });
 
