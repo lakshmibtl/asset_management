@@ -920,30 +920,38 @@ def edit_asset(request, pk):
                 # If they change the status TO 'In Use' from something else, redirect to Assign
                 new_status_val = request.POST.get('status', '').lower() or (form.cleaned_data.get('status') or '').lower()
                 if new_status_val == 'in use' and original_status != 'in use':
-                    # Prevent ghost assets: save as Available until assigned
-                    asset.status = 'Available'
-                    asset.save()
-                    messages.info(request, "Asset updated. Please assign it now to formally mark it as 'In Use'.")
-                    if request.GET.get('iframe') == '1':
-                        url = reverse('assign_asset') + f"?asset={asset.pk}"
-                        return HttpResponse(f"<script>window.parent.location.href='{url}';</script>")
-                    return redirect(f"{reverse('assign_asset')}?asset={asset.pk}")
-                
-                # If they manually changed the status to an unassigned state, close any active assignments
-                if new_status_val in ('available', 'dead', 'under repair') and original_status not in ('available', 'dead', 'under repair'):
-                    active_assignments = Assignment.objects.filter(
-                        asset=asset
-                    ).exclude(status__iexact='Returned')
-                    
+                    active_assignments = Assignment.objects.filter(asset=asset).exclude(status__iexact='Returned')
                     if active_assignments.exists():
-                        active_assignments.update(
-                            status='Returned',
-                            return_reason=f"Asset status manually changed to {asset.status} by Admin",
-                            returned_at=timezone.now()
-                        )
-                        messages.info(request, f"Active assignments for {asset.asset_id} were automatically closed.")
-
-                messages.success(request, "Asset updated successfully!")
+                        # Asset is already assigned! Just update the assignment status to match
+                        active_assignments.update(status='In Use')
+                        asset.status = 'In Use'
+                        asset.save()
+                        messages.success(request, "Asset and its active assignment updated to 'In Use'.")
+                    else:
+                        # Prevent ghost assets: save as Available until assigned
+                        asset.status = 'Available'
+                        asset.save()
+                        messages.info(request, "Asset updated. Please assign it now to formally mark it as 'In Use'.")
+                        if request.GET.get('iframe') == '1':
+                            url = reverse('assign_asset') + f"?asset={asset.pk}"
+                            return HttpResponse(f"<script>window.parent.location.href='{url}';</script>")
+                        return redirect(f"{reverse('assign_asset')}?asset={asset.pk}")
+                else:
+                    # If they manually changed the status to an unassigned state, close any active assignments
+                    if new_status_val in ('available', 'dead', 'under repair') and original_status not in ('available', 'dead', 'under repair'):
+                        active_assignments = Assignment.objects.filter(
+                            asset=asset
+                        ).exclude(status__iexact='Returned')
+                        
+                        if active_assignments.exists():
+                            active_assignments.update(
+                                status='Returned',
+                                return_reason=f"Asset status manually changed to {asset.status} by Admin",
+                                returned_at=timezone.now()
+                            )
+                            messages.info(request, f"Active assignments for {asset.asset_id} were automatically closed.")
+                    
+                    messages.success(request, "Asset updated successfully!")
                 if request.GET.get('iframe') == '1':
                     return HttpResponse("<script>window.parent.location.href = window.parent.location.href;</script>")
                 return redirect('asset_detail', pk=asset.pk)
@@ -1163,16 +1171,11 @@ def assign_asset(request):
                 employee.save()
                 
             asset = assignment.asset
-            if assignment.status and 'temporary' in assignment.status.lower():
-                asset.status = "Temporary"
-                asset.save()
-            else:
-                # Only move Available/Under Repair → In Use so they leave unassigned stock.
-                # Preserve custom/Other statuses (e.g. 'IN SERVER') and existing 'In Use'.
-                if asset.status in ('Available', 'Under Repair'):
-                    asset.status = "In Use"
-                    asset.save()
-                # else: keep the custom/existing status as-is
+            # Preserve 'Temporary' asset status even when assigned.
+            # Only move unassigned/available stock to 'In Use'.
+            if asset.status in ('Available', 'Under Repair'):
+                asset.status = "In Use"
+            asset.save()
 
             next_url = request.POST.get('next')
             if next_url:

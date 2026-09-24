@@ -684,36 +684,34 @@
                 <div class="card-body p-4 d-flex flex-column">
 
                     <div class="d-flex justify-content-between align-items-start mb-3">
-                        {% if 'temporary' in assign.status|lower or 'temporary' in assign.asset.status|lower %}
-                        <div class="d-flex gap-2">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <!-- Always show IN USE for active assignments -->
                             <span class="badge badge-inuse status-badge">
                                 <i class="bi bi-person-check-fill me-1"></i> In Use
                             </span>
+
+                            <!-- Assignment Status (Temporary User or Custom) -->
+                            {% if assign.status|lower == 'temporary user' or assign.status|lower == 'temporary' %}
                             <span class="badge status-badge" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(251, 191, 36, 0.25)); color: #b45309; border: 1px solid rgba(245, 158, 11, 0.3);">
                                 <i class="bi bi-clock-history me-1"></i> Temporary User
                             </span>
-                        </div>
-                        {% elif assign.status != 'In Use' and assign.status != 'Returned' %}
-                        <div class="d-flex gap-2">
-                            <span class="badge badge-inuse status-badge">
-                                <i class="bi bi-person-check-fill me-1"></i> In Use
-                            </span>
+                            {% elif assign.status != 'In Use' and assign.status != 'Returned' %}
                             <span class="badge status-badge" style="background: linear-gradient(135deg, rgba(109, 40, 217, 0.12), rgba(167, 139, 250, 0.22)); color: #6d28d9; border: 1px solid rgba(109, 40, 217, 0.25);">
                                 <i class="bi bi-tag-fill me-1"></i> {{ assign.status }}
                             </span>
-                        </div>
-                        {% else %}
-                        <div class="d-flex gap-2">
-                            <span class="badge badge-inuse status-badge">
-                                <i class="bi bi-person-check-fill me-1"></i> In Use
+                            {% endif %}
+
+                            <!-- Asset Status (Temporary Asset or Custom) -->
+                            {% if assign.asset.status|lower == 'temporary' or assign.asset.status|lower == 'temporary use' %}
+                            <span class="badge status-badge" style="background: linear-gradient(135deg, rgba(71, 85, 105, 0.12), rgba(100, 116, 139, 0.18)); color: #475569; border: 1px solid rgba(100, 116, 139, 0.25);">
+                                <i class="bi bi-laptop me-1"></i> Temporary Asset
                             </span>
-                            {% if assign.asset.status != 'In Use' and assign.asset.status != 'Available' and assign.asset.status != 'Temporary' %}
+                            {% elif assign.asset.status != 'In Use' and assign.asset.status != 'Available' %}
                             <span class="badge status-badge" style="background: linear-gradient(135deg, rgba(109, 40, 217, 0.12), rgba(167, 139, 250, 0.22)); color: #6d28d9; border: 1px solid rgba(109, 40, 217, 0.25);">
                                 <i class="bi bi-tag-fill me-1"></i> {{ assign.asset.status }}
                             </span>
                             {% endif %}
                         </div>
-                        {% endif %}
                         <div class="text-muted small fw-semibold">ID: {{ assign.asset.asset_id }}</div>
                     </div>
 
@@ -1857,6 +1855,18 @@
                 const assetId = this.dataset.assetId;
                 if (assetId) {
                     $('#assetSelect').val(assetId).trigger('change');
+                }
+                
+                const assetItem = this.closest('.asset-item');
+                const assetStatus = assetItem ? assetItem.dataset.status : null;
+                const deploymentSelect = document.getElementById('deploymentStatusSelect');
+                if (deploymentSelect) {
+                    if (assetStatus === 'temporary' || assetStatus === 'temporary use') {
+                        deploymentSelect.value = 'Temporary';
+                    } else {
+                        deploymentSelect.value = 'In Use';
+                    }
+                    deploymentSelect.dispatchEvent(new Event('change'));
                 }
             });
         });
