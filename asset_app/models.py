@@ -394,7 +394,7 @@ class Assignment(models.Model):
     STATUS_CHOICES = [
         ('In Use', 'In Use'),
         ('Returned', 'Returned'),
-        ('Temporary', 'Temporary Use'),
+        ('Temporary', 'Temporary User'),
     ]
 
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)

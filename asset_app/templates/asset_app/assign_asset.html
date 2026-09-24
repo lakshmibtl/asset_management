@@ -329,7 +329,7 @@
                                 style="color: var(--primary);"></i> DEPLOYMENT STATUS</label>
                         <select name="status" id="assignStatusSelect" class="form-select">
                             <option value="In Use">In Use</option>
-                            <option value="Temporary">Temporary Use</option>
+                            <option value="Temporary">Temporary User</option>
                         </select>
                     </div>
 
@@ -378,7 +378,7 @@
                     empSearchEl.disabled = isManual;
                     if (isManual) empSearchEl.value = '';
                 }
-                if (empSearchHelpEl) empSearchHelpEl.textContent = isManual ? 'Enter details directly below.' : 'Search employee or leave blank / enter details for Temporary Use.';
+                if (empSearchHelpEl) empSearchHelpEl.textContent = isManual ? 'Enter details directly below.' : 'Search employee or leave blank / enter details for Temporary User.';
                 empName.prop('readonly', false).removeClass('readonly-box');
                 empDept.prop('readonly', false).removeClass('readonly-box');
                 empBranch.prop('readonly', false).removeClass('readonly-box');
