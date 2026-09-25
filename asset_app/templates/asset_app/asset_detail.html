@@ -319,6 +319,22 @@
                                 </div>
                             </div>
                             {% endif %}
+                            {% if asset.processor %}
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <div class="info-tile">
+                                    <div class="tile-label"><i class="bi bi-cpu-fill me-1"></i>Processor</div>
+                                    <div class="tile-value">{{ asset.processor }}</div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if asset.graphic_card %}
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <div class="info-tile">
+                                    <div class="tile-label"><i class="bi bi-gpu-card me-1"></i>Graphic Card</div>
+                                    <div class="tile-value">{{ asset.graphic_card }}</div>
+                                </div>
+                            </div>
+                            {% endif %}
                             <div class="col-6 col-md-4 col-lg-3">
                                 <div class="info-tile">
                                     <div class="tile-label"><i class="bi bi-calendar3 me-1"></i>Purchase Date</div>

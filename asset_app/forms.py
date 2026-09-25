@@ -163,9 +163,27 @@ class AssetForm(forms.ModelForm):
         ),
     )
 
+    processor = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control form-control-lg rounded-3 shadow-sm',
+            'id': 'id_processor',
+            'placeholder': 'Enter Processor'
+        })
+    )
+
+    graphic_card = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control form-control-lg rounded-3 shadow-sm',
+            'id': 'id_graphic_card',
+            'placeholder': 'Enter Graphic Card'
+        })
+    )
+
     class Meta:
         model = Asset
-        fields = ['asset_type', 'model', 'series_number', 'vendor_name', 'company_name', 'status', 'ram', 'storage', 'purchase_date', 'cost', 'warranty', 'warranty_end_date', 'image']
+        fields = ['asset_type', 'model', 'series_number', 'vendor_name', 'company_name', 'status', 'ram', 'storage', 'processor', 'graphic_card', 'purchase_date', 'cost', 'warranty', 'warranty_end_date', 'image']
 
         widgets = {
             'model': forms.TextInput(attrs={

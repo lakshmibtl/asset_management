@@ -269,6 +269,18 @@
               </div>
               <div class="col-6 col-lg-4">
                 <div class="info-tile">
+                  <div class="tile-label"><i class="bi bi-cpu-fill me-1"></i>Processor</div>
+                  <div class="tile-value">{{ asset.processor|default:"—" }}</div>
+                </div>
+              </div>
+              <div class="col-6 col-lg-4">
+                <div class="info-tile">
+                  <div class="tile-label"><i class="bi bi-gpu-card me-1"></i>Graphic Card</div>
+                  <div class="tile-value">{{ asset.graphic_card|default:"—" }}</div>
+                </div>
+              </div>
+              <div class="col-6 col-lg-4">
+                <div class="info-tile">
                   <div class="tile-label"><i class="bi bi-cash-coin me-1"></i>Cost</div>
                   <div class="tile-value">{% if asset.cost %}Rs {{ asset.cost|floatformat:2 }}{% else %}—{% endif %}</div>
                 </div>

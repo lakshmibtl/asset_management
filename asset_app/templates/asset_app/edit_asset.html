@@ -439,6 +439,20 @@
                                 {{ form.other_storage }}
                             </div>
 
+                            <div class="col-md-6 animate__animated animate__fadeInLeft" id="processorContainer">
+                                <div class="form-floating">
+                                    {{ form.processor|add_class:"form-control form-control-lg shadow-sm" }}
+                                    <label>Processor</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 animate__animated animate__fadeInRight" id="graphicCardContainer">
+                                <div class="form-floating">
+                                    {{ form.graphic_card|add_class:"form-control form-control-lg shadow-sm" }}
+                                    <label>Graphic Card</label>
+                                </div>
+                            </div>
+
                             <div class="col-md-6 animate__animated animate__fadeInLeft">
                                 <div class="form-floating">
                                     {{ form.purchase_date|add_class:"form-control form-control-lg shadow-sm"|attr:"placeholder:DD/MM/YYYY"|attr:"autocomplete:off" }}
@@ -742,16 +756,22 @@
         const assetTypeSelect = document.getElementById('id_asset_type');
         const ramContainer = document.getElementById('ramContainer');
         const storageContainer = document.getElementById('storageContainer');
+        const processorContainer = document.getElementById('processorContainer');
+        const graphicCardContainer = document.getElementById('graphicCardContainer');
         
         function toggleRamStorage() {
-            if (assetTypeSelect && ramContainer && storageContainer) {
+            if (assetTypeSelect && ramContainer && storageContainer && processorContainer && graphicCardContainer) {
                 const typeVal = assetTypeSelect.value.toLowerCase();
                 if (typeVal === 'laptop' || typeVal === 'desktop') {
                     ramContainer.style.display = 'block';
                     storageContainer.style.display = 'block';
+                    processorContainer.style.display = 'block';
+                    graphicCardContainer.style.display = 'block';
                 } else {
                     ramContainer.style.display = 'none';
                     storageContainer.style.display = 'none';
+                    processorContainer.style.display = 'none';
+                    graphicCardContainer.style.display = 'none';
                 }
             }
         }

@@ -67,6 +67,8 @@ class Asset(models.Model):
 
     ram = models.CharField(max_length=50, blank=True, null=True)
     storage = models.CharField(max_length=50, blank=True, null=True)
+    processor = models.CharField(max_length=100, blank=True, null=True)
+    graphic_card = models.CharField(max_length=100, blank=True, null=True)
 
     image = models.ImageField(upload_to='assets/', blank=True, null=True)
     qr_code_base64 = models.TextField(blank=True, null=True)
