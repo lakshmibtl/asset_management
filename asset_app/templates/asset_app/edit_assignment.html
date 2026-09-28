@@ -222,11 +222,11 @@
                     <div class="row g-2">
                         <div class="col-12 col-md-6">
                             <label class="form-label small text-muted">Department</label>
-                            <input type="text" id="empDept" class="form-control readonly-box" readonly value="{{ assignment.employee.department|default:'—' }}">
+                            <input type="text" id="empDept" name="emp_dept" class="form-control" value="{{ assignment.employee.department|default:'' }}">
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label small text-muted">Branch</label>
-                            <input type="text" id="empBranch" class="form-control readonly-box" readonly value="{{ assignment.employee.branch|default:'—' }}">
+                            <input type="text" id="empBranch" name="emp_branch" class="form-control" value="{{ assignment.employee.branch|default:'' }}">
                         </div>
                     </div>
                 </div>

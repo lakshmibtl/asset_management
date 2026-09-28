@@ -1049,8 +1049,8 @@ def edit_employee(request, emp_id):
         
         if new_name:
             employee.name = new_name
-            if new_dept: employee.department = new_dept
-            if new_branch: employee.branch = new_branch
+            employee.department = new_dept
+            employee.branch = new_branch
             employee.save()
             messages.success(request, f"Successfully updated employee: {new_name}")
         else:
@@ -1262,6 +1262,22 @@ def edit_assignment(request, pk):
             return redirect('edit_assignment', pk=assignment.pk)
 
         assignment.employee = get_object_or_404(Employee, id=emp_id)
+        
+        # Update employee department and branch if provided
+        emp_dept = request.POST.get('emp_dept')
+        emp_branch = request.POST.get('emp_branch')
+        emp_updated = False
+        
+        if emp_dept is not None and assignment.employee.department != emp_dept.strip():
+            assignment.employee.department = emp_dept.strip()
+            emp_updated = True
+        if emp_branch is not None and assignment.employee.branch != emp_branch.strip():
+            assignment.employee.branch = emp_branch.strip()
+            emp_updated = True
+            
+        if emp_updated:
+            assignment.employee.save()
+            
         assignment.status = status or 'In Use'
         if date_obj:
             assignment.assigned_date = date_obj
