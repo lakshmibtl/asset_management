@@ -212,6 +212,15 @@ class AssetForm(forms.ModelForm):
             }),
         }
 
+    def _is_dead_submission(self):
+        """True when the submitted status resolves to 'Dead'."""
+        if not self.is_bound:
+            return False
+        status = (self.data.get('status') or '').strip()
+        if status == 'Other':
+            status = (self.data.get('other_status') or '').strip()
+        return status.lower() == 'dead'
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -220,6 +229,12 @@ class AssetForm(forms.ModelForm):
         self.fields['series_number'].required = True
         self.fields['model'].required = True
         self.fields['cost'].required = True
+
+        # Dead assets have no cost / warranty, so those inputs are disabled by the
+        # form. Disabled fields are never posted, so they must not be required here.
+        if self._is_dead_submission():
+            self.fields['cost'].required = False
+            self.fields['cost'].widget.attrs.pop('required', None)
 
         # Handle custom asset type on Edit
         if self.instance and self.instance.pk:
@@ -305,6 +320,16 @@ class AssetForm(forms.ModelForm):
             cleaned_data['warranty_end_date'] = None
             if 'warranty_end_date' in self._errors:
                 del self._errors['warranty_end_date']
+
+        # New dead assets: cost / warranty / warranty end date are not applicable.
+        # Existing assets are left untouched so editing never wipes historical data.
+        if not self.instance.pk and self._is_dead_submission():
+            cleaned_data['cost'] = None
+            cleaned_data['warranty'] = None
+            cleaned_data['other_warranty'] = None
+            cleaned_data['warranty_end_date'] = None
+            for name in ('cost', 'warranty', 'other_warranty', 'warranty_end_date'):
+                self._errors.pop(name, None)
 
         ram = cleaned_data.get('ram')
         other_ram = cleaned_data.get('other_ram')

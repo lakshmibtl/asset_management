@@ -20,10 +20,15 @@ class Migration(migrations.Migration):
             name='processor',
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
-        migrations.AlterField(
-            model_name='asset',
-            name='series_number',
-            field=models.CharField(blank=True, max_length=100, unique=True),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[],
+            state_operations=[
+                migrations.AlterField(
+                    model_name='asset',
+                    name='series_number',
+                    field=models.CharField(blank=True, max_length=100, unique=True),
+                ),
+            ],
         ),
         migrations.AlterField(
             model_name='assignment',

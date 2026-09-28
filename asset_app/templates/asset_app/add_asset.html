@@ -30,6 +30,16 @@
         cursor: text;
     }
 
+    /* Fields disabled when status is set to "Dead" */
+    .field-disabled {
+        opacity: 0.45;
+        pointer-events: none;
+    }
+
+    .field-disabled .form-floating>label::after {
+        color: #6c757d;
+    }
+
     /* ============ HERO ============ */
     /* Removed .form-hero styles to match the rest of the app */
 
@@ -414,27 +424,30 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-6 animate__animated animate__fadeInRight">
+                            <div class="col-md-6 animate__animated animate__fadeInRight" id="costContainer">
                                 <div class="form-floating">
                                     {{ form.cost|add_class:"form-control form-control-lg shadow-sm"|attr:"placeholder:Cost" }}
-                                    <label>Cost <span class="text-danger">*</span></label>
+                                    <label>Cost <span class="text-danger" id="costRequiredMark">*</span></label>
                                 </div>
+                                <div class="form-text d-none" id="costDeadNote">Not applicable for dead assets.</div>
                             </div>
 
-                            <div class="col-md-6 animate__animated animate__fadeInLeft">
+                            <div class="col-md-6 animate__animated animate__fadeInLeft" id="warrantyContainer">
                                 <div class="form-floating">
                                     {{ form.warranty|add_class:"form-select form-select-lg shadow-sm"|attr:"id:id_warranty" }}
                                     <label>Warranty</label>
                                 </div>
                                 {{ form.other_warranty }}
+                                <div class="form-text d-none" id="warrantyDeadNote">Not applicable for dead assets.</div>
                             </div>
 
-                            <div class="col-md-6 animate__animated animate__fadeInRight">
+                            <div class="col-md-6 animate__animated animate__fadeInRight" id="warrantyEndDateContainer">
                                 <div class="form-floating">
                                     {{ form.warranty_end_date|add_class:"form-control form-control-lg shadow-sm"|attr:"placeholder:DD/MM/YYYY"|attr:"autocomplete:off" }}
                                     <label>Warranty End Date <span class="fm-hint">(DD/MM/YYYY)</span></label>
                                     <div class="form-text">Format: DD/MM/YYYY</div>
                                 </div>
+                                <div class="form-text d-none" id="warrantyEndDateDeadNote">Not applicable for dead assets.</div>
                             </div>
                         </div>
                 </div>
@@ -616,6 +629,58 @@
         }
     });
 
+    // ── Status "Dead": disable Cost, Warranty and Warranty End Date ──
+    document.addEventListener('DOMContentLoaded', function () {
+        const statusSelect = document.getElementById('id_status');
+        if (!statusSelect) return;
+
+        const groups = [
+            {
+                container: document.getElementById('costContainer'),
+                note: document.getElementById('costDeadNote'),
+                fields: [document.getElementById('id_cost')]
+            },
+            {
+                container: document.getElementById('warrantyContainer'),
+                note: document.getElementById('warrantyDeadNote'),
+                fields: [document.getElementById('id_warranty'), document.getElementById('otherWarrantyInput')]
+            },
+            {
+                container: document.getElementById('warrantyEndDateContainer'),
+                note: document.getElementById('warrantyEndDateDeadNote'),
+                fields: [document.getElementById('id_warranty_end_date')]
+            }
+        ].filter(function (g) { return g.container; });
+
+        groups.forEach(function (g) {
+            g.fields = g.fields.filter(Boolean);
+            g.wasRequired = g.fields.length ? g.fields[0].required : false;
+        });
+
+        function setGroupEnabled(group, enabled) {
+            group.container.classList.toggle('field-disabled', !enabled);
+            if (group.note) group.note.classList.toggle('d-none', enabled);
+
+            group.fields.forEach(function (el) {
+                el.disabled = !enabled;
+                el.required = enabled ? group.wasRequired : false;
+                if (!enabled) el.value = '';
+            });
+
+            // Keep the date picker in sync with the disabled state
+            const inst = (window.__dmy || {})['id_warranty_end_date'];
+            if (!enabled && inst && typeof inst.close === 'function') inst.close();
+        }
+
+        function syncDeadState() {
+            const isDead = (statusSelect.value || '').trim().toLowerCase() === 'dead';
+            groups.forEach(function (g) { setGroupEnabled(g, !isDead); });
+        }
+
+        statusSelect.addEventListener('change', syncDeadState);
+        syncDeadState();
+    });
+
     document.addEventListener('DOMContentLoaded', function () {
         const purchaseDateInput = document.getElementById('id_purchase_date');
         const warrantySelect = document.getElementById('id_warranty');
@@ -642,6 +707,7 @@
         }
 
         function calculateWarrantyEndDate() {
+            if (warrantyEndDate && warrantyEndDate.disabled) return;
             let base = parseDmY(purchaseDateInput.value);
             if (!base) base = new Date();
             let years = 0, months = 0, days = 0;
