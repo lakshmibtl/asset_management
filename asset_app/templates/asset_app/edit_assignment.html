@@ -4,6 +4,7 @@
 {% block title %}Edit Assignment{% endblock %}
 
 {% block content %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
     :root {
         --primary: #07518A;
@@ -85,7 +86,8 @@
     }
 
     .form-control,
-    .form-select {
+    .form-select,
+    .select2-container--default .select2-selection--single {
         border: 1.5px solid var(--input-border) !important;
         border-radius: 12px !important;
         padding: 10px 15px !important;
@@ -209,14 +211,14 @@
                         Recipient
                     </span>
 
-                    <div class="mb-2">
-                        <label class="form-label fw-bold small text-muted"><i class="bi bi-person-search me-1" style="color: var(--primary);"></i> RECIPIENT</label>
-                        <select name="employee" id="empSelect" class="form-select" required>
-                            <option value="">Select employee...</option>
-                            {% for emp in employees %}
-                            <option value="{{ emp.pk }}" data-dept="{{ emp.department|default:'' }}" data-branch="{{ emp.branch|default:'' }}" {% if assignment.employee_id == emp.pk %}selected{% endif %}>{{ emp.name }} [{{ emp.employee_id }}]</option>
-                            {% endfor %}
-                        </select>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted"><i class="bi bi-person-search me-1" style="color: var(--primary);"></i> RECIPIENT SEARCH</label>
+                        <div class="emp-picker">
+                            <input type="text" id="empSearch" name="emp_search" class="form-control"
+                                placeholder="Type name or ID to search..." autocomplete="off" value="{{ assignment.employee.name }} [{{ assignment.employee.employee_id }}]">
+                            <input type="hidden" name="employee" id="empId" value="{{ assignment.employee.pk }}">
+                            <div class="emp-results" id="empResults"></div>
+                        </div>
                     </div>
 
                     <div class="row g-2">
@@ -267,13 +269,93 @@
     </form>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script>
+    $(document).ready(function() {
+        var EMPLOYEES = {{ employees_json|safe }};
+        (function () {
+            var input = document.getElementById('empSearch');
+            if (!input) return;
+            var hidden = document.getElementById('empId');
+            var results = document.getElementById('empResults');
+            var empDept = document.getElementById('empDept');
+            var empBranch = document.getElementById('empBranch');
+
+            function selectEmployee(id) {
+                for (var i = 0; i < EMPLOYEES.length; i++) {
+                    if (EMPLOYEES[i].id === id) {
+                        var e = EMPLOYEES[i];
+                        hidden.value = e.id;
+                        input.value = (e.name || '—') + ' [' + (e.emp_id || '') + ']';
+                        empDept.value = (e.dept || '');
+                        empBranch.value = (e.branch || '');
+                        results.style.display = 'none';
+                        return;
+                    }
+                }
+            }
+
+            function matches(e, q) {
+                return (e.name || '').toLowerCase().indexOf(q) !== -1 ||
+                    String(e.emp_id || '').toLowerCase().indexOf(q) !== -1 ||
+                    (e.dept || '').toLowerCase().indexOf(q) !== -1;
+            }
+
+            function render(list) {
+                if (!list.length) {
+                    results.innerHTML = '<div class="emp-empty">No employees found</div>';
+                    results.style.display = 'block';
+                    return;
+                }
+                var html = '';
+                for (var i = 0; i < list.length; i++) {
+                    var e = list[i];
+                    html += '<div class="emp-item" data-id="' + e.id + '">' +
+                        '<div class="emp-item-name"></div>' +
+                        '<div class="emp-item-meta"></div></div>';
+                }
+                results.innerHTML = html;
+                var items = results.querySelectorAll('.emp-item');
+                for (var j = 0; j < items.length; j++) {
+                    var emp = list[j];
+                    items[j].querySelector('.emp-item-name').textContent = emp.name || '—';
+                    items[j].querySelector('.emp-item-meta').textContent = (emp.emp_id || '') + ' · ' + (emp.dept || '—');
+                    items[j].addEventListener('mousedown', function (id) {
+                        return function (ev) { ev.preventDefault(); selectEmployee(id); };
+                    }(emp.id));
+                }
+                results.style.display = 'block';
+            }
+
+            input.addEventListener('focus', function () {
+                var q = input.value.trim().toLowerCase();
+                if (q) {
+                    render(EMPLOYEES.filter(function (e) { return matches(e, q); }).slice(0, 50));
+                } else {
+                    render(EMPLOYEES.slice(0, 50));
+                }
+            });
+
+            input.addEventListener('keyup', function () {
+                var q = input.value.trim().toLowerCase();
+                if (!q) { 
+                    render(EMPLOYEES.slice(0, 50));
+                    hidden.value = ''; 
+                    return; 
+                }
+                render(EMPLOYEES.filter(function (e) { return matches(e, q); }).slice(0, 50));
+            });
+
+            input.addEventListener('blur', function () {
+                setTimeout(function () { results.style.display = 'none'; }, 150);
+            });
+        })();
+    });
+
     (function () {
         const statusSelect = document.getElementById('assignStatusSelect');
         const otherStatusInput = document.getElementById('otherStatusInput');
-        const empSelect = document.getElementById('empSelect');
-        const empDept = document.getElementById('empDept');
-        const empBranch = document.getElementById('empBranch');
 
         function updateStatusMode() {
             if (statusSelect.value === 'Other') {
@@ -287,14 +369,6 @@
 
         if (statusSelect) statusSelect.addEventListener('change', updateStatusMode);
         updateStatusMode();
-
-        if (empSelect) {
-            empSelect.addEventListener('change', function () {
-                const opt = empSelect.options[empSelect.selectedIndex];
-                empDept.value = opt.dataset.dept || '—';
-                empBranch.value = opt.dataset.branch || '—';
-            });
-        }
 
         const form = document.getElementById('editForm');
         if (form) {
