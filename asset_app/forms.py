@@ -194,7 +194,6 @@ class AssetForm(forms.ModelForm):
             'series_number': forms.TextInput(attrs={
                 'class': 'form-control form-control-lg rounded-3 shadow-sm',
                 'placeholder': 'Enter Serial / Series Number',
-                'required': 'required'
             }),
             'vendor_name': forms.TextInput(attrs={
                 'class': 'form-control form-control-lg rounded-3 shadow-sm',
@@ -226,9 +225,19 @@ class AssetForm(forms.ModelForm):
 
         # ✅ DOUBLE SAFETY: server-side required
         self.fields['company_name'].required = True
-        self.fields['series_number'].required = True
         self.fields['model'].required = True
         self.fields['cost'].required = True
+
+        # Serial number is optional when adding: leave it blank and the system
+        # generates a unique one on save. Editing an existing asset still
+        # requires it, since every stored asset already has one.
+        is_edit = bool(self.instance and self.instance.pk)
+        if is_edit:
+            self.fields['series_number'].required = True
+            self.fields['series_number'].widget.attrs['required'] = 'required'
+        else:
+            self.fields['series_number'].required = False
+            self.fields['series_number'].widget.attrs.pop('required', None)
 
         # Dead assets have no cost / warranty, so those inputs are disabled by the
         # form. Disabled fields are never posted, so they must not be required here.

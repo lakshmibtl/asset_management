@@ -81,8 +81,53 @@ class Asset(models.Model):
 
  
 
+    ID_PREFIX_MAP = {'Laptop': 'LP', 'Desktop': 'DT', 'Printer': 'PR'}
+
     def __str__(self):
         return f"{self.asset_type} - {self.asset_id}"
+
+    @classmethod
+    def _next_sequential_id(cls, field_name, prefix, fallback_scope=None):
+        """Highest numeric suffix already used for ``prefix`` under ``field_name``, +1."""
+        numbers = []
+        for value in Asset.objects.filter(**{f'{field_name}__startswith': f'{prefix}-'}).values_list(field_name, flat=True):
+            try:
+                numbers.append(int(value.split('-')[-1]))
+            except (ValueError, IndexError):
+                continue
+        if fallback_scope is not None:
+            for value in fallback_scope:
+                try:
+                    numbers.append(int(value.split('-')[-1]))
+                except (ValueError, IndexError):
+                    continue
+        return max(numbers) + 1 if numbers else 1
+
+    @classmethod
+    def generate_series_number(cls, asset_type='Laptop', exclude=None):
+        """Build the next unused system serial number, e.g. ``SN-LP-0042``.
+
+        Used by the Add Asset form when the user leaves the serial blank, and by
+        the "Generate" button so the preview matches what save() will produce.
+        ``exclude`` holds values to skip, so regenerating offers a new one
+        instead of handing back the current candidate.
+        """
+        prefix = cls.ID_PREFIX_MAP.get(asset_type, 'AS')
+        skip = {v.strip().lower() for v in (exclude or []) if v and v.strip()}
+        numbers = []
+        for value in Asset.objects.filter(series_number__startswith=f'SN-{prefix}-').values_list('series_number', flat=True):
+            if value.lower() in skip:
+                continue
+            try:
+                numbers.append(int(value.split('-')[-1]))
+            except (ValueError, IndexError):
+                continue
+        next_number = max(numbers) + 1 if numbers else 1
+        candidate = f'SN-{prefix}-{next_number:04d}'
+        while candidate.lower() in skip:
+            next_number += 1
+            candidate = f'SN-{prefix}-{next_number:04d}'
+        return candidate
 
     @property
     def warranty_label(self):
@@ -110,26 +155,21 @@ class Asset(models.Model):
     def save(self, *args, **kwargs):
         # Auto-generate unique asset_id
         if not self.asset_id:
-            prefix_map = {'Laptop': 'LP', 'Desktop': 'DT', 'Printer': 'PR'}
-            prefix = prefix_map.get(self.asset_type, 'AS')
-            numbers = []
-            # Check existing assets
-            for aid in Asset.objects.filter(asset_id__startswith=f"{prefix}-").values_list('asset_id', flat=True):
-                try:
-                    numbers.append(int(aid.split('-')[-1]))
-                except (ValueError, IndexError):
-                    continue
+            prefix = self.ID_PREFIX_MAP.get(self.asset_type, 'AS')
             # Also check deleted asset IDs so they are never reused
             try:
-                for aid in AssetDeletionLog.objects.filter(asset_id__startswith=f"{prefix}-").values_list('asset_id', flat=True):
-                    try:
-                        numbers.append(int(aid.split('-')[-1]))
-                    except (ValueError, IndexError):
-                        continue
+                deleted_ids = list(
+                    AssetDeletionLog.objects.filter(
+                        asset_id__startswith=f"{prefix}-"
+                    ).values_list('asset_id', flat=True)
+                )
             except Exception:
-                pass
-            next_number = max(numbers) + 1 if numbers else 1
-            self.asset_id = f"{prefix}-{next_number:04d}"
+                deleted_ids = []
+            self.asset_id = f"{prefix}-{self._next_sequential_id('asset_id', prefix, deleted_ids):04d}"
+
+        # Auto-generate a unique serial number when the user left it blank
+        if not (self.series_number or '').strip():
+            self.series_number = self.generate_series_number(self.asset_type)
 
         # Auto-calculate warranty end date = add/purchase date + warranty years/months/days
         import re

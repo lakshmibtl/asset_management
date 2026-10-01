@@ -13,7 +13,7 @@ from django.urls import reverse, resolve
 from django.utils import timezone
 from django.utils.timezone import now
 from django.db.models import Count, Q
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
@@ -723,18 +723,30 @@ def add_asset(request):
     if request.method == 'POST':
         form = AssetForm(request.POST, request.FILES)
         if form.is_valid():
+            auto_serial = not (form.cleaned_data.get('series_number') or '').strip()
             try:
                 asset = form.save(commit=False)
                 original_status = asset.status
-                
+
                 # Prevent ghost assets: If user selects 'In Use', save as 'Available' temporarily
                 # so it doesn't disappear if they hit 'Back' and cancel the assignment.
                 # It will be formally marked 'In Use' when they complete the assign form.
                 if asset.status.lower() == "in use":
                     asset.status = "Available"
-                
-                asset.save()
-                
+
+                # A system-generated serial is picked by counting existing rows, so two
+                # concurrent adds can land on the same value. Retry a few times before
+                # giving up.
+                for attempt in range(3 if auto_serial else 1):
+                    try:
+                        with transaction.atomic():
+                            asset.save()
+                        break
+                    except IntegrityError:
+                        if not auto_serial or attempt == 2:
+                            raise
+                        asset.series_number = ''
+
                 if original_status.lower() == "in use":
                     messages.info(request, "Asset saved to stock. Please complete assignment to mark it as 'In Use'.")
                     return redirect(f"{reverse('assign_asset')}?asset={asset.pk}")
@@ -742,11 +754,20 @@ def add_asset(request):
                     messages.success(request, "Asset added successfully!")
                     return redirect('view_assets')
             except IntegrityError:
-                messages.error(request, "Error: Asset ID must be unique.")
+                messages.error(request, "Error: Asset ID or Serial Number must be unique.")
     else:
         form = AssetForm()
 
     return render(request, 'asset_app/add_asset.html', {'form': form})
+
+
+@login_required
+def generate_serial_number(request):
+    """Return the next unused system serial number for the Add Asset form."""
+    asset_type = (request.GET.get('asset_type') or 'Laptop').strip()
+    exclude = (request.GET.get('exclude') or '').strip()
+    series_number = Asset.generate_series_number(asset_type, exclude=[exclude] if exclude else None)
+    return JsonResponse({'series_number': series_number})
 
 
 @login_required
